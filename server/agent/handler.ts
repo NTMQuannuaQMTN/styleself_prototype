@@ -86,11 +86,24 @@ export async function handleAgentChat(
       global: authHeader ? { headers: { Authorization: authHeader } } : {},
     })
 
-    const { data: store } = await supabase
+    const storeRes = await supabase
       .from('stores')
       .select('*')
       .eq('slug', agentId)
       .maybeSingle()
+
+    if (storeRes.error) {
+      console.error(`[agent ${conversationId}] store lookup failed`, storeRes.error)
+      return {
+        status: 500,
+        body: {
+          ok: false,
+          error: 'server',
+          message: 'Could not load this store right now. Try again shortly.',
+        },
+      }
+    }
+    const store = storeRes.data
 
     if (!store) {
       return {

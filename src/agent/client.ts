@@ -30,14 +30,24 @@ export async function sendAgentMessage(
     }
   }
 
+  const raw = await res.text().catch(() => '')
   let data: unknown
   try {
-    data = await res.json()
+    data = raw ? JSON.parse(raw) : null
   } catch {
+    data = null
+  }
+
+  // The endpoint always answers with our JSON envelope. A non-JSON body means a
+  // gateway error (function crash, timeout, or missing deployment).
+  if (!data || typeof data !== 'object') {
     return {
       ok: false,
       error: 'server',
-      message: 'The agent returned an unexpected response.',
+      message:
+        res.status === 504 || res.status === 408
+          ? 'The assistant took too long to respond. Try a shorter question.'
+          : `The assistant is unavailable right now (HTTP ${res.status}). Try again shortly.`,
     }
   }
 
