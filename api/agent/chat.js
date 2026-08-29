@@ -226,6 +226,26 @@ var DemoCatalog = class {
       }
     }
   }
+  decrementStockAcrossLocations(variantId, qty, preferredLocationId) {
+    let remaining = qty;
+    const locationIds = [
+      ...preferredLocationId ? [preferredLocationId] : [],
+      ...this.locations.map((location) => location.id).filter((id) => id !== preferredLocationId)
+    ];
+    for (const locationId of locationIds) {
+      if (remaining <= 0) return;
+      for (const p of this.products) {
+        const v2 = p.variants.find((x) => x.id === variantId);
+        const available = v2?.stockByLocation[locationId];
+        if (v2 && available != null) {
+          const used = Math.min(available, remaining);
+          v2.stockByLocation[locationId] = available - used;
+          remaining -= used;
+          break;
+        }
+      }
+    }
+  }
 };
 function v(id, size, color, stock, colorHex = null) {
   return { id, size, color, colorHex, priceCents: null, stockByLocation: stock };
@@ -422,6 +442,14 @@ var TOOL_SCHEMAS = [
   {
     type: "function",
     function: {
+      name: "clear_cart",
+      description: "Remove every item and variant from the shopper's bag. Use when the shopper asks to clear or empty the cart.",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "create_order_preview",
       description: "Deterministic purchase preview. The backend calculates all money. Call when the shopper is ready to buy \u2014 uses the bag, or pass items to buy directly. Do not call for casual interest.",
       parameters: {
@@ -599,6 +627,12 @@ async function executeTool(name, rawArgs, ctx) {
         ...qty < wantQty ? { note: `Only ${stock} in stock \u2014 added ${qty}.` } : {}
       };
     }
+    case "clear_cart": {
+      const removed = ctx.cart.length;
+      ctx.cart = [];
+      ctx.cartChanged = true;
+      return { cleared: true, removed_items: removed, bag_size: 0 };
+    }
     case "create_order_preview": {
       const explicit = Array.isArray(rawArgs.items) ? rawArgs.items : [];
       const fulfillment = rawArgs.fulfillment === "pickup" ? "pickup" : "delivery";
@@ -629,11 +663,13 @@ async function executeTool(name, rawArgs, ctx) {
           allInStock = false;
           continue;
         }
-        const variant = resolveVariant(p, w.size, w.color) ?? p.variants[0];
+        const sizeRequired = new Set(p.variants.map((v2) => v2.size).filter(Boolean)).size > 1;
+        const colorRequired = new Set(p.variants.map((v2) => v2.color).filter(Boolean)).size > 1;
+        const dimensionsSpecified = (!sizeRequired || Boolean(w.size)) && (!colorRequired || Boolean(w.color));
+        const variant = dimensionsSpecified ? resolveVariant(p, w.size, w.color) : null;
         const unit = variant?.priceCents ?? p.priceCents;
-        const atLoc = variant && locationId ? variant.stockByLocation[locationId] ?? 0 : 0;
         const stockOk = variant ? variantStock(variant) >= w.quantity : false;
-        if (!variant || !stockOk || locationId && atLoc < w.quantity && fulfillment === "pickup") {
+        if (!variant || !stockOk) {
           allInStock = false;
         }
         lines.push({
@@ -733,7 +769,10 @@ async function buildCartSummary(cart, catalog, currency) {
       productId: p.id,
       name: p.name,
       variantLabel: variant ? variantLabel(variant) : null,
+      size: variant?.size ?? null,
+      color: variant?.color ?? null,
       quantity: l.quantity,
+      stockQuantity: variant ? variantStock(variant) : 0,
       unitPriceCents: variant?.priceCents ?? p.priceCents
     };
   }).filter((x) => x != null);
@@ -878,6 +917,11 @@ function cardFor(p, currency, reply, nearestMatch) {
     sizes,
     stockLevel,
     stockQuantity: stock,
+    variantStock: p.variants.map((v2) => ({
+      size: v2.size,
+      color: v2.color,
+      quantity: variantStock2(v2)
+    })),
     ...stockLevel === "low" ? { unitsLeft: stock } : {},
     reason: reasonFor(p.name, reply),
     ...nearestMatch ? { nearestMatch: true } : {}

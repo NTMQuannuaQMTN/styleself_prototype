@@ -342,16 +342,16 @@ export function AgentChat({
     'What do you have for a formal dinner?',
   ]
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0)
-  const stockByVariant = new Map(
+  const stockByVariant = new Map<string, number>(
     turns.flatMap((turn) => turn.products ?? []).flatMap((product) =>
       (product.variantStock ?? []).map((variant) => [
         `${product.id}|${variant.size ?? ''}|${variant.color ?? ''}`,
         variant.quantity,
-      ] as const),
+      ]),
     ),
   )
 
-  function cartItemKey(item: CartItem) {
+  function cartItemKey(item: CartItem): string {
     return `${item.productId}|${item.size ?? ''}|${item.color ?? ''}`
   }
 
