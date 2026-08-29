@@ -1,0 +1,17 @@
+sku,name,price,category,brand,style,gender,material,care,description,image_url,status,size,color,variant_sku,stock_orchard,stock_bugis
+LB-001,Linen Blazer,129,Blazers,Kairo,Smart casual,Mens,100% linen,Dry clean only,Relaxed-fit oatmeal linen blazer with a natural shoulder — reads smart without feeling stiff.,https://images.unsplash.com/photo-1594938298603-c8148c4dae35,active,S,Oatmeal,LB-001-S-OAT,3,2
+LB-001,,,,,,,,,,,,M,Oatmeal,LB-001-M-OAT,5,4
+LB-001,,,,,,,,,,,,L,Oatmeal,LB-001-L-OAT,4,1
+OX-014,Oxford Shirt,59,Shirts,Kairo,Smart casual,Unisex,100% cotton,Machine wash cold,Classic cotton oxford — works under a blazer or on its own.,https://images.unsplash.com/photo-1596755094514-f87e34085b2c,active,S,White,OX-014-S-WHT,8,6
+OX-014,,,,,,,,,,,,M,White,OX-014-M-WHT,12,9
+OX-014,,,,,,,,,,,,L,White,OX-014-L-WHT,6,5
+OX-014,,,,,,,,,,,,M,Sky Blue,OX-014-M-BLU,4,3
+WT-233,Wide-Leg Trousers,89,Trousers,Neruda,Relaxed,Womens,Tencel blend,Machine wash cold,High-rise wide-leg trousers with a fluid drape.,https://images.unsplash.com/photo-1594633312681-425c7b97ccd1,active,26,Sand,WT-233-26-SND,2,2
+WT-233,,,,,,,,,,,,28,Sand,WT-233-28-SND,3,4
+WT-233,,,,,,,,,,,,30,Sand,WT-233-30-SND,3,2
+WT-233,,,,,,,,,,,,28,Black,WT-233-28-BLK,5,3
+KN-090,Merino Crew Knit,99,Knitwear,Neruda,Minimal,Unisex,100% merino wool,Hand wash cold,Fine-gauge merino crew-neck knit in a versatile mid-grey.,https://images.unsplash.com/photo-1616150638538-ffb0679a3fc4,active,S,Grey,KN-090-S-GRY,4,3
+KN-090,,,,,,,,,,,,M,Grey,KN-090-M-GRY,6,5
+KN-090,,,,,,,,,,,,L,Grey,KN-090-L-GRY,3,2
+TR-500,Cropped Trench Coat,219,Outerwear,Kairo,Statement,Womens,Cotton gabardine,Dry clean only,Cropped double-breasted trench in stone with a belted waist.,https://images.unsplash.com/photo-1591047139829-d91aecb6caea,active,S,Stone,TR-500-S-STN,2,1
+TR-500,,,,,,,,,,,,M,Stone,TR-500-M-STN,3,2

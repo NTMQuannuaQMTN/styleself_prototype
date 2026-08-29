@@ -25,9 +25,18 @@ Run them **in order** in the SQL Editor (or `supabase db push`):
    it re-validates price and stock from live rows, writes the order, and
    decrements `inventory` in one transaction. Idempotent on
    `(conversation_id, draft_hash)`. `/agent/demo` never hits the database.
+5. `20260829170000_join_request_creates_location.sql` … `20260829190000` — the
+   brand/branch model: an approved join request becomes a non-primary
+   `store_locations` row, and branch members manage only their own location's
+   catalog (`can_edit_product`).
+6. [`migrations/20260829200000_product_merchant_sku.sql`](migrations/20260829200000_product_merchant_sku.sql)
+   — `products.merchant_sku` (unique per store) — the reconciliation key for the
+   CSV catalog import.
 
-This file is fully idempotent — **re-run it** to pick up every column / policy
-added since your last run.
+The catalog migration file is fully idempotent — **re-run it** to pick up every
+column / policy added since your last run. The follow-up files use
+`add column if not exists` and `create ... if not exists`, so they are safe to
+re-run too.
 
 **Dashboard** — open the SQL Editor and run each file's contents in order.
 

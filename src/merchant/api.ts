@@ -414,6 +414,7 @@ export async function createProduct(
   input: {
     storeId: string
     locationId?: string | null
+    merchantSku?: string | null
     name: string
     priceCents: number
     currency: string
@@ -427,6 +428,7 @@ export async function createProduct(
       .insert({
         store_id: input.storeId,
         location_id: input.locationId ?? null,
+        merchant_sku: input.merchantSku?.trim() || null,
         name: input.name.trim(),
         ...cleanAttributes(input),
         price_cents: input.priceCents,
@@ -445,6 +447,7 @@ export async function updateProduct(
     Pick<
       Product,
       | 'name'
+      | 'merchant_sku'
       | 'description'
       | 'brand'
       | 'style'
@@ -488,6 +491,17 @@ export async function createVariant(input: {
       .select('*')
       .single(),
   )
+}
+
+export async function updateVariant(
+  id: string,
+  patch: Partial<Pick<ProductVariant, 'size' | 'color' | 'sku' | 'price_cents'>>,
+): Promise<void> {
+  const { error } = await supabase
+    .from('product_variants')
+    .update(patch)
+    .eq('id', id)
+  if (error) throw new Error(error.message)
 }
 
 /** Human label for a (size, color) variant: "M · Navy", "One size", "Charcoal". */

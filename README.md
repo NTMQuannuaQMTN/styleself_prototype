@@ -90,7 +90,12 @@ one and request to join — an owner approves) or land in the Agent Studio:
 - **Overview** — live store metrics
 - **Agent Studio** — name, greeting, brand description, fashion focus, tone,
   currency, recommendation limit, confirmation rule, commerce rules (persisted)
-- **Catalog** — products with variants and per-location inventory
+- **Catalog** — products with variants and per-location inventory. Add them one at
+  a time, or **bulk-import from a CSV** (`Catalog → Import CSV`): download the
+  template, fill in your products, upload it back. The import matches rows to
+  existing products by product code (`sku`), updates stock and details in place,
+  creates any new products, tolerates missing columns, and never deletes anything
+  — you review every change before it's applied.
 - **Locations** — single store or many
 - **Team** — members + join-request approvals
 - **Deploy** — per-store `<iframe>` embed snippet + go-live checklist/toggle
