@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import { useStore } from '../../merchant/useStore'
@@ -8,6 +8,7 @@ import { PageHeader } from '../../components/merchant/ui'
 export default function PreviewPage() {
   const { session } = useAuth()
   const { activeStore, agent } = useStore()
+  const [chatSize, setChatSize] = useState<'small' | 'large'>('small')
 
   if (!activeStore) return null
 
@@ -39,13 +40,21 @@ export default function PreviewPage() {
 
       <div className="grid gap-8 lg:grid-cols-[1fr_18rem] lg:items-start">
         {/* Chat -------------------------------------------------------------- */}
-        <div className="mx-auto w-full max-w-2xl lg:mx-0">
+        <div className="mx-auto w-full lg:mx-0">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="eyebrow text-[0.6rem]">Chat window</p>
+            <SizeToggle size={chatSize} onChange={setChatSize} />
+          </div>
           <AgentChat
             key={activeStore.id}
             agentId={activeStore.slug}
             authToken={session?.access_token}
             cartPlacement="preview"
-            className="max-h-[36rem] min-h-[32rem] w-full"
+            className={`w-full ${
+              chatSize === 'large'
+                ? 'min-h-[48rem] lg:min-h-[44rem]'
+                : 'max-w-2xl min-h-[32rem] max-h-[36rem]'
+            }`}
           />
         </div>
 
@@ -111,5 +120,31 @@ function Step({ n, children }: { n: number; children: ReactNode }) {
       </span>
       <span>{children}</span>
     </li>
+  )
+}
+
+function SizeToggle({
+  size,
+  onChange,
+}: {
+  size: 'small' | 'large'
+  onChange: (size: 'small' | 'large') => void
+}) {
+  return (
+    <div className="inline-flex rounded-full border border-line-strong p-0.5 text-[0.65rem]" aria-label="Chat window size">
+      {(['small', 'large'] as const).map((option) => (
+        <button
+          key={option}
+          type="button"
+          aria-pressed={size === option}
+          onClick={() => onChange(option)}
+          className={`rounded-full px-2.5 py-1 capitalize transition-colors ${
+            size === option ? 'bg-ink text-paper' : 'text-muted hover:text-ink'
+          }`}
+        >
+          {option}
+        </button>
+      ))}
+    </div>
   )
 }
