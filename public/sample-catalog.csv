@@ -1,17 +1,54 @@
-sku,name,price,category,brand,style,gender,material,care,description,image_url,status,size,color,variant_sku,stock_orchard,stock_bugis
-LB-001,Linen Blazer,129,Blazers,Kairo,Smart casual,Mens,100% linen,Dry clean only,Relaxed-fit oatmeal linen blazer with a natural shoulder — reads smart without feeling stiff.,https://images.unsplash.com/photo-1594938298603-c8148c4dae35,active,S,Oatmeal,LB-001-S-OAT,3,2
-LB-001,,,,,,,,,,,,M,Oatmeal,LB-001-M-OAT,5,4
-LB-001,,,,,,,,,,,,L,Oatmeal,LB-001-L-OAT,4,1
-OX-014,Oxford Shirt,59,Shirts,Kairo,Smart casual,Unisex,100% cotton,Machine wash cold,Classic cotton oxford — works under a blazer or on its own.,https://images.unsplash.com/photo-1596755094514-f87e34085b2c,active,S,White,OX-014-S-WHT,8,6
-OX-014,,,,,,,,,,,,M,White,OX-014-M-WHT,12,9
-OX-014,,,,,,,,,,,,L,White,OX-014-L-WHT,6,5
-OX-014,,,,,,,,,,,,M,Sky Blue,OX-014-M-BLU,4,3
-WT-233,Wide-Leg Trousers,89,Trousers,Neruda,Relaxed,Womens,Tencel blend,Machine wash cold,High-rise wide-leg trousers with a fluid drape.,https://images.unsplash.com/photo-1594633312681-425c7b97ccd1,active,26,Sand,WT-233-26-SND,2,2
-WT-233,,,,,,,,,,,,28,Sand,WT-233-28-SND,3,4
-WT-233,,,,,,,,,,,,30,Sand,WT-233-30-SND,3,2
-WT-233,,,,,,,,,,,,28,Black,WT-233-28-BLK,5,3
-KN-090,Merino Crew Knit,99,Knitwear,Neruda,Minimal,Unisex,100% merino wool,Hand wash cold,Fine-gauge merino crew-neck knit in a versatile mid-grey.,https://images.unsplash.com/photo-1616150638538-ffb0679a3fc4,active,S,Grey,KN-090-S-GRY,4,3
-KN-090,,,,,,,,,,,,M,Grey,KN-090-M-GRY,6,5
-KN-090,,,,,,,,,,,,L,Grey,KN-090-L-GRY,3,2
-TR-500,Cropped Trench Coat,219,Outerwear,Kairo,Statement,Womens,Cotton gabardine,Dry clean only,Cropped double-breasted trench in stone with a belted waist.,https://images.unsplash.com/photo-1591047139829-d91aecb6caea,active,S,Stone,TR-500-S-STN,2,1
-TR-500,,,,,,,,,,,,M,Stone,TR-500-M-STN,3,2
+sku,name,price,category,brand,style,gender,material,care,description,image_url,status,size,color,color_hex,variant_sku,stock_sentosa
+LB-001,Linen Blazer,129,Blazers,Kairo,Smart casual,Mens,100% linen,Dry clean only,Relaxed-fit linen blazer with a natural shoulder — reads smart without feeling stiff.,https://images.unsplash.com/photo-1594938298603-c8148c4dae35,active,S,Oatmeal,#E3D7BF,LB-001-S-OAT,3
+LB-001,,,,,,,,,,,,M,Oatmeal,#E3D7BF,LB-001-M-OAT,6
+LB-001,,,,,,,,,,,,L,Oatmeal,#E3D7BF,LB-001-L-OAT,4
+LB-001,,,,,,,,,,,,XL,Oatmeal,#E3D7BF,LB-001-XL-OAT,2
+LB-001,,,,,,,,,,,,S,Navy,#26314A,LB-001-S-NVY,2
+LB-001,,,,,,,,,,,,M,Navy,#26314A,LB-001-M-NVY,5
+LB-001,,,,,,,,,,,,L,Navy,#26314A,LB-001-L-NVY,4
+LB-001,,,,,,,,,,,,M,Olive,#6B6A3C,LB-001-M-OLV,3
+LB-001,,,,,,,,,,,,L,Olive,#6B6A3C,LB-001-L-OLV,2
+OX-014,Oxford Shirt,59,Shirts,Kairo,Smart casual,Unisex,100% cotton,Machine wash cold,Classic cotton oxford — works under a blazer or on its own.,https://images.unsplash.com/photo-1596755094514-f87e34085b2c,active,XS,White,#F4F1EA,OX-014-XS-WHT,5
+OX-014,,,,,,,,,,,,S,White,#F4F1EA,OX-014-S-WHT,9
+OX-014,,,,,,,,,,,,M,White,#F4F1EA,OX-014-M-WHT,14
+OX-014,,,,,,,,,,,,L,White,#F4F1EA,OX-014-L-WHT,8
+OX-014,,,,,,,,,,,,XL,White,#F4F1EA,OX-014-XL-WHT,4
+OX-014,,,,,,,,,,,,S,Sky Blue,#8FB3D9,OX-014-S-SKY,6
+OX-014,,,,,,,,,,,,M,Sky Blue,#8FB3D9,OX-014-M-SKY,7
+OX-014,,,,,,,,,,,,L,Sky Blue,#8FB3D9,OX-014-L-SKY,5
+OX-014,,,,,,,,,,,,S,Pink,#E2C3BD,OX-014-S-PNK,3
+OX-014,,,,,,,,,,,,M,Pink,#E2C3BD,OX-014-M-PNK,4
+OX-014,,,,,,,,,,,,L,Pink,#E2C3BD,OX-014-L-PNK,2
+WT-233,Wide-Leg Trousers,89,Trousers,Neruda,Relaxed,Womens,Tencel blend,Machine wash cold,High-rise wide-leg trousers with a fluid drape.,https://images.unsplash.com/photo-1594633312681-425c7b97ccd1,active,24,Sand,#DBC9A3,WT-233-24-SND,2
+WT-233,,,,,,,,,,,,26,Sand,#DBC9A3,WT-233-26-SND,4
+WT-233,,,,,,,,,,,,28,Sand,#DBC9A3,WT-233-28-SND,5
+WT-233,,,,,,,,,,,,30,Sand,#DBC9A3,WT-233-30-SND,3
+WT-233,,,,,,,,,,,,26,Black,#1C1B18,WT-233-26-BLK,6
+WT-233,,,,,,,,,,,,28,Black,#1C1B18,WT-233-28-BLK,7
+WT-233,,,,,,,,,,,,30,Black,#1C1B18,WT-233-30-BLK,4
+WT-233,,,,,,,,,,,,26,Rust,#A8552F,WT-233-26-RST,2
+WT-233,,,,,,,,,,,,28,Rust,#A8552F,WT-233-28-RST,3
+KN-090,Merino Crew Knit,99,Knitwear,Neruda,Minimal,Unisex,100% merino wool,Hand wash cold,Fine-gauge merino crew-neck knit with a clean and versatile silhouette.,https://images.unsplash.com/photo-1616150638538-ffb0679a3fc4,active,S,Grey,#8D8B85,KN-090-S-GRY,5
+KN-090,,,,,,,,,,,,M,Grey,#8D8B85,KN-090-M-GRY,8
+KN-090,,,,,,,,,,,,L,Grey,#8D8B85,KN-090-L-GRY,4
+KN-090,,,,,,,,,,,,XL,Grey,#8D8B85,KN-090-XL-GRY,2
+KN-090,,,,,,,,,,,,S,Forest,#2F4A37,KN-090-S-FST,3
+KN-090,,,,,,,,,,,,M,Forest,#2F4A37,KN-090-M-FST,5
+KN-090,,,,,,,,,,,,L,Forest,#2F4A37,KN-090-L-FST,4
+KN-090,,,,,,,,,,,,S,Burgundy,#5E2B2B,KN-090-S-BRG,2
+KN-090,,,,,,,,,,,,M,Burgundy,#5E2B2B,KN-090-M-BRG,4
+KN-090,,,,,,,,,,,,L,Burgundy,#5E2B2B,KN-090-L-BRG,3
+TR-500,Cropped Trench Coat,219,Outerwear,Kairo,Statement,Womens,Cotton gabardine,Dry clean only,Cropped double-breasted trench with a belted waist.,https://images.unsplash.com/photo-1591047139829-d91aecb6caea,active,XS,Stone,#CABFA9,TR-500-XS-STN,2
+TR-500,,,,,,,,,,,,S,Stone,#CABFA9,TR-500-S-STN,3
+TR-500,,,,,,,,,,,,M,Stone,#CABFA9,TR-500-M-STN,4
+TR-500,,,,,,,,,,,,L,Stone,#CABFA9,TR-500-L-STN,2
+TR-500,,,,,,,,,,,,S,Black,#1C1B18,TR-500-S-BLK,3
+TR-500,,,,,,,,,,,,M,Black,#1C1B18,TR-500-M-BLK,4
+TR-500,,,,,,,,,,,,L,Black,#1C1B18,TR-500-L-BLK,2
+CH-320,Wool Overcoat,289,Outerwear,Aldous,Tailored,Mens,Wool blend,Dry clean only,Full-length single-breasted overcoat with a clean lapel and a half-belt back.,https://images.unsplash.com/photo-1544022613-e87ca75a784a,active,S,Charcoal,#3B3A37,CH-320-S-CHR,2
+CH-320,,,,,,,,,,,,M,Charcoal,#3B3A37,CH-320-M-CHR,4
+CH-320,,,,,,,,,,,,L,Charcoal,#3B3A37,CH-320-L-CHR,3
+CH-320,,,,,,,,,,,,XL,Charcoal,#3B3A37,CH-320-XL-CHR,2
+CH-320,,,,,,,,,,,,S,Camel,#B07F4A,CH-320-S-CML,2
+CH-320,,,,,,,,,,,,M,Camel,#B07F4A,CH-320-M-CML,3
+CH-320,,,,,,,,,,,,L,Camel,#B07F4A,CH-320-L-CML,3

@@ -15,6 +15,7 @@ import {
   type ProductWithVariants,
 } from '../../merchant/api'
 import { moneyToInput, parseMoney } from '../../merchant/money'
+import { swatchColor } from '../../agent/swatch'
 import type { ProductStatus, StoreLocation } from '../../lib/database.types'
 import {
   Card,
@@ -651,6 +652,7 @@ function VariantsSection({
 }) {
   const [size, setSize] = useState('')
   const [color, setColor] = useState('')
+  const [colorHex, setColorHex] = useState('')
   const [sku, setSku] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -665,10 +667,12 @@ function VariantsSection({
         productId: product.id,
         size: size || null,
         color: color || null,
+        colorHex: colorHex || null,
         sku,
       })
       setSize('')
       setColor('')
+      setColorHex('')
       setSku('')
       onReload()
     } catch (err) {
@@ -707,7 +711,16 @@ function VariantsSection({
               {product.variants.map((v) => (
                 <tr key={v.id} className="border-b border-line last:border-0">
                   <td className="py-2 pr-3">
-                    <p className="font-medium text-ink">{variantLabel(v)}</p>
+                    <p className="flex items-center gap-1.5 font-medium text-ink">
+                      {v.color && (
+                        <span
+                          aria-hidden
+                          className="h-3 w-3 shrink-0 rounded-full border border-line-strong"
+                          style={{ backgroundColor: v.color_hex ?? swatchColor(v.color) }}
+                        />
+                      )}
+                      {variantLabel(v)}
+                    </p>
                     {v.sku && <p className="text-xs text-muted">{v.sku}</p>}
                   </td>
                   {locations.map((loc) => {
@@ -766,6 +779,27 @@ function VariantsSection({
             onChange={(e) => setColor(e.target.value)}
             placeholder="Navy"
           />
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-ink-soft">Swatch</span>
+            <span className="flex items-center gap-1.5">
+              <input
+                type="color"
+                value={colorHex || '#8d8b85'}
+                onChange={(e) => setColorHex(e.target.value.toUpperCase())}
+                className="h-9 w-9 shrink-0 cursor-pointer rounded-md border border-line-strong bg-surface"
+                aria-label="Swatch colour"
+              />
+              {colorHex && (
+                <button
+                  type="button"
+                  onClick={() => setColorHex('')}
+                  className="text-xs text-muted hover:text-ink"
+                >
+                  clear
+                </button>
+              )}
+            </span>
+          </label>
           <TextField
             label="SKU (optional)"
             className="min-w-28 flex-1"

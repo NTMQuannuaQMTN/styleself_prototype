@@ -492,6 +492,8 @@ export async function createVariant(input: {
   productId: string
   size?: string | null
   color?: string | null
+  /** optional #RRGGBB swatch colour */
+  colorHex?: string | null
   sku?: string
   priceCents?: number | null
 }): Promise<ProductVariant> {
@@ -502,6 +504,7 @@ export async function createVariant(input: {
         product_id: input.productId,
         size: input.size?.trim() || null,
         color: input.color?.trim() || null,
+        color_hex: input.colorHex?.trim() || null,
         sku: input.sku?.trim() || null,
         price_cents: input.priceCents ?? null,
       })
@@ -512,7 +515,9 @@ export async function createVariant(input: {
 
 export async function updateVariant(
   id: string,
-  patch: Partial<Pick<ProductVariant, 'size' | 'color' | 'sku' | 'price_cents'>>,
+  patch: Partial<
+    Pick<ProductVariant, 'size' | 'color' | 'color_hex' | 'sku' | 'price_cents'>
+  >,
 ): Promise<void> {
   const { error } = await supabase
     .from('product_variants')

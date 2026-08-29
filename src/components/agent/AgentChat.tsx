@@ -7,8 +7,17 @@ import {
   type ChatTurn,
 } from '../../agent/types'
 import { ChatMessage, TypingDots, type Turn } from './ChatMessage'
+import type { CardSelection } from './ProductCards'
 
 const HISTORY_LIMIT = 8
+
+/** picks per assistant turn, keyed by turn index → product id → line */
+type SelectionByTurn = Record<number, Record<string, CardSelection>>
+
+function variantText(sel: CardSelection): string {
+  const bits = [sel.size, sel.color].filter(Boolean).join(' ')
+  return bits ? ` (${bits})` : ''
+}
 
 function newConversationId() {
   try {
@@ -35,6 +44,8 @@ export function AgentChat({
   const [status, setStatus] = useState<'init' | 'ready' | 'thinking'>('init')
   const [fatal, setFatal] = useState<string | null>(null)
   const [input, setInput] = useState('')
+  const [selections, setSelections] = useState<SelectionByTurn>({})
+  const [confirmedTurns, setConfirmedTurns] = useState<Set<number>>(new Set())
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // open the conversation (no model call server-side)
@@ -107,6 +118,30 @@ export function AgentChat({
     setStatus('ready')
   }
 
+  function selectCard(turnIdx: number, productId: string, next: CardSelection | null) {
+    setSelections((prev) => {
+      const forTurn = { ...(prev[turnIdx] ?? {}) }
+      if (next) forTurn[productId] = next
+      else delete forTurn[productId]
+      return { ...prev, [turnIdx]: forTurn }
+    })
+  }
+
+  function confirmCards(turnIdx: number) {
+    const turn = turns[turnIdx]
+    const picks = selections[turnIdx] ?? {}
+    if (!turn?.products) return
+    const parts = turn.products
+      .filter((p) => picks[p.id]?.quantity > 0)
+      .map((p) => {
+        const s = picks[p.id]
+        return `${s.quantity}x ${p.name}${variantText(s)}`
+      })
+    if (parts.length === 0) return
+    setConfirmedTurns((prev) => new Set(prev).add(turnIdx))
+    send(`Add ${parts.join(', ')} to my bag`)
+  }
+
   if (fatal) {
     return (
       <div
@@ -155,6 +190,12 @@ export function AgentChat({
               agentId={agentId}
               conversationId={conversationId}
               authToken={authToken}
+              busy={status !== 'ready'}
+              cardSelection={selections[i]}
+              cardConfirmed={confirmedTurns.has(i)}
+              onCardSelect={(pid, next) => selectCard(i, pid, next)}
+              onCardConfirm={() => confirmCards(i)}
+              onAskDetails={(name) => send(`Tell me more about the ${name}`)}
             />
           ))
         )}

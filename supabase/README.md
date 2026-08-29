@@ -31,6 +31,12 @@ Run them **in order** in the SQL Editor (or `supabase db push`):
    `payout_account_last4` (settlement destination, last-4 only); the
    `set_store_live(store, bool)` **SECURITY DEFINER** RPC restricts going
    live/offline to the store **owner**.
+6. `20260829200000_product_merchant_sku.sql` — `products.merchant_sku` + a
+   partial unique index `(store_id, merchant_sku)` — the CSV import's match key.
+7. [`migrations/20260829220000_variant_color_hex.sql`](migrations/20260829220000_variant_color_hex.sql)
+   — `product_variants.color_hex` (optional `#RRGGBB`, `CHECK`ed) for an accurate
+   storefront swatch. Display-only; the colour NAME in `product_variants.color` is
+   still what the agent matches on. RLS unchanged.
 
 The catalog migration file is fully idempotent — **re-run it** to pick up every
 column / policy added since your last run. The follow-up files use

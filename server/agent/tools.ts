@@ -68,6 +68,8 @@ export type ToolContext = {
   cart: CartLine[]
   cartChanged: boolean
   lastSearch?: CatalogProduct[]
+  /** true when the last search only found near-matches, not an exact one */
+  lastSearchWeak?: boolean
   lastCompare?: CatalogProduct[]
   lastDetails?: CatalogProduct[]
   lastOrderPreview?: AgentOrderPreview
@@ -235,6 +237,7 @@ export async function executeTool(
         8,
       )
       ctx.lastSearch = ranked
+      ctx.lastSearchWeak = weak
       return {
         count: ranked.length,
         recommend_at_most: ctx.recommendationLimit,

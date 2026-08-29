@@ -7,7 +7,7 @@ import type {
 import { CartCard } from './CartCard'
 import { ComparisonCard } from './ComparisonCard'
 import { OrderPreview } from './OrderPreview'
-import { ProductCards } from './ProductCards'
+import { ProductCards, type CardSelection } from './ProductCards'
 
 export type Turn = {
   role: 'user' | 'assistant'
@@ -25,12 +25,25 @@ export function ChatMessage({
   agentId,
   conversationId,
   authToken,
+  cardSelection,
+  cardConfirmed,
+  busy,
+  onCardSelect,
+  onCardConfirm,
+  onAskDetails,
 }: {
   turn: Turn
   agentName: string
   agentId: string
   conversationId: string
   authToken?: string
+  /** picks for this turn's product block, by product id */
+  cardSelection?: Record<string, CardSelection>
+  cardConfirmed?: boolean
+  busy?: boolean
+  onCardSelect?: (productId: string, next: CardSelection | null) => void
+  onCardConfirm?: () => void
+  onAskDetails?: (productName: string) => void
 }) {
   if (turn.role === 'user') {
     return (
@@ -51,7 +64,15 @@ export function ChatMessage({
         </p>
       )}
       {turn.products && turn.products.length > 0 && (
-        <ProductCards products={turn.products} />
+        <ProductCards
+          products={turn.products}
+          selection={cardSelection ?? {}}
+          confirmed={cardConfirmed ?? false}
+          busy={busy ?? false}
+          onSelect={(id, next) => onCardSelect?.(id, next)}
+          onConfirm={() => onCardConfirm?.()}
+          onAskDetails={(name) => onAskDetails?.(name)}
+        />
       )}
       {turn.comparison && <ComparisonCard comparison={turn.comparison} />}
       {turn.cart && !turn.orderPreview && <CartCard cart={turn.cart} />}
