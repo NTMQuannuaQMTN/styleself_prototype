@@ -107,8 +107,19 @@ export function StoreProvider() {
     }
     setStoreDataLoading(true)
     try {
-      const [store, agentRow, locs, pending] = await Promise.all([
-        getStore(activeStoreId),
+      const store = await getStore(activeStoreId)
+      if (!mounted.current) return
+      if (!store) {
+        // Store was deleted or is no longer visible — drop it, fall back to another.
+        setActiveStoreRow(null)
+        setAgent(null)
+        setLocations([])
+        setIncomingRequestCount(0)
+        const fallback = memberships.find((m) => m.store.id !== activeStoreId)
+        setActiveStoreId(fallback ? fallback.store.id : null)
+        return
+      }
+      const [agentRow, locs, pending] = await Promise.all([
         getAgent(activeStoreId),
         listLocations(activeStoreId),
         activeIsManager
