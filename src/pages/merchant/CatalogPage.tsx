@@ -54,12 +54,17 @@ export default function CatalogPage() {
   const canAddProduct = isManager || Boolean(memberLocationId)
   const [deletingAll, setDeletingAll] = useState(false)
   const [deleteAllError, setDeleteAllError] = useState<string | null>(null)
+  const activeStoreId = activeStore?.id
   const products = useAsync(
-    () => listProducts(activeStore!.id),
-    [activeStore?.id],
+    () =>
+      activeStoreId
+        ? listProducts(activeStoreId)
+        : Promise.resolve([] as ProductWithVariants[]),
+    [activeStoreId],
   )
 
   if (!activeStore) return null
+  const store = activeStore
 
   async function removeAllProducts() {
     if (
@@ -72,7 +77,7 @@ export default function CatalogPage() {
     setDeletingAll(true)
     setDeleteAllError(null)
     try {
-      await deleteAllProducts(activeStore!.id)
+      await deleteAllProducts(store.id)
       products.reload()
     } catch (err) {
       setDeleteAllError(
@@ -162,7 +167,7 @@ export default function CatalogPage() {
                 type="button"
                 onClick={() =>
                   downloadText(
-                    `${activeStore.slug}-catalog-template.csv`,
+                    `${store.slug}-catalog-template.csv`,
                     templateCsv(locations),
                   )
                 }
