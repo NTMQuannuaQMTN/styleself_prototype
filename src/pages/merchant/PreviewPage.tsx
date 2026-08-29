@@ -39,7 +39,6 @@ export default function PreviewPage() {
           key={activeStore.id}
           agentId={activeStore.slug}
           authToken={session?.access_token}
-          embedKey={activeStore.embed_key}
           cartPlacement="preview"
           className="max-h-[34rem] min-h-[30rem] w-full"
         />

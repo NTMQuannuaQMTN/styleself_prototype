@@ -27,7 +27,6 @@ export function ChatMessage({
   agentId,
   conversationId,
   authToken,
-  embedKey,
   onPaid,
 }: {
   turn: Turn
@@ -36,7 +35,6 @@ export function ChatMessage({
   agentId: string
   conversationId: string
   authToken?: string
-  embedKey?: string
   onPaid?: (order: AgentOrderConfirmation) => void
 }) {
   if (turn.role === 'user') {
@@ -69,7 +67,6 @@ export function ChatMessage({
           orderDraftToken={turn.orderDraftToken}
           preview={turn.orderPreview}
           authToken={authToken}
-          embedKey={embedKey}
           onPaid={onPaid}
         />
       )}

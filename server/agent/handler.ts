@@ -120,22 +120,6 @@ export async function handleAgentChat(
       }
     }
 
-    // Anonymous embeds must carry the store's embed key (?k= in the iframe URL).
-    // An authenticated merchant previewing their own draft is exempt.
-    if (!authHeader && store.embed_key) {
-      const key = typeof req.embedKey === 'string' ? req.embedKey.trim() : ''
-      if (key !== store.embed_key) {
-        return {
-          status: 403,
-          body: {
-            ok: false,
-            error: 'forbidden',
-            message: 'This embed is not authorised. Check the code from the Deploy page.',
-          },
-        }
-      }
-    }
-
     const [{ data: agentRow }, { data: locRows }] = await Promise.all([
       supabase.from('store_agents').select('*').eq('store_id', store.id).maybeSingle(),
       supabase

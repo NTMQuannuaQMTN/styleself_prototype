@@ -32,15 +32,12 @@ function newConversationId() {
 export function AgentChat({
   agentId,
   authToken,
-  embedKey,
   className = '',
   cartPlacement = 'left',
 }: {
   agentId: string
   /** Only for the merchant's own preview of a not-yet-published agent. */
   authToken?: string
-  /** Embed key from the iframe URL (?k=). Required for anonymous live embeds. */
-  embedKey?: string
   className?: string
   cartPlacement?: 'left' | 'preview'
 }) {
@@ -62,7 +59,7 @@ export function AgentChat({
   useEffect(() => {
     let active = true
     sendAgentMessage(
-      { agentId, conversationId, embedKey, messages: [], context: emptyContext() },
+      { agentId, conversationId, messages: [], context: emptyContext() },
       authToken,
     ).then((res) => {
       if (!active) return
@@ -78,7 +75,7 @@ export function AgentChat({
     return () => {
       active = false
     }
-  }, [agentId, conversationId, authToken, embedKey])
+  }, [agentId, conversationId, authToken])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -150,7 +147,7 @@ export function AgentChat({
       .map((t) => ({ role: t.role, content: t.text }))
 
     const res = await sendAgentMessage(
-      { agentId, conversationId, embedKey, messages: history, context },
+      { agentId, conversationId, messages: history, context },
       authToken,
     )
 
@@ -283,7 +280,6 @@ export function AgentChat({
               agentId={agentId}
               conversationId={conversationId}
               authToken={authToken}
-              embedKey={embedKey}
               onPaid={(order) => {
                 setContext((c) => ({ ...c, cart: [], selectedProductIds: [] }))
                 setCart([])
