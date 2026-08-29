@@ -26,7 +26,7 @@ Run them **in order** in the SQL Editor (or `supabase db push`):
    re-validates price and stock from live rows, writes the order, and decrements
    `inventory` in one transaction. Idempotent on `(conversation_id, draft_hash)`.
    `/agent/demo` never hits the database.
-5. [`migrations/20260829180000_store_payout_and_deploy.sql`](migrations/20260829180000_store_payout_and_deploy.sql)
+5. [`migrations/20260829210000_store_payout_and_deploy.sql`](migrations/20260829210000_store_payout_and_deploy.sql)
    — `stores` gains `payout_bank_name` / `payout_account_name` /
    `payout_account_last4` (settlement destination, last-4 only); the
    `set_store_live(store, bool)` **SECURITY DEFINER** RPC restricts going

@@ -18,12 +18,15 @@ export function OrderPreview({
   orderDraftToken,
   preview,
   authToken,
+  onPaid,
 }: {
   agentId: string
   conversationId: string
   orderDraftToken?: string
   preview: AgentOrderPreview
   authToken?: string
+  /** Called once payment succeeds — lets the chat clear the paid bag. */
+  onPaid?: (order: AgentOrderConfirmation) => void
 }) {
   const [stage, setStage] = useState<Stage>('review')
   const [name, setName] = useState('')
@@ -81,6 +84,7 @@ export function OrderPreview({
     if (res.ok && res.kind === 'order') {
       setOrder(res)
       setStage('done')
+      onPaid?.(res)
     } else {
       setError('message' in res ? res.message : 'The payment could not be completed.')
       setStage('error')
@@ -96,7 +100,7 @@ export function OrderPreview({
         <VisaMark />
       </div>
 
-      {/* line items + totals — always visible */}
+      {/* line items — always visible */}
       <div className="mt-2 space-y-1.5 border-b border-line pb-2.5">
         {preview.lines.map((line, i) => (
           <div key={i} className="flex items-baseline justify-between gap-3 text-sm">
@@ -111,24 +115,26 @@ export function OrderPreview({
           </div>
         ))}
       </div>
-      <dl className="mt-2.5 space-y-1 text-sm">
-        <div className="flex justify-between">
-          <dt className="text-muted">Subtotal</dt>
-          <dd className="text-ink">{money(preview.subtotalCents)}</dd>
-        </div>
-        <div className="flex justify-between">
-          <dt className="text-muted">
-            {preview.fulfillment === 'pickup'
-              ? `Pickup${preview.location ? ` · ${preview.location}` : ''}`
-              : 'Delivery'}
-          </dt>
-          <dd className="text-ink">{money(preview.deliveryCents)}</dd>
-        </div>
-        <div className="flex justify-between border-t border-line pt-1.5 font-medium">
-          <dt className="text-ink">Total</dt>
-          <dd className="font-display text-ink">{money(preview.totalCents)}</dd>
-        </div>
-      </dl>
+      {stage !== 'done' && (
+        <dl className="mt-2.5 space-y-1 text-sm">
+          <div className="flex justify-between">
+            <dt className="text-muted">Subtotal</dt>
+            <dd className="text-ink">{money(preview.subtotalCents)}</dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-muted">
+              {preview.fulfillment === 'pickup'
+                ? `Pickup${preview.location ? ` · ${preview.location}` : ''}`
+                : 'Delivery'}
+            </dt>
+            <dd className="text-ink">{money(preview.deliveryCents)}</dd>
+          </div>
+          <div className="flex justify-between border-t border-line pt-1.5 font-medium">
+            <dt className="text-ink">Total</dt>
+            <dd className="font-display text-ink">{money(preview.totalCents)}</dd>
+          </div>
+        </dl>
+      )}
 
       {stage === 'review' && (
         <>
