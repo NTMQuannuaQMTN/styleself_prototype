@@ -10,6 +10,17 @@
 -- Apply with `supabase db push` or by pasting into the SQL editor.
 
 -- ---------------------------------------------------------------------------
+-- Merchant setup type enum
+-- ---------------------------------------------------------------------------
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'merchant_setup_type') then
+    create type public.merchant_setup_type as enum ('branch', 'create-store');
+  end if;
+end
+$$;
+
+-- ---------------------------------------------------------------------------
 -- profiles
 -- ---------------------------------------------------------------------------
 create table if not exists public.profiles (

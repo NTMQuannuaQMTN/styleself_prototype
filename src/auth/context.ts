@@ -2,6 +2,8 @@ import { createContext } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import type { Profile } from '../lib/database.types'
 
+export type MerchantSetup = 'branch' | 'create-store'
+
 export type SignUpArgs = {
   email: string
   password: string

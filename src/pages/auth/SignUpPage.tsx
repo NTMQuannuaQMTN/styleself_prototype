@@ -13,6 +13,45 @@ import {
 import { useAuth } from '../../auth/useAuth'
 import { authErrorMessage } from '../../auth/errors'
 
+// function MerchantSetupChooser({ onPick }: { onPick: (setup: MerchantSetup) => void }) {
+//   return (
+//     <AuthShell
+//       title="How do you want to start?"
+//       subtitle="Choose whether you want to join an existing store or launch your own brand."
+//       footer={
+//         <>
+//           Already have an account?{' '}
+//           <Link to="/login" className="font-medium text-ink underline">
+//             Log in
+//           </Link>
+//         </>
+//       }
+//     >
+//       <div className="flex flex-col gap-3">
+//         {MERCHANT_SETUP_OPTIONS.map(({ value, title, description }) => (
+//           <button
+//             key={value}
+//             type="button"
+//             onClick={() => onPick(value)}
+//             className="group flex items-center justify-between rounded-xl border border-line-strong bg-surface p-4 text-left transition-colors hover:border-ink"
+//           >
+//             <span>
+//               <span className="block text-[0.95rem] font-medium text-ink">{title}</span>
+//               <span className="mt-0.5 block text-sm text-muted">{description}</span>
+//             </span>
+//             <span
+//               aria-hidden
+//               className="ml-3 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-ink"
+//             >
+//               →
+//             </span>
+//           </button>
+//         ))}
+//       </div>
+//     </AuthShell>
+//   )
+// }
+
 export default function SignUpPage() {
   const { signUpWithPassword, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
