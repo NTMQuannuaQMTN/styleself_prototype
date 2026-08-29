@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { AgentChat } from '../../components/agent/AgentChat'
 
 /**
@@ -13,6 +13,8 @@ import { AgentChat } from '../../components/agent/AgentChat'
  */
 export default function AgentPage() {
   const { agentId = 'demo' } = useParams()
+  const [params] = useSearchParams()
+  const embedKey = params.get('k') ?? undefined
   const [size, setSize] = useState<'small' | 'large'>('small')
 
   return (
@@ -39,7 +41,7 @@ export default function AgentPage() {
             ))}
           </div>
         </div>
-        <AgentChat agentId={agentId} className="min-h-0 flex-1" />
+        <AgentChat agentId={agentId} embedKey={embedKey} className="min-h-0 flex-1" />
         <p className="mt-2 shrink-0 text-center text-[0.68rem] text-muted">
           Shopping assistant by{' '}
           <span className="font-display italic text-ink">StyleSelf</span>

@@ -33,6 +33,13 @@ Run them **in order** in the SQL Editor (or `supabase db push`):
    `payout_account_last4` (settlement destination, last-4 only); the
    `set_store_live(store, bool)` **SECURITY DEFINER** RPC restricts going
    live/offline to the store **owner**.
+7. Later idempotent follow-ups: `…230000` adds `product_variants.color_hex`;
+   `…240000_store_embed_key.sql` adds `stores.embed_key` (auto `se_<hex>`, unique)
+   + `embed_key_required` (default false). The iframe loads as
+   `/agent/<slug>?k=<embed_key>`; the backend **always** rejects an anonymous
+   call whose key is present but wrong, and additionally rejects a *missing* key
+   when the owner turns `embed_key_required` on. `rotate_embed_key(store)`
+   (**SECURITY DEFINER**, owner-only) issues a new key.
 
 The catalog migration file is fully idempotent — **re-run it** to pick up every
 column / policy added since your last run. The follow-up files use

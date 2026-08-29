@@ -46,6 +46,7 @@ function newConversationId() {
 export function AgentChat({
   agentId,
   authToken,
+  embedKey,
   className = '',
   cartPlacement = 'left',
   onCartChange,
@@ -53,6 +54,8 @@ export function AgentChat({
   agentId: string
   /** Only for the merchant's own preview of a not-yet-published agent. */
   authToken?: string
+  /** Embed key from the iframe URL (?k=). Passed on every request. */
+  embedKey?: string
   className?: string
   /**
    * 'left' — the widget renders its own floating "Current cart" box beside the chat.
@@ -69,7 +72,9 @@ export function AgentChat({
   const [turns, setTurns] = useState<Turn[]>([])
   const [context, setContext] = useState<AgentContext>(emptyContext())
   const [status, setStatus] = useState<'init' | 'ready' | 'thinking'>('init')
-  const [fatal, setFatal] = useState<string | null>(null)
+  const [fatal, setFatal] = useState<
+    { kind: 'forbidden' | 'other'; message: string } | null
+  >(null)
   const [input, setInput] = useState('')
   // Per-turn product-card picks: the shopper sets qty/size/colour on the cards,
   // then "Add N to bag" sends one combined message the agent turns into
@@ -111,12 +116,15 @@ export function AgentChat({
   useEffect(() => {
     let active = true
     sendAgentMessage(
-      { agentId, conversationId, messages: [], context: emptyContext() },
+      { agentId, conversationId, embedKey, messages: [], context: emptyContext() },
       authToken,
     ).then((res) => {
       if (!active) return
       if (!res.ok) {
-        setFatal(res.message)
+        setFatal({
+          kind: res.error === 'forbidden' ? 'forbidden' : 'other',
+          message: res.message,
+        })
         return
       }
       setBranding(res.agent)
@@ -127,7 +135,7 @@ export function AgentChat({
     return () => {
       active = false
     }
-  }, [agentId, conversationId, authToken])
+  }, [agentId, conversationId, authToken, embedKey])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -136,6 +144,7 @@ export function AgentChat({
     })
   }, [turns, status])
 
+  // Hand the cart rows to a host that renders the box itself (cartPlacement="external").
   // Let a host render the cart itself (merchant Preview side rail).
   useEffect(() => {
     onCartChange?.(cart)
@@ -192,11 +201,15 @@ export function AgentChat({
       .map((t) => ({ role: t.role, content: t.text }))
 
     const res = await sendAgentMessage(
-      { agentId, conversationId, messages: history, context },
+      { agentId, conversationId, embedKey, messages: history, context },
       authToken,
     )
 
     if (!res.ok) {
+      if (res.error === 'forbidden') {
+        setFatal({ kind: 'forbidden', message: res.message })
+        return
+      }
       setTurns((t) => [...t, { role: 'assistant', text: res.message }])
       setStatus('ready')
       return
@@ -273,10 +286,28 @@ export function AgentChat({
   if (fatal) {
     return (
       <div
-        className={`flex flex-col items-center justify-center gap-2 rounded-[18px] border border-line-strong bg-surface p-8 text-center ${className}`}
+        className={`flex flex-col items-center justify-center gap-3 rounded-[18px] border border-line-strong bg-surface p-8 text-center ${className}`}
       >
-        <p className="font-display text-lg text-ink">Agent unavailable</p>
-        <p className="max-w-xs text-sm text-muted">{fatal}</p>
+        {fatal.kind === 'forbidden' ? (
+          <>
+            <span
+              aria-hidden
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#8f3a24]/10 text-lg text-[#8f3a24]"
+            >
+              ⚠
+            </span>
+            <p className="font-display text-lg text-ink">Invalid embed key</p>
+            <p className="max-w-xs text-sm text-muted">
+              This <code>?k=</code> key doesn’t match the store. Re-copy the embed
+              code from the Deploy page and update it on your site.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="font-display text-lg text-ink">Agent unavailable</p>
+            <p className="max-w-xs text-sm text-muted">{fatal.message}</p>
+          </>
+        )}
       </div>
     )
   }
@@ -470,6 +501,7 @@ export function AgentChat({
               orderDraftToken={activeOrder.token}
               preview={activeOrder.preview}
               authToken={authToken}
+              embedKey={embedKey}
               buyer={buyer}
               onBuyerChange={(patch) => setBuyer((b) => ({ ...b, ...patch }))}
               onPaid={handlePaid}
