@@ -103,6 +103,7 @@ function LocationForm({
           onChange={(e) => setName(e.target.value)}
           placeholder="Orchard"
           disabled={!canEdit}
+          plain={!canEdit}
         />
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField
@@ -111,6 +112,7 @@ function LocationForm({
             onChange={(e) => setAddress(e.target.value)}
             placeholder="391 Orchard Rd"
             disabled={!canEdit}
+            plain={!canEdit}
           />
           <TextField
             label="City / area"
@@ -118,6 +120,7 @@ function LocationForm({
             onChange={(e) => setCity(e.target.value)}
             placeholder="Singapore"
             disabled={!canEdit}
+            plain={!canEdit}
           />
         </div>
         {error ? <InlineError>{error}</InlineError> : null}

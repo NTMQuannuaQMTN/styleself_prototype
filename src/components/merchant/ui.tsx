@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { Children, isValidElement, useId } from 'react'
 import type {
   InputHTMLAttributes,
   ReactNode,
@@ -117,12 +117,37 @@ export function LoadingRow({ label = 'Loading…' }: { label?: string }) {
 // ---------------------------------------------------------------------------
 // Form fields
 // ---------------------------------------------------------------------------
-type FieldShell = { label: string; hint?: ReactNode; className?: string }
+// `plain` renders the value as static text (no input box) — used to show a form
+// as read-only to someone who can't edit it, so it clearly isn't editable.
+type FieldShell = { label: string; hint?: ReactNode; className?: string; plain?: boolean }
+
+const asText = (v: unknown) =>
+  v === undefined || v === null || v === '' ? '—' : String(v)
+
+function PlainValue({
+  id,
+  children,
+  multiline = false,
+}: {
+  id: string
+  children: ReactNode
+  multiline?: boolean
+}) {
+  return (
+    <p
+      id={id}
+      className={`py-1.5 text-sm text-ink ${multiline ? 'whitespace-pre-wrap' : ''}`}
+    >
+      {children}
+    </p>
+  )
+}
 
 export function TextField({
   label,
   hint,
   className = '',
+  plain = false,
   id,
   ...rest
 }: FieldShell & InputHTMLAttributes<HTMLInputElement>) {
@@ -133,7 +158,11 @@ export function TextField({
       <label htmlFor={fieldId} className="field-label">
         {label}
       </label>
-      <input id={fieldId} className="field-input" {...rest} />
+      {plain ? (
+        <PlainValue id={fieldId}>{asText(rest.value)}</PlainValue>
+      ) : (
+        <input id={fieldId} className="field-input" {...rest} />
+      )}
       {hint ? <p className="mt-1.5 text-xs text-muted">{hint}</p> : null}
     </div>
   )
@@ -143,6 +172,7 @@ export function TextArea({
   label,
   hint,
   className = '',
+  plain = false,
   id,
   ...rest
 }: FieldShell & TextareaHTMLAttributes<HTMLTextAreaElement>) {
@@ -153,7 +183,13 @@ export function TextArea({
       <label htmlFor={fieldId} className="field-label">
         {label}
       </label>
-      <textarea id={fieldId} className="field-input min-h-24" {...rest} />
+      {plain ? (
+        <PlainValue id={fieldId} multiline>
+          {asText(rest.value)}
+        </PlainValue>
+      ) : (
+        <textarea id={fieldId} className="field-input min-h-24" {...rest} />
+      )}
       {hint ? <p className="mt-1.5 text-xs text-muted">{hint}</p> : null}
     </div>
   )
@@ -163,6 +199,7 @@ export function SelectField({
   label,
   hint,
   className = '',
+  plain = false,
   id,
   children,
   ...rest
@@ -174,12 +211,28 @@ export function SelectField({
       <label htmlFor={fieldId} className="field-label">
         {label}
       </label>
-      <select id={fieldId} className="field-input" {...rest}>
-        {children}
-      </select>
+      {plain ? (
+        <PlainValue id={fieldId}>{selectedLabel(children, rest.value)}</PlainValue>
+      ) : (
+        <select id={fieldId} className="field-input" {...rest}>
+          {children}
+        </select>
+      )}
       {hint ? <p className="mt-1.5 text-xs text-muted">{hint}</p> : null}
     </div>
   )
+}
+
+/** Best-effort display text for the chosen <option> when a select is shown plain. */
+function selectedLabel(children: ReactNode, value: unknown): string {
+  let text = ''
+  Children.forEach(children, (child) => {
+    if (!isValidElement(child) || child.type !== 'option') return
+    const props = child.props as { value?: unknown; children?: ReactNode }
+    const optValue = props.value ?? props.children
+    if (String(optValue) === String(value)) text = String(props.children ?? optValue)
+  })
+  return text || asText(value)
 }
 
 export function Spinner({ className = '' }: { className?: string }) {
