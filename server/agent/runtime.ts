@@ -328,6 +328,12 @@ export async function runTurn(
       d.items.map((i) => [i.variantId, i.quantity, i.unitPriceCents]),
     )
     const draftHash = sha256Hex(`${canonical}|${d.totalCents}|${d.fulfillment}`)
+    // Agent payment mandate: the shopper authorizes this agent to spend up to the
+    // preview total on their behalf. It rides the signed draft token, is echoed on
+    // the authorization, and the Visa pipeline enforces the ceiling before it
+    // authorizes the card. Ties "the shopper consented to THIS purchase" to the
+    // card authorization itself, not just a UI click.
+    const mandateId = sha256Hex(`${input.conversationId}|${draftHash}|mandate`).slice(0, 24)
     orderDraftToken = sign(
       {
         kind: 'draft',
@@ -345,6 +351,8 @@ export async function runTurn(
         feesCents: d.feesCents,
         totalCents: d.totalCents,
         currency: d.currency,
+        mandateId,
+        mandateLimitCents: d.totalCents,
         iat: now,
         exp: now + DRAFT_TTL_MS,
       },

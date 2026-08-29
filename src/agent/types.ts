@@ -231,6 +231,32 @@ export type AgentOrderConfirmation = {
   feesCents: number
   totalCents: number
   visaAuthCode: string
+  /** Visa Payments Stack receipt — the four stages the payment moved through.
+   *  All optional so an older client renders the confirmation without them. */
+  visa?: {
+    /** Visa Token Service — the network token, never the funding PAN. */
+    networkToken: { last4: string; reference: string; brand: string }
+    /** "ACCEPT" — a confirmation only exists on an approved authorization. */
+    decision: 'ACCEPT'
+    /** ISO 8583 field 39, e.g. "00" (approved). */
+    processorResponse: string
+    /** 3-D Secure Electronic Commerce Indicator, e.g. "05" (authenticated). */
+    threeDSEci: string
+    /** Agent payment mandate — the ceiling the shopper authorized, enforced at auth. */
+    agentMandate: {
+      mandateId: string
+      limitCents: number
+      withinLimit: boolean
+    }
+    /** Clearing + settlement. */
+    clearing: {
+      reconciliationId: string
+      settlementId: string
+      rail: string
+      interchangeCents: number
+      netToMerchantCents: number
+    }
+  }
   /** Where the funds settle, e.g. "Urban Thread · DBS ••4291". null if unset. */
   settlement: string | null
   message: string

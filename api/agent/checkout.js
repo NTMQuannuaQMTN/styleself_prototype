@@ -134,8 +134,8 @@ var DemoCatalog = class {
     }
   }
 };
-function v(id, size, color, stock, colorHex = null) {
-  return { id, size, color, colorHex, priceCents: null, stockByLocation: stock };
+function v(id2, size, color, stock, colorHex = null) {
+  return { id: id2, size, color, colorHex, priceCents: null, stockByLocation: stock };
 }
 var DEMO_PRODUCTS = [
   {
@@ -266,13 +266,169 @@ function variantLabel(v2) {
   return [v2.size, v2.color].filter(Boolean).join(" / ") || "One size";
 }
 
-// server/agent/orders.ts
-var FEE_CENTS = 500;
-function simulateVisaAuth() {
-  return { authorized: true };
+// server/agent/visa.ts
+function tokenizeCard(input) {
+  const last4 = /^\d{4}$/.test(input.last4) ? input.last4 : "0000";
+  return {
+    status: "AUTHORIZED",
+    networkToken: {
+      tokenReferenceId: id("VTS", 24),
+      tokenRequestorId: digits(11),
+      panLast4: last4,
+      tokenLast4: last4,
+      tokenExpiry: tokenExpiry(),
+      tokenType: "NETWORK_TOKEN",
+      tokenState: "ACTIVE",
+      brand: input.brand ?? "Visa"
+    }
+  };
+}
+function authorize(input) {
+  if (input.token.panLast4 === "0002") {
+    return {
+      decision: "DECLINE",
+      reasonCode: "201",
+      processorResponse: "05",
+      message: "Issuer declined the authorization (do not honor)."
+    };
+  }
+  const mandate = input.mandate ?? null;
+  if (mandate && input.amountCents > mandate.limitCents) {
+    return {
+      decision: "DECLINE",
+      reasonCode: "203",
+      processorResponse: "05",
+      message: "Amount exceeds the agent payment mandate authorized by the cardholder."
+    };
+  }
+  return {
+    decision: "ACCEPT",
+    reasonCode: "100",
+    authorizationCode: authCode(),
+    processorResponse: "00",
+    networkTransactionId: digits(15),
+    amount: { authorizedCents: input.amountCents, currency: input.currency },
+    avs: "Y",
+    cvv: "M",
+    threeDS: {
+      version: "2.2.0",
+      eci: "05",
+      cavvPresent: true,
+      authenticationStatus: "Y"
+    },
+    agentMandate: {
+      present: Boolean(mandate),
+      mandateId: mandate?.mandateId ?? null,
+      withinLimit: mandate ? input.amountCents <= mandate.limitCents : true
+    }
+  };
+}
+function capture(input) {
+  return {
+    status: "PENDING_SETTLEMENT",
+    reconciliationId: id("RECON", 18),
+    capturedCents: input.amountCents,
+    clearingDate: addBusinessDaysISO(1)
+  };
+}
+function settle(input) {
+  const interchangeCents = Math.round(input.amountCents * 0.018) + 10;
+  return {
+    status: "SETTLED",
+    settlementId: id("STL", 18),
+    rail: "VISA_DIRECT",
+    creditedTo: input.payoutAccount,
+    interchangeCents,
+    netToMerchantCents: Math.max(0, input.amountCents - interchangeCents),
+    settlementDate: addBusinessDaysISO(1)
+  };
+}
+function id(prefix, hexLen) {
+  let s = "";
+  while (s.length < hexLen) s += Math.random().toString(16).slice(2);
+  return `${prefix}-${s.slice(0, hexLen).toUpperCase()}`;
+}
+function digits(n) {
+  let s = "";
+  while (s.length < n) s += Math.floor(Math.random() * 1e9).toString();
+  return s.slice(0, n);
 }
 function authCode() {
-  return `VISA-${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let s = "";
+  for (let i = 0; i < 6; i++) {
+    s += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return s;
+}
+function tokenExpiry() {
+  const d = /* @__PURE__ */ new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${mm}/${d.getFullYear() + 4}`;
+}
+function addBusinessDaysISO(days) {
+  const d = /* @__PURE__ */ new Date();
+  let added = 0;
+  while (added < days) {
+    d.setDate(d.getDate() + 1);
+    const day = d.getDay();
+    if (day !== 0 && day !== 6) added++;
+  }
+  return d.toISOString().slice(0, 10);
+}
+
+// server/agent/orders.ts
+var FEE_CENTS = 500;
+function runVisaPipeline(input, totalCents) {
+  const { networkToken } = tokenizeCard({
+    last4: input.cardLast4,
+    brand: input.cardBrand
+  });
+  const auth = authorize({
+    token: networkToken,
+    amountCents: totalCents,
+    currency: input.currency,
+    mandate: { mandateId: input.mandate.mandateId, limitCents: input.mandate.limitCents }
+  });
+  if (auth.decision !== "ACCEPT") {
+    return {
+      ok: false,
+      error: "declined",
+      message: auth.reasonCode === "203" ? "This charge is above the amount you authorized the agent to spend." : `Payment declined by the issuer (${auth.reasonCode}).`
+    };
+  }
+  const cleared = capture({
+    authorizationCode: auth.authorizationCode,
+    amountCents: totalCents
+  });
+  const settled = settle({
+    reconciliationId: cleared.reconciliationId,
+    amountCents: totalCents,
+    payoutAccount: input.settlement
+  });
+  return {
+    authorizationCode: auth.authorizationCode,
+    networkToken: {
+      last4: networkToken.tokenLast4,
+      reference: networkToken.tokenReferenceId,
+      brand: networkToken.brand
+    },
+    decision: "ACCEPT",
+    processorResponse: auth.processorResponse,
+    threeDSEci: auth.threeDS.eci,
+    agentMandate: {
+      mandateId: input.mandate.mandateId,
+      limitCents: input.mandate.limitCents,
+      withinLimit: auth.agentMandate.withinLimit
+    },
+    clearing: {
+      reconciliationId: cleared.reconciliationId,
+      settlementId: settled.settlementId,
+      rail: settled.rail === "VISA_DIRECT" ? "Visa Direct" : settled.rail,
+      interchangeCents: settled.interchangeCents,
+      netToMerchantCents: settled.netToMerchantCents
+    }
+  };
 }
 async function lineRows(catalog, items) {
   const products = await catalog.byIds([...new Set(items.map((i) => i.productId))]);
@@ -294,17 +450,17 @@ async function simulateCheckout(catalog, input) {
   const key = `${input.conversationId}|${input.draftHash}`;
   const cached = demoOrders.get(key);
   if (cached) return cached;
-  const visa = simulateVisaAuth();
-  if (!visa.authorized) {
-    return { ok: false, error: "declined", message: `Payment declined: ${visa.reason}` };
-  }
   const locId = input.locationId ?? catalog.locations[0]?.id ?? null;
   const items = await lineRows(catalog, input.items);
   const subtotal = items.reduce((s, l) => s + l.lineTotalCents, 0);
   const fees = input.fulfillment === "delivery" ? FEE_CENTS : 0;
+  const total = subtotal + fees;
+  const receipt = runVisaPipeline(input, total);
+  if ("ok" in receipt) return receipt;
   if (locId && catalog.decrementStock) {
     for (const it of input.items) catalog.decrementStock(it.variantId, locId, it.quantity);
   }
+  const { authorizationCode, ...visa } = receipt;
   const confirmation = {
     ok: true,
     kind: "order",
@@ -315,8 +471,9 @@ async function simulateCheckout(catalog, input) {
     items,
     subtotalCents: subtotal,
     feesCents: fees,
-    totalCents: subtotal + fees,
-    visaAuthCode: authCode(),
+    totalCents: total,
+    visaAuthCode: authorizationCode,
+    visa,
     settlement: input.settlement,
     message: "Payment authorized and your order is confirmed."
   };
@@ -324,10 +481,10 @@ async function simulateCheckout(catalog, input) {
   return confirmation;
 }
 async function runCheckout(supabase, storeId, catalog, input) {
-  const visa = simulateVisaAuth();
-  if (!visa.authorized) {
-    return { ok: false, error: "declined", message: `Payment declined: ${visa.reason}` };
-  }
+  const items = await lineRows(catalog, input.items);
+  const total = items.reduce((s, l) => s + l.lineTotalCents, 0) + (input.fulfillment === "delivery" ? FEE_CENTS : 0);
+  const receipt = runVisaPipeline(input, total);
+  if ("ok" in receipt) return receipt;
   const { data, error } = await supabase.rpc("agent_checkout", {
     p_store: storeId,
     p_conversation: input.conversationId,
@@ -354,7 +511,7 @@ async function runCheckout(supabase, storeId, catalog, input) {
     return { ok: false, error: "server", message: "The payment could not be completed." };
   }
   const order = data;
-  const items = await lineRows(catalog, input.items);
+  const { authorizationCode, ...visa } = receipt;
   return {
     ok: true,
     kind: "order",
@@ -366,7 +523,8 @@ async function runCheckout(supabase, storeId, catalog, input) {
     subtotalCents: order.subtotal_cents,
     feesCents: order.fees_cents,
     totalCents: order.total_cents,
-    visaAuthCode: order.visa_auth_code ?? authCode(),
+    visaAuthCode: order.visa_auth_code ?? authorizationCode,
+    visa,
     settlement: input.settlement,
     message: "Payment authorized and your order is confirmed."
   };
@@ -411,6 +569,7 @@ async function handleCheckout(body, authHeader, rawEnv) {
     const buyerName = str(req.buyerName);
     const card = req.card ?? {};
     const last4 = str(card.last4);
+    const brand = str(card.brand) ?? null;
     if (!buyerName || buyerName.length < 2) {
       return fail(400, "bad_request", "Enter the cardholder name.");
     }
@@ -427,6 +586,10 @@ async function handleCheckout(body, authHeader, rawEnv) {
         agentId,
         conversationId,
         buyerName,
+        cardLast4: last4,
+        cardBrand: brand,
+        mandateId: draft.mandateId,
+        mandateLimitCents: draft.mandateLimitCents,
         iat: now,
         exp: now + 10 * 60 * 1e3
       },
@@ -459,7 +622,13 @@ async function handleCheckout(body, authHeader, rawEnv) {
     currency: draft.currency,
     items: draft.items,
     merchantName: resolved.merchantName,
-    settlement: resolved.settlement
+    cardLast4: auth.cardLast4 ?? "0000",
+    cardBrand: auth.cardBrand ?? null,
+    settlement: resolved.settlement,
+    mandate: {
+      mandateId: auth.mandateId ?? draft.mandateId,
+      limitCents: auth.mandateLimitCents ?? draft.mandateLimitCents
+    }
   };
   const result = resolved.kind === "demo" ? await simulateCheckout(resolved.catalog, input) : await runCheckout(resolved.supabase, resolved.storeId, resolved.catalog, input);
   if (!result.ok) {

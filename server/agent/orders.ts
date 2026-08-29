@@ -3,6 +3,7 @@ import type { Database } from '../../src/lib/database.types'
 import type { AgentOrderConfirmation, AgentCheckoutError } from '../../src/agent/types'
 import type { Catalog } from './catalog'
 import { variantLabel } from './tools'
+import { authorize, capture, settle, tokenizeCard } from './visa'
 
 export type DraftItem = { productId: string; variantId: string; quantity: number }
 
@@ -16,20 +17,87 @@ export type CheckoutInput = {
   currency: string
   items: DraftItem[]
   merchantName: string
+  /** Card last-4 + brand carried from the authorize step (never the full PAN). */
+  cardLast4: string
+  cardBrand: string | null
   /** Human-readable settlement destination, or null when unset. */
   settlement: string | null
+  /** Agent payment mandate — the ceiling the shopper authorized the agent to spend. */
+  mandate: { mandateId: string; limitCents: number }
 }
 
 const FEE_CENTS = 500
 
-/** Simulated Visa authorization. Deterministic success; the decline branch is
- *  isolated so a real PSP call can replace this without touching callers. */
-function simulateVisaAuth(): { authorized: true } | { authorized: false; reason: string } {
-  return { authorized: true }
+/** The Visa Payments Stack receipt assembled from the four simulator stages. */
+type VisaReceipt = NonNullable<AgentOrderConfirmation['visa']> & {
+  authorizationCode: string
 }
 
-function authCode(): string {
-  return `VISA-${Math.random().toString(36).slice(2, 10).toUpperCase()}`
+/**
+ * Run the amount through the simulated Visa Payments Stack:
+ *   tokenize (VTS) → authorize (3-DS + mandate) → capture → settle (Visa Direct).
+ * Returns the receipt on approval, or an AgentCheckoutError on a decline — the
+ * caller must bail before touching stock when that happens.
+ */
+function runVisaPipeline(
+  input: CheckoutInput,
+  totalCents: number,
+): VisaReceipt | AgentCheckoutError {
+  const { networkToken } = tokenizeCard({
+    last4: input.cardLast4,
+    brand: input.cardBrand,
+  })
+
+  const auth = authorize({
+    token: networkToken,
+    amountCents: totalCents,
+    currency: input.currency,
+    mandate: { mandateId: input.mandate.mandateId, limitCents: input.mandate.limitCents },
+  })
+  if (auth.decision !== 'ACCEPT') {
+    return {
+      ok: false,
+      error: 'declined',
+      message:
+        auth.reasonCode === '203'
+          ? 'This charge is above the amount you authorized the agent to spend.'
+          : `Payment declined by the issuer (${auth.reasonCode}).`,
+    }
+  }
+
+  const cleared = capture({
+    authorizationCode: auth.authorizationCode,
+    amountCents: totalCents,
+  })
+  const settled = settle({
+    reconciliationId: cleared.reconciliationId,
+    amountCents: totalCents,
+    payoutAccount: input.settlement,
+  })
+
+  return {
+    authorizationCode: auth.authorizationCode,
+    networkToken: {
+      last4: networkToken.tokenLast4,
+      reference: networkToken.tokenReferenceId,
+      brand: networkToken.brand,
+    },
+    decision: 'ACCEPT',
+    processorResponse: auth.processorResponse,
+    threeDSEci: auth.threeDS.eci,
+    agentMandate: {
+      mandateId: input.mandate.mandateId,
+      limitCents: input.mandate.limitCents,
+      withinLimit: auth.agentMandate.withinLimit,
+    },
+    clearing: {
+      reconciliationId: cleared.reconciliationId,
+      settlementId: settled.settlementId,
+      rail: settled.rail === 'VISA_DIRECT' ? 'Visa Direct' : settled.rail,
+      interchangeCents: settled.interchangeCents,
+      netToMerchantCents: settled.netToMerchantCents,
+    },
+  }
 }
 
 async function lineRows(catalog: Catalog, items: DraftItem[]) {
@@ -60,20 +128,20 @@ export async function simulateCheckout(
   const cached = demoOrders.get(key)
   if (cached) return cached
 
-  const visa = simulateVisaAuth()
-  if (!visa.authorized) {
-    return { ok: false, error: 'declined', message: `Payment declined: ${visa.reason}` }
-  }
-
   const locId = input.locationId ?? catalog.locations[0]?.id ?? null
   const items = await lineRows(catalog, input.items)
   const subtotal = items.reduce((s, l) => s + l.lineTotalCents, 0)
   const fees = input.fulfillment === 'delivery' ? FEE_CENTS : 0
+  const total = subtotal + fees
+
+  const receipt = runVisaPipeline(input, total)
+  if ('ok' in receipt) return receipt
 
   if (locId && catalog.decrementStock) {
     for (const it of input.items) catalog.decrementStock(it.variantId, locId, it.quantity)
   }
 
+  const { authorizationCode, ...visa } = receipt
   const confirmation: AgentOrderConfirmation = {
     ok: true,
     kind: 'order',
@@ -84,8 +152,9 @@ export async function simulateCheckout(
     items,
     subtotalCents: subtotal,
     feesCents: fees,
-    totalCents: subtotal + fees,
-    visaAuthCode: authCode(),
+    totalCents: total,
+    visaAuthCode: authorizationCode,
+    visa,
     settlement: input.settlement,
     message: 'Payment authorized and your order is confirmed.',
   }
@@ -100,10 +169,12 @@ export async function runCheckout(
   catalog: Catalog,
   input: CheckoutInput,
 ): Promise<AgentOrderConfirmation | AgentCheckoutError> {
-  const visa = simulateVisaAuth()
-  if (!visa.authorized) {
-    return { ok: false, error: 'declined', message: `Payment declined: ${visa.reason}` }
-  }
+  const items = await lineRows(catalog, input.items)
+  const total = items.reduce((s, l) => s + l.lineTotalCents, 0) +
+    (input.fulfillment === 'delivery' ? FEE_CENTS : 0)
+
+  const receipt = runVisaPipeline(input, total)
+  if ('ok' in receipt) return receipt
 
   const { data, error } = await supabase.rpc('agent_checkout', {
     p_store: storeId,
@@ -133,7 +204,7 @@ export async function runCheckout(
   }
 
   const order = data as Database['public']['Tables']['agent_orders']['Row']
-  const items = await lineRows(catalog, input.items)
+  const { authorizationCode, ...visa } = receipt
 
   return {
     ok: true,
@@ -146,7 +217,8 @@ export async function runCheckout(
     subtotalCents: order.subtotal_cents,
     feesCents: order.fees_cents,
     totalCents: order.total_cents,
-    visaAuthCode: order.visa_auth_code ?? authCode(),
+    visaAuthCode: order.visa_auth_code ?? authorizationCode,
+    visa,
     settlement: input.settlement,
     message: 'Payment authorized and your order is confirmed.',
   }
