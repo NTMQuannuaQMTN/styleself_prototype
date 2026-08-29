@@ -496,6 +496,11 @@ export async function deleteProduct(id: string): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
+export async function deleteAllProducts(storeId: string): Promise<void> {
+  const { error } = await supabase.from('products').delete().eq('store_id', storeId)
+  if (error) throw new Error(error.message)
+}
+
 export async function createVariant(input: {
   productId: string
   size?: string | null

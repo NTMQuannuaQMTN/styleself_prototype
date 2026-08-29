@@ -1,0 +1,565 @@
+sku,name,price,category,brand,style,gender,material,care,description,image_url,status,size,color,color_hex,variant_sku,stock_sentosa
+TC-001,Canvas Utility Jacket,118,Jackets,Kairo,Workwear,Unisex,Cotton canvas,Machine wash cold,Durable utility jacket with four practical pockets.,https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3,active,S,Black,#1C1B18,TC-001-S-BLA-1,8
+TC-001,,,,,,,,,,,,M,Black,#1C1B18,TC-001-M-BLA-2,15
+TC-001,,,,,,,,,,,,L,Black,#1C1B18,TC-001-L-BLA-3,22
+TC-001,,,,,,,,,,,,XL,Black,#1C1B18,TC-001-XL-BLA-4,29
+TC-001,,,,,,,,,,,,2XL,Black,#1C1B18,TC-001-2XL-BLA-5,36
+TC-001,,,,,,,,,,,,S,Navy,#26314A,TC-001-S-NAV-6,43
+TC-001,,,,,,,,,,,,M,Navy,#26314A,TC-001-M-NAV-7,50
+TC-001,,,,,,,,,,,,L,Navy,#26314A,TC-001-L-NAV-8,57
+TC-001,,,,,,,,,,,,XL,Navy,#26314A,TC-001-XL-NAV-9,64
+TC-001,,,,,,,,,,,,2XL,Navy,#26314A,TC-001-2XL-NAV-10,71
+TC-001,,,,,,,,,,,,S,Forest,#2F4A37,TC-001-S-FOR-11,78
+TC-001,,,,,,,,,,,,M,Forest,#2F4A37,TC-001-M-FOR-12,85
+TC-001,,,,,,,,,,,,L,Forest,#2F4A37,TC-001-L-FOR-13,92
+TC-001,,,,,,,,,,,,XL,Forest,#2F4A37,TC-001-XL-FOR-14,99
+TC-001,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-001-2XL-FOR-15,6
+TC-002,Silk Slip Dress,149,Dresses,Neruda,Minimal,Womens,100% silk,Dry clean only,Bias-cut slip dress with adjustable straps.,https://images.unsplash.com/photo-1566174053879-31528523f8ae,active,S,Navy,#26314A,TC-002-S-NAV-1,25
+TC-002,,,,,,,,,,,,M,Navy,#26314A,TC-002-M-NAV-2,32
+TC-002,,,,,,,,,,,,L,Navy,#26314A,TC-002-L-NAV-3,39
+TC-002,,,,,,,,,,,,XL,Navy,#26314A,TC-002-XL-NAV-4,46
+TC-002,,,,,,,,,,,,2XL,Navy,#26314A,TC-002-2XL-NAV-5,53
+TC-002,,,,,,,,,,,,S,Forest,#2F4A37,TC-002-S-FOR-6,60
+TC-002,,,,,,,,,,,,M,Forest,#2F4A37,TC-002-M-FOR-7,67
+TC-002,,,,,,,,,,,,L,Forest,#2F4A37,TC-002-L-FOR-8,74
+TC-002,,,,,,,,,,,,XL,Forest,#2F4A37,TC-002-XL-FOR-9,81
+TC-002,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-002-2XL-FOR-10,88
+TC-002,,,,,,,,,,,,S,Stone,#CABFA9,TC-002-S-STO-11,95
+TC-002,,,,,,,,,,,,M,Stone,#CABFA9,TC-002-M-STO-12,2
+TC-002,,,,,,,,,,,,L,Stone,#CABFA9,TC-002-L-STO-13,9
+TC-002,,,,,,,,,,,,XL,Stone,#CABFA9,TC-002-XL-STO-14,16
+TC-002,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-002-2XL-STO-15,23
+TC-003,Ribbed Polo Shirt,69,Shirts,Aldous,Preppy,Mens,Cotton modal,Machine wash cold,Soft ribbed polo with a relaxed collar.,https://images.unsplash.com/photo-1625910513413-5fc45f4d7d8f,active,S,Forest,#2F4A37,TC-003-S-FOR-1,42
+TC-003,,,,,,,,,,,,M,Forest,#2F4A37,TC-003-M-FOR-2,49
+TC-003,,,,,,,,,,,,L,Forest,#2F4A37,TC-003-L-FOR-3,56
+TC-003,,,,,,,,,,,,XL,Forest,#2F4A37,TC-003-XL-FOR-4,63
+TC-003,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-003-2XL-FOR-5,70
+TC-003,,,,,,,,,,,,S,Stone,#CABFA9,TC-003-S-STO-6,77
+TC-003,,,,,,,,,,,,M,Stone,#CABFA9,TC-003-M-STO-7,84
+TC-003,,,,,,,,,,,,L,Stone,#CABFA9,TC-003-L-STO-8,91
+TC-003,,,,,,,,,,,,XL,Stone,#CABFA9,TC-003-XL-STO-9,98
+TC-003,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-003-2XL-STO-10,5
+TC-003,,,,,,,,,,,,S,Burgundy,#5E2B2B,TC-003-S-BUR-11,12
+TC-003,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-003-M-BUR-12,19
+TC-003,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-003-L-BUR-13,26
+TC-003,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-003-XL-BUR-14,33
+TC-003,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-003-2XL-BUR-15,40
+TC-004,Plissé Midi Skirt,85,Skirts,Neruda,Contemporary,Womens,Polyester crepe,Machine wash cold,Fluid pleated midi skirt with elastic waist.,https://images.unsplash.com/photo-1583496661160-fb5886a13d27,active,S,Stone,#CABFA9,TC-004-S-STO-1,59
+TC-004,,,,,,,,,,,,M,Stone,#CABFA9,TC-004-M-STO-2,66
+TC-004,,,,,,,,,,,,L,Stone,#CABFA9,TC-004-L-STO-3,73
+TC-004,,,,,,,,,,,,XL,Stone,#CABFA9,TC-004-XL-STO-4,80
+TC-004,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-004-2XL-STO-5,87
+TC-004,,,,,,,,,,,,S,Burgundy,#5E2B2B,TC-004-S-BUR-6,94
+TC-004,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-004-M-BUR-7,1
+TC-004,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-004-L-BUR-8,8
+TC-004,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-004-XL-BUR-9,15
+TC-004,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-004-2XL-BUR-10,22
+TC-004,,,,,,,,,,,,S,Black,#1C1B18,TC-004-S-BLA-11,29
+TC-004,,,,,,,,,,,,M,Black,#1C1B18,TC-004-M-BLA-12,36
+TC-004,,,,,,,,,,,,L,Black,#1C1B18,TC-004-L-BLA-13,43
+TC-004,,,,,,,,,,,,XL,Black,#1C1B18,TC-004-XL-BLA-14,50
+TC-004,,,,,,,,,,,,2XL,Black,#1C1B18,TC-004-2XL-BLA-15,57
+TC-005,Leather Chelsea Boots,179,Footwear,Kairo,Classic,Unisex,Full grain leather,Spot clean,Streamlined Chelsea boots with a stacked heel.,https://images.unsplash.com/photo-1638247025967-b4e38f787b76,active,38,Burgundy,#5E2B2B,TC-005-38-BUR-1,76
+TC-005,,,,,,,,,,,,40,Burgundy,#5E2B2B,TC-005-40-BUR-2,83
+TC-005,,,,,,,,,,,,42,Burgundy,#5E2B2B,TC-005-42-BUR-3,90
+TC-005,,,,,,,,,,,,38,Black,#1C1B18,TC-005-38-BLA-4,97
+TC-005,,,,,,,,,,,,40,Black,#1C1B18,TC-005-40-BLA-5,4
+TC-005,,,,,,,,,,,,42,Black,#1C1B18,TC-005-42-BLA-6,11
+TC-005,,,,,,,,,,,,38,Navy,#26314A,TC-005-38-NAV-7,18
+TC-005,,,,,,,,,,,,40,Navy,#26314A,TC-005-40-NAV-8,25
+TC-005,,,,,,,,,,,,42,Navy,#26314A,TC-005-42-NAV-9,32
+TC-006,Suede Loafers,139,Footwear,Aldous,Smart casual,Mens,Suede leather,Professional clean,Soft suede loafers with a penny strap.,https://images.unsplash.com/photo-1614252235316-8c857d38b5f4,active,38,Black,#1C1B18,TC-006-38-BLA-1,93
+TC-006,,,,,,,,,,,,40,Black,#1C1B18,TC-006-40-BLA-2,100
+TC-006,,,,,,,,,,,,42,Black,#1C1B18,TC-006-42-BLA-3,7
+TC-006,,,,,,,,,,,,38,Navy,#26314A,TC-006-38-NAV-4,14
+TC-006,,,,,,,,,,,,40,Navy,#26314A,TC-006-40-NAV-5,21
+TC-006,,,,,,,,,,,,42,Navy,#26314A,TC-006-42-NAV-6,28
+TC-006,,,,,,,,,,,,38,Forest,#2F4A37,TC-006-38-FOR-7,35
+TC-006,,,,,,,,,,,,40,Forest,#2F4A37,TC-006-40-FOR-8,42
+TC-006,,,,,,,,,,,,42,Forest,#2F4A37,TC-006-42-FOR-9,49
+TC-007,Alpaca Cardigan,129,Knitwear,Neruda,Soft tailoring,Womens,Alpaca wool blend,Hand wash cold,Brushed alpaca cardigan with horn buttons.,https://images.unsplash.com/photo-1576566588028-4147f3842f27,active,S,Navy,#26314A,TC-007-S-NAV-1,10
+TC-007,,,,,,,,,,,,M,Navy,#26314A,TC-007-M-NAV-2,17
+TC-007,,,,,,,,,,,,L,Navy,#26314A,TC-007-L-NAV-3,24
+TC-007,,,,,,,,,,,,XL,Navy,#26314A,TC-007-XL-NAV-4,31
+TC-007,,,,,,,,,,,,2XL,Navy,#26314A,TC-007-2XL-NAV-5,38
+TC-007,,,,,,,,,,,,S,Forest,#2F4A37,TC-007-S-FOR-6,45
+TC-007,,,,,,,,,,,,M,Forest,#2F4A37,TC-007-M-FOR-7,52
+TC-007,,,,,,,,,,,,L,Forest,#2F4A37,TC-007-L-FOR-8,59
+TC-007,,,,,,,,,,,,XL,Forest,#2F4A37,TC-007-XL-FOR-9,66
+TC-007,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-007-2XL-FOR-10,73
+TC-007,,,,,,,,,,,,S,Stone,#CABFA9,TC-007-S-STO-11,80
+TC-007,,,,,,,,,,,,M,Stone,#CABFA9,TC-007-M-STO-12,87
+TC-007,,,,,,,,,,,,L,Stone,#CABFA9,TC-007-L-STO-13,94
+TC-007,,,,,,,,,,,,XL,Stone,#CABFA9,TC-007-XL-STO-14,1
+TC-007,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-007-2XL-STO-15,8
+TC-008,Relaxed Linen Shorts,59,Shorts,Kairo,Resort,Unisex,100% linen,Machine wash cold,Easy linen shorts with a drawstring waist.,https://images.unsplash.com/photo-1591195853828-11db59a44f6b,active,S,Forest,#2F4A37,TC-008-S-FOR-1,27
+TC-008,,,,,,,,,,,,M,Forest,#2F4A37,TC-008-M-FOR-2,34
+TC-008,,,,,,,,,,,,L,Forest,#2F4A37,TC-008-L-FOR-3,41
+TC-008,,,,,,,,,,,,XL,Forest,#2F4A37,TC-008-XL-FOR-4,48
+TC-008,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-008-2XL-FOR-5,55
+TC-008,,,,,,,,,,,,S,Stone,#CABFA9,TC-008-S-STO-6,62
+TC-008,,,,,,,,,,,,M,Stone,#CABFA9,TC-008-M-STO-7,69
+TC-008,,,,,,,,,,,,L,Stone,#CABFA9,TC-008-L-STO-8,76
+TC-008,,,,,,,,,,,,XL,Stone,#CABFA9,TC-008-XL-STO-9,83
+TC-008,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-008-2XL-STO-10,90
+TC-008,,,,,,,,,,,,S,Burgundy,#5E2B2B,TC-008-S-BUR-11,97
+TC-008,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-008-M-BUR-12,4
+TC-008,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-008-L-BUR-13,11
+TC-008,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-008-XL-BUR-14,18
+TC-008,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-008-2XL-BUR-15,25
+TC-009,Merino Beanie,35,Accessories,Aldous,Minimal,Unisex,100% merino wool,Hand wash cold,Lightweight ribbed beanie for cool days.,https://images.unsplash.com/photo-1575428652377-a2d80e2277fc,active,One size,Stone,#CABFA9,TC-009-Onesize-STO-1,44
+TC-009,,,,,,,,,,,,One size,Burgundy,#5E2B2B,TC-009-Onesize-BUR-2,51
+TC-009,,,,,,,,,,,,One size,Black,#1C1B18,TC-009-Onesize-BLA-3,58
+TC-010,Structured Leather Tote,165,Bags,Kairo,Polished,Womens,Vegetable tanned leather,Spot clean,Roomy structured tote with an interior pocket.,https://images.unsplash.com/photo-1584917865442-de89df76afd3,active,One size,Burgundy,#5E2B2B,TC-010-Onesize-BUR-1,61
+TC-010,,,,,,,,,,,,One size,Black,#1C1B18,TC-010-Onesize-BLA-2,68
+TC-010,,,,,,,,,,,,One size,Navy,#26314A,TC-010-Onesize-NAV-3,75
+TC-011,Reversible Bucket Hat,42,Hats,Neruda,Playful,Unisex,Cotton twill,Machine wash cold,Reversible bucket hat with contrasting sides.,https://images.unsplash.com/photo-1521369909029-2afed882baee,active,One size,Black,#1C1B18,TC-011-Onesize-BLA-1,78
+TC-011,,,,,,,,,,,,One size,Navy,#26314A,TC-011-Onesize-NAV-2,85
+TC-011,,,,,,,,,,,,One size,Forest,#2F4A37,TC-011-Onesize-FOR-3,92
+TC-012,Technical Running Tee,48,Activewear,Aldous,Performance,Unisex,Recycled polyester,Machine wash cold,Breathable quick-dry tee with reflective detail.,https://images.unsplash.com/photo-1552674605-db6ffd4facb5,active,S,Navy,#26314A,TC-012-S-NAV-1,95
+TC-012,,,,,,,,,,,,M,Navy,#26314A,TC-012-M-NAV-2,2
+TC-012,,,,,,,,,,,,L,Navy,#26314A,TC-012-L-NAV-3,9
+TC-012,,,,,,,,,,,,XL,Navy,#26314A,TC-012-XL-NAV-4,16
+TC-012,,,,,,,,,,,,2XL,Navy,#26314A,TC-012-2XL-NAV-5,23
+TC-012,,,,,,,,,,,,S,Forest,#2F4A37,TC-012-S-FOR-6,30
+TC-012,,,,,,,,,,,,M,Forest,#2F4A37,TC-012-M-FOR-7,37
+TC-012,,,,,,,,,,,,L,Forest,#2F4A37,TC-012-L-FOR-8,44
+TC-012,,,,,,,,,,,,XL,Forest,#2F4A37,TC-012-XL-FOR-9,51
+TC-012,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-012-2XL-FOR-10,58
+TC-012,,,,,,,,,,,,S,Stone,#CABFA9,TC-012-S-STO-11,65
+TC-012,,,,,,,,,,,,M,Stone,#CABFA9,TC-012-M-STO-12,72
+TC-012,,,,,,,,,,,,L,Stone,#CABFA9,TC-012-L-STO-13,79
+TC-012,,,,,,,,,,,,XL,Stone,#CABFA9,TC-012-XL-STO-14,86
+TC-012,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-012-2XL-STO-15,93
+TC-013,High Rise Leggings,72,Activewear,Neruda,Streamlined,Womens,Nylon elastane,Machine wash cold,Supportive high-rise leggings with a phone pocket.,https://images.unsplash.com/photo-1506629905607-d9c297d8a0f3,active,S,Forest,#2F4A37,TC-013-S-FOR-1,12
+TC-013,,,,,,,,,,,,M,Forest,#2F4A37,TC-013-M-FOR-2,19
+TC-013,,,,,,,,,,,,L,Forest,#2F4A37,TC-013-L-FOR-3,26
+TC-013,,,,,,,,,,,,XL,Forest,#2F4A37,TC-013-XL-FOR-4,33
+TC-013,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-013-2XL-FOR-5,40
+TC-013,,,,,,,,,,,,S,Stone,#CABFA9,TC-013-S-STO-6,47
+TC-013,,,,,,,,,,,,M,Stone,#CABFA9,TC-013-M-STO-7,54
+TC-013,,,,,,,,,,,,L,Stone,#CABFA9,TC-013-L-STO-8,61
+TC-013,,,,,,,,,,,,XL,Stone,#CABFA9,TC-013-XL-STO-9,68
+TC-013,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-013-2XL-STO-10,75
+TC-013,,,,,,,,,,,,S,Burgundy,#5E2B2B,TC-013-S-BUR-11,82
+TC-013,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-013-M-BUR-12,89
+TC-013,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-013-L-BUR-13,96
+TC-013,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-013-XL-BUR-14,3
+TC-013,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-013-2XL-BUR-15,10
+TC-014,Cashmere Scarf,99,Scarves,Kairo,Luxury,Unisex,100% cashmere,Dry clean only,Generously sized cashmere scarf with fringe ends.,https://images.unsplash.com/photo-1520903920243-00d872a2d1c9,active,One size,Stone,#CABFA9,TC-014-Onesize-STO-1,29
+TC-014,,,,,,,,,,,,One size,Burgundy,#5E2B2B,TC-014-Onesize-BUR-2,36
+TC-014,,,,,,,,,,,,One size,Black,#1C1B18,TC-014-Onesize-BLA-3,43
+TC-015,Denim Overshirt,88,Shirts,Aldous,Western,Mens,Organic cotton denim,Machine wash cold,Midweight denim overshirt with snap buttons.,https://images.unsplash.com/photo-1543076447-215ad9ba6923,active,S,Burgundy,#5E2B2B,TC-015-S-BUR-1,46
+TC-015,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-015-M-BUR-2,53
+TC-015,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-015-L-BUR-3,60
+TC-015,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-015-XL-BUR-4,67
+TC-015,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-015-2XL-BUR-5,74
+TC-015,,,,,,,,,,,,S,Black,#1C1B18,TC-015-S-BLA-6,81
+TC-015,,,,,,,,,,,,M,Black,#1C1B18,TC-015-M-BLA-7,88
+TC-015,,,,,,,,,,,,L,Black,#1C1B18,TC-015-L-BLA-8,95
+TC-015,,,,,,,,,,,,XL,Black,#1C1B18,TC-015-XL-BLA-9,2
+TC-015,,,,,,,,,,,,2XL,Black,#1C1B18,TC-015-2XL-BLA-10,9
+TC-015,,,,,,,,,,,,S,Navy,#26314A,TC-015-S-NAV-11,16
+TC-015,,,,,,,,,,,,M,Navy,#26314A,TC-015-M-NAV-12,23
+TC-015,,,,,,,,,,,,L,Navy,#26314A,TC-015-L-NAV-13,30
+TC-015,,,,,,,,,,,,XL,Navy,#26314A,TC-015-XL-NAV-14,37
+TC-015,,,,,,,,,,,,2XL,Navy,#26314A,TC-015-2XL-NAV-15,44
+TC-016,Corduroy Mini Skirt,64,Skirts,Neruda,Retro,Womens,Cotton corduroy,Machine wash cold,A-line corduroy mini skirt with patch pockets.,https://images.unsplash.com/photo-1551028719-00167b16eac5,active,S,Black,#1C1B18,TC-016-S-BLA-1,63
+TC-016,,,,,,,,,,,,M,Black,#1C1B18,TC-016-M-BLA-2,70
+TC-016,,,,,,,,,,,,L,Black,#1C1B18,TC-016-L-BLA-3,77
+TC-016,,,,,,,,,,,,XL,Black,#1C1B18,TC-016-XL-BLA-4,84
+TC-016,,,,,,,,,,,,2XL,Black,#1C1B18,TC-016-2XL-BLA-5,91
+TC-016,,,,,,,,,,,,S,Navy,#26314A,TC-016-S-NAV-6,98
+TC-016,,,,,,,,,,,,M,Navy,#26314A,TC-016-M-NAV-7,5
+TC-016,,,,,,,,,,,,L,Navy,#26314A,TC-016-L-NAV-8,12
+TC-016,,,,,,,,,,,,XL,Navy,#26314A,TC-016-XL-NAV-9,19
+TC-016,,,,,,,,,,,,2XL,Navy,#26314A,TC-016-2XL-NAV-10,26
+TC-016,,,,,,,,,,,,S,Forest,#2F4A37,TC-016-S-FOR-11,33
+TC-016,,,,,,,,,,,,M,Forest,#2F4A37,TC-016-M-FOR-12,40
+TC-016,,,,,,,,,,,,L,Forest,#2F4A37,TC-016-L-FOR-13,47
+TC-016,,,,,,,,,,,,XL,Forest,#2F4A37,TC-016-XL-FOR-14,54
+TC-016,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-016-2XL-FOR-15,61
+TC-017,Merino Base Layer,74,Base Layers,Aldous,Essential,Unisex,Merino nylon blend,Machine wash cold,Temperature regulating long sleeve base layer.,https://images.unsplash.com/photo-1608234807905-4466023792f5,active,S,Navy,#26314A,TC-017-S-NAV-1,80
+TC-017,,,,,,,,,,,,M,Navy,#26314A,TC-017-M-NAV-2,87
+TC-017,,,,,,,,,,,,L,Navy,#26314A,TC-017-L-NAV-3,94
+TC-017,,,,,,,,,,,,XL,Navy,#26314A,TC-017-XL-NAV-4,1
+TC-017,,,,,,,,,,,,2XL,Navy,#26314A,TC-017-2XL-NAV-5,8
+TC-017,,,,,,,,,,,,S,Forest,#2F4A37,TC-017-S-FOR-6,15
+TC-017,,,,,,,,,,,,M,Forest,#2F4A37,TC-017-M-FOR-7,22
+TC-017,,,,,,,,,,,,L,Forest,#2F4A37,TC-017-L-FOR-8,29
+TC-017,,,,,,,,,,,,XL,Forest,#2F4A37,TC-017-XL-FOR-9,36
+TC-017,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-017-2XL-FOR-10,43
+TC-017,,,,,,,,,,,,S,Stone,#CABFA9,TC-017-S-STO-11,50
+TC-017,,,,,,,,,,,,M,Stone,#CABFA9,TC-017-M-STO-12,57
+TC-017,,,,,,,,,,,,L,Stone,#CABFA9,TC-017-L-STO-13,64
+TC-017,,,,,,,,,,,,XL,Stone,#CABFA9,TC-017-XL-STO-14,71
+TC-017,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-017-2XL-STO-15,78
+TC-018,Quilted Vest,108,Vests,Kairo,Outdoor,Unisex,Recycled nylon,Machine wash cold,Lightweight quilted vest with a high collar.,https://images.unsplash.com/photo-1548883354-7622d03aca27,active,S,Forest,#2F4A37,TC-018-S-FOR-1,97
+TC-018,,,,,,,,,,,,M,Forest,#2F4A37,TC-018-M-FOR-2,4
+TC-018,,,,,,,,,,,,L,Forest,#2F4A37,TC-018-L-FOR-3,11
+TC-018,,,,,,,,,,,,XL,Forest,#2F4A37,TC-018-XL-FOR-4,18
+TC-018,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-018-2XL-FOR-5,25
+TC-018,,,,,,,,,,,,S,Stone,#CABFA9,TC-018-S-STO-6,32
+TC-018,,,,,,,,,,,,M,Stone,#CABFA9,TC-018-M-STO-7,39
+TC-018,,,,,,,,,,,,L,Stone,#CABFA9,TC-018-L-STO-8,46
+TC-018,,,,,,,,,,,,XL,Stone,#CABFA9,TC-018-XL-STO-9,53
+TC-018,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-018-2XL-STO-10,60
+TC-018,,,,,,,,,,,,S,Burgundy,#5E2B2B,TC-018-S-BUR-11,67
+TC-018,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-018-M-BUR-12,74
+TC-018,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-018-L-BUR-13,81
+TC-018,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-018-XL-BUR-14,88
+TC-018,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-018-2XL-BUR-15,95
+TC-019,Platform Sandals,95,Footwear,Neruda,Modern,Womens,Leather and rubber,Spot clean,Minimal platform sandals with adjustable straps.,https://images.unsplash.com/photo-1562273138-f46be4ebdf33,active,38,Stone,#CABFA9,TC-019-38-STO-1,14
+TC-019,,,,,,,,,,,,40,Stone,#CABFA9,TC-019-40-STO-2,21
+TC-019,,,,,,,,,,,,42,Stone,#CABFA9,TC-019-42-STO-3,28
+TC-019,,,,,,,,,,,,38,Burgundy,#5E2B2B,TC-019-38-BUR-4,35
+TC-019,,,,,,,,,,,,40,Burgundy,#5E2B2B,TC-019-40-BUR-5,42
+TC-019,,,,,,,,,,,,42,Burgundy,#5E2B2B,TC-019-42-BUR-6,49
+TC-019,,,,,,,,,,,,38,Black,#1C1B18,TC-019-38-BLA-7,56
+TC-019,,,,,,,,,,,,40,Black,#1C1B18,TC-019-40-BLA-8,63
+TC-019,,,,,,,,,,,,42,Black,#1C1B18,TC-019-42-BLA-9,70
+TC-020,Woven Leather Belt,45,Belts,Aldous,Classic,Unisex,Full grain leather,Spot clean,Hand woven leather belt with a brass buckle.,https://images.unsplash.com/photo-1624222247344-550fb60583dc,active,One size,Burgundy,#5E2B2B,TC-020-Onesize-BUR-1,31
+TC-020,,,,,,,,,,,,One size,Black,#1C1B18,TC-020-Onesize-BLA-2,38
+TC-020,,,,,,,,,,,,One size,Navy,#26314A,TC-020-Onesize-NAV-3,45
+TC-021,Poplin Blouse,79,Blouses,Neruda,Feminine,Womens,Organic cotton,Machine wash cold,Crisp poplin blouse with gathered sleeves.,https://images.unsplash.com/photo-1605763240000-7e93b172d754,active,S,Black,#1C1B18,TC-021-S-BLA-1,48
+TC-021,,,,,,,,,,,,M,Black,#1C1B18,TC-021-M-BLA-2,55
+TC-021,,,,,,,,,,,,L,Black,#1C1B18,TC-021-L-BLA-3,62
+TC-021,,,,,,,,,,,,XL,Black,#1C1B18,TC-021-XL-BLA-4,69
+TC-021,,,,,,,,,,,,2XL,Black,#1C1B18,TC-021-2XL-BLA-5,76
+TC-021,,,,,,,,,,,,S,Navy,#26314A,TC-021-S-NAV-6,83
+TC-021,,,,,,,,,,,,M,Navy,#26314A,TC-021-M-NAV-7,90
+TC-021,,,,,,,,,,,,L,Navy,#26314A,TC-021-L-NAV-8,97
+TC-021,,,,,,,,,,,,XL,Navy,#26314A,TC-021-XL-NAV-9,4
+TC-021,,,,,,,,,,,,2XL,Navy,#26314A,TC-021-2XL-NAV-10,11
+TC-021,,,,,,,,,,,,S,Forest,#2F4A37,TC-021-S-FOR-11,18
+TC-021,,,,,,,,,,,,M,Forest,#2F4A37,TC-021-M-FOR-12,25
+TC-021,,,,,,,,,,,,L,Forest,#2F4A37,TC-021-L-FOR-13,32
+TC-021,,,,,,,,,,,,XL,Forest,#2F4A37,TC-021-XL-FOR-14,39
+TC-021,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-021-2XL-FOR-15,46
+TC-022,Travel Joggers,82,Trousers,Kairo,Comfort,Mens,Stretch ponte,Machine wash cold,Polished joggers designed for long travel days.,https://images.unsplash.com/photo-1552902865-b72c031ac5ea,active,S,Navy,#26314A,TC-022-S-NAV-1,65
+TC-022,,,,,,,,,,,,M,Navy,#26314A,TC-022-M-NAV-2,72
+TC-022,,,,,,,,,,,,L,Navy,#26314A,TC-022-L-NAV-3,79
+TC-022,,,,,,,,,,,,XL,Navy,#26314A,TC-022-XL-NAV-4,86
+TC-022,,,,,,,,,,,,2XL,Navy,#26314A,TC-022-2XL-NAV-5,93
+TC-022,,,,,,,,,,,,S,Forest,#2F4A37,TC-022-S-FOR-6,100
+TC-022,,,,,,,,,,,,M,Forest,#2F4A37,TC-022-M-FOR-7,7
+TC-022,,,,,,,,,,,,L,Forest,#2F4A37,TC-022-L-FOR-8,14
+TC-022,,,,,,,,,,,,XL,Forest,#2F4A37,TC-022-XL-FOR-9,21
+TC-022,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-022-2XL-FOR-10,28
+TC-022,,,,,,,,,,,,S,Stone,#CABFA9,TC-022-S-STO-11,35
+TC-022,,,,,,,,,,,,M,Stone,#CABFA9,TC-022-M-STO-12,42
+TC-022,,,,,,,,,,,,L,Stone,#CABFA9,TC-022-L-STO-13,49
+TC-022,,,,,,,,,,,,XL,Stone,#CABFA9,TC-022-XL-STO-14,56
+TC-022,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-022-2XL-STO-15,63
+TC-023,Wrap Jumpsuit,135,Jumpsuits,Neruda,Statement,Womens,Tencel twill,Machine wash cold,Fluid wrap jumpsuit with a defined waist.,https://images.unsplash.com/photo-1591369822096-ffd140ec948f,active,S,Forest,#2F4A37,TC-023-S-FOR-1,82
+TC-023,,,,,,,,,,,,M,Forest,#2F4A37,TC-023-M-FOR-2,89
+TC-023,,,,,,,,,,,,L,Forest,#2F4A37,TC-023-L-FOR-3,96
+TC-023,,,,,,,,,,,,XL,Forest,#2F4A37,TC-023-XL-FOR-4,3
+TC-023,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-023-2XL-FOR-5,10
+TC-023,,,,,,,,,,,,S,Stone,#CABFA9,TC-023-S-STO-6,17
+TC-023,,,,,,,,,,,,M,Stone,#CABFA9,TC-023-M-STO-7,24
+TC-023,,,,,,,,,,,,L,Stone,#CABFA9,TC-023-L-STO-8,31
+TC-023,,,,,,,,,,,,XL,Stone,#CABFA9,TC-023-XL-STO-9,38
+TC-023,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-023-2XL-STO-10,45
+TC-023,,,,,,,,,,,,S,Burgundy,#5E2B2B,TC-023-S-BUR-11,52
+TC-023,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-023-M-BUR-12,59
+TC-023,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-023-L-BUR-13,66
+TC-023,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-023-XL-BUR-14,73
+TC-023,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-023-2XL-BUR-15,80
+TC-024,Graphic Sweatshirt,62,Sweatshirts,Aldous,Streetwear,Unisex,Cotton fleece,Machine wash cold,Relaxed fleece sweatshirt with an abstract graphic.,https://images.unsplash.com/photo-1556821840-3a63f95609a7,active,S,Stone,#CABFA9,TC-024-S-STO-1,99
+TC-024,,,,,,,,,,,,M,Stone,#CABFA9,TC-024-M-STO-2,6
+TC-024,,,,,,,,,,,,L,Stone,#CABFA9,TC-024-L-STO-3,13
+TC-024,,,,,,,,,,,,XL,Stone,#CABFA9,TC-024-XL-STO-4,20
+TC-024,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-024-2XL-STO-5,27
+TC-024,,,,,,,,,,,,S,Burgundy,#5E2B2B,TC-024-S-BUR-6,34
+TC-024,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-024-M-BUR-7,41
+TC-024,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-024-L-BUR-8,48
+TC-024,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-024-XL-BUR-9,55
+TC-024,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-024-2XL-BUR-10,62
+TC-024,,,,,,,,,,,,S,Black,#1C1B18,TC-024-S-BLA-11,69
+TC-024,,,,,,,,,,,,M,Black,#1C1B18,TC-024-M-BLA-12,76
+TC-024,,,,,,,,,,,,L,Black,#1C1B18,TC-024-L-BLA-13,83
+TC-024,,,,,,,,,,,,XL,Black,#1C1B18,TC-024-XL-BLA-14,90
+TC-024,,,,,,,,,,,,2XL,Black,#1C1B18,TC-024-2XL-BLA-15,97
+TC-025,Waterproof Shell,155,Outerwear,Kairo,Technical,Unisex,Recycled waterproof nylon,Machine wash cold,Packable waterproof shell for unpredictable weather.,https://images.unsplash.com/photo-1544966503-7cc5ac882d5f,active,S,Burgundy,#5E2B2B,TC-025-S-BUR-1,16
+TC-025,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-025-M-BUR-2,23
+TC-025,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-025-L-BUR-3,30
+TC-025,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-025-XL-BUR-4,37
+TC-025,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-025-2XL-BUR-5,44
+TC-025,,,,,,,,,,,,S,Black,#1C1B18,TC-025-S-BLA-6,51
+TC-025,,,,,,,,,,,,M,Black,#1C1B18,TC-025-M-BLA-7,58
+TC-025,,,,,,,,,,,,L,Black,#1C1B18,TC-025-L-BLA-8,65
+TC-025,,,,,,,,,,,,XL,Black,#1C1B18,TC-025-XL-BLA-9,72
+TC-025,,,,,,,,,,,,2XL,Black,#1C1B18,TC-025-2XL-BLA-10,79
+TC-025,,,,,,,,,,,,S,Navy,#26314A,TC-025-S-NAV-11,86
+TC-025,,,,,,,,,,,,M,Navy,#26314A,TC-025-M-NAV-12,93
+TC-025,,,,,,,,,,,,L,Navy,#26314A,TC-025-L-NAV-13,100
+TC-025,,,,,,,,,,,,XL,Navy,#26314A,TC-025-XL-NAV-14,7
+TC-025,,,,,,,,,,,,2XL,Navy,#26314A,TC-025-2XL-NAV-15,14
+TC-026,Everyday Tank,29,Tops,Neruda,Essential,Womens,Ribbed cotton,Machine wash cold,Fitted ribbed tank for easy layering.,https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3,active,S,Black,#1C1B18,TC-026-S-BLA-1,33
+TC-026,,,,,,,,,,,,M,Black,#1C1B18,TC-026-M-BLA-2,40
+TC-026,,,,,,,,,,,,L,Black,#1C1B18,TC-026-L-BLA-3,47
+TC-026,,,,,,,,,,,,XL,Black,#1C1B18,TC-026-XL-BLA-4,54
+TC-026,,,,,,,,,,,,2XL,Black,#1C1B18,TC-026-2XL-BLA-5,61
+TC-026,,,,,,,,,,,,S,Navy,#26314A,TC-026-S-NAV-6,68
+TC-026,,,,,,,,,,,,M,Navy,#26314A,TC-026-M-NAV-7,75
+TC-026,,,,,,,,,,,,L,Navy,#26314A,TC-026-L-NAV-8,82
+TC-026,,,,,,,,,,,,XL,Navy,#26314A,TC-026-XL-NAV-9,89
+TC-026,,,,,,,,,,,,2XL,Navy,#26314A,TC-026-2XL-NAV-10,96
+TC-026,,,,,,,,,,,,S,Forest,#2F4A37,TC-026-S-FOR-11,3
+TC-026,,,,,,,,,,,,M,Forest,#2F4A37,TC-026-M-FOR-12,10
+TC-026,,,,,,,,,,,,L,Forest,#2F4A37,TC-026-L-FOR-13,17
+TC-026,,,,,,,,,,,,XL,Forest,#2F4A37,TC-026-XL-FOR-14,24
+TC-026,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-026-2XL-FOR-15,31
+TC-027,Camp Collar Shirt,71,Shirts,Aldous,Resort,Mens,Linen viscose,Machine wash cold,Short sleeve camp collar shirt with a breezy drape.,https://images.unsplash.com/photo-1610652492500-ded49ceeb378,active,S,Navy,#26314A,TC-027-S-NAV-1,50
+TC-027,,,,,,,,,,,,M,Navy,#26314A,TC-027-M-NAV-2,57
+TC-027,,,,,,,,,,,,L,Navy,#26314A,TC-027-L-NAV-3,64
+TC-027,,,,,,,,,,,,XL,Navy,#26314A,TC-027-XL-NAV-4,71
+TC-027,,,,,,,,,,,,2XL,Navy,#26314A,TC-027-2XL-NAV-5,78
+TC-027,,,,,,,,,,,,S,Forest,#2F4A37,TC-027-S-FOR-6,85
+TC-027,,,,,,,,,,,,M,Forest,#2F4A37,TC-027-M-FOR-7,92
+TC-027,,,,,,,,,,,,L,Forest,#2F4A37,TC-027-L-FOR-8,99
+TC-027,,,,,,,,,,,,XL,Forest,#2F4A37,TC-027-XL-FOR-9,6
+TC-027,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-027-2XL-FOR-10,13
+TC-027,,,,,,,,,,,,S,Stone,#CABFA9,TC-027-S-STO-11,20
+TC-027,,,,,,,,,,,,M,Stone,#CABFA9,TC-027-M-STO-12,27
+TC-027,,,,,,,,,,,,L,Stone,#CABFA9,TC-027-L-STO-13,34
+TC-027,,,,,,,,,,,,XL,Stone,#CABFA9,TC-027-XL-STO-14,41
+TC-027,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-027-2XL-STO-15,48
+TC-028,Leather Crossbody,119,Bags,Kairo,Everyday,Unisex,Full grain leather,Spot clean,Compact crossbody bag with adjustable strap.,https://images.unsplash.com/photo-1553062407-98eeb64c6a62,active,One size,Forest,#2F4A37,TC-028-Onesize-FOR-1,67
+TC-028,,,,,,,,,,,,One size,Stone,#CABFA9,TC-028-Onesize-STO-2,74
+TC-028,,,,,,,,,,,,One size,Burgundy,#5E2B2B,TC-028-Onesize-BUR-3,81
+TC-029,Silk Headband,25,Hair Accessories,Neruda,Romantic,Womens,100% silk,Hand wash cold,Soft knotted silk headband with a comfortable fit.,https://images.unsplash.com/photo-1522337360788-8b13dee7a37e,active,One size,Stone,#CABFA9,TC-029-Onesize-STO-1,84
+TC-029,,,,,,,,,,,,One size,Burgundy,#5E2B2B,TC-029-Onesize-BUR-2,91
+TC-029,,,,,,,,,,,,One size,Black,#1C1B18,TC-029-Onesize-BLA-3,98
+TC-030,Classic Polo,55,Polo Shirts,Aldous,Preppy,Mens,Pique cotton,Machine wash cold,Classic pique polo with a clean two-button placket.,https://images.unsplash.com/photo-1625910513413-5fc45f4d7d8f,active,One size,Burgundy,#5E2B2B,TC-030-Onesize-BUR-1,1
+TC-030,,,,,,,,,,,,One size,Black,#1C1B18,TC-030-Onesize-BLA-2,8
+TC-030,,,,,,,,,,,,One size,Navy,#26314A,TC-030-Onesize-NAV-3,15
+TC-031,Printed Midi Dress,112,Dresses,Neruda,Eclectic,Womens,Viscose crepe,Machine wash cold,Printed midi dress with a softly flared skirt.,https://images.unsplash.com/photo-1572804013309-59a88b7e92f1,active,S,Black,#1C1B18,TC-031-S-BLA-1,18
+TC-031,,,,,,,,,,,,M,Black,#1C1B18,TC-031-M-BLA-2,25
+TC-031,,,,,,,,,,,,L,Black,#1C1B18,TC-031-L-BLA-3,32
+TC-031,,,,,,,,,,,,XL,Black,#1C1B18,TC-031-XL-BLA-4,39
+TC-031,,,,,,,,,,,,2XL,Black,#1C1B18,TC-031-2XL-BLA-5,46
+TC-031,,,,,,,,,,,,S,Navy,#26314A,TC-031-S-NAV-6,53
+TC-031,,,,,,,,,,,,M,Navy,#26314A,TC-031-M-NAV-7,60
+TC-031,,,,,,,,,,,,L,Navy,#26314A,TC-031-L-NAV-8,67
+TC-031,,,,,,,,,,,,XL,Navy,#26314A,TC-031-XL-NAV-9,74
+TC-031,,,,,,,,,,,,2XL,Navy,#26314A,TC-031-2XL-NAV-10,81
+TC-031,,,,,,,,,,,,S,Forest,#2F4A37,TC-031-S-FOR-11,88
+TC-031,,,,,,,,,,,,M,Forest,#2F4A37,TC-031-M-FOR-12,95
+TC-031,,,,,,,,,,,,L,Forest,#2F4A37,TC-031-L-FOR-13,2
+TC-031,,,,,,,,,,,,XL,Forest,#2F4A37,TC-031-XL-FOR-14,9
+TC-031,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-031-2XL-FOR-15,16
+TC-032,Canvas Sneakers,78,Footwear,Kairo,Casual,Unisex,Cotton canvas,Spot clean,Low-top canvas sneakers with a vulcanized sole.,https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77,active,38,Navy,#26314A,TC-032-38-NAV-1,35
+TC-032,,,,,,,,,,,,40,Navy,#26314A,TC-032-40-NAV-2,42
+TC-032,,,,,,,,,,,,42,Navy,#26314A,TC-032-42-NAV-3,49
+TC-032,,,,,,,,,,,,38,Forest,#2F4A37,TC-032-38-FOR-4,56
+TC-032,,,,,,,,,,,,40,Forest,#2F4A37,TC-032-40-FOR-5,63
+TC-032,,,,,,,,,,,,42,Forest,#2F4A37,TC-032-42-FOR-6,70
+TC-032,,,,,,,,,,,,38,Stone,#CABFA9,TC-032-38-STO-7,77
+TC-032,,,,,,,,,,,,40,Stone,#CABFA9,TC-032-40-STO-8,84
+TC-032,,,,,,,,,,,,42,Stone,#CABFA9,TC-032-42-STO-9,91
+TC-033,Down Puffer,198,Outerwear,Aldous,Expedition,Unisex,Recycled down nylon,Professional clean,Insulated puffer jacket for serious cold-weather comfort.,https://images.unsplash.com/photo-1548883354-7622d03aca27,active,S,Forest,#2F4A37,TC-033-S-FOR-1,52
+TC-033,,,,,,,,,,,,M,Forest,#2F4A37,TC-033-M-FOR-2,59
+TC-033,,,,,,,,,,,,L,Forest,#2F4A37,TC-033-L-FOR-3,66
+TC-033,,,,,,,,,,,,XL,Forest,#2F4A37,TC-033-XL-FOR-4,73
+TC-033,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-033-2XL-FOR-5,80
+TC-033,,,,,,,,,,,,S,Stone,#CABFA9,TC-033-S-STO-6,87
+TC-033,,,,,,,,,,,,M,Stone,#CABFA9,TC-033-M-STO-7,94
+TC-033,,,,,,,,,,,,L,Stone,#CABFA9,TC-033-L-STO-8,1
+TC-033,,,,,,,,,,,,XL,Stone,#CABFA9,TC-033-XL-STO-9,8
+TC-033,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-033-2XL-STO-10,15
+TC-033,,,,,,,,,,,,S,Burgundy,#5E2B2B,TC-033-S-BUR-11,22
+TC-033,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-033-M-BUR-12,29
+TC-033,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-033-L-BUR-13,36
+TC-033,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-033-XL-BUR-14,43
+TC-033,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-033-2XL-BUR-15,50
+TC-034,Wide Brim Fedora,68,Hats,Kairo,Heritage,Unisex,Wool felt,Spot clean,Structured wool fedora with a tonal grosgrain band.,https://images.unsplash.com/photo-1521369909029-2afed882baee,active,One size,Stone,#CABFA9,TC-034-Onesize-STO-1,69
+TC-034,,,,,,,,,,,,One size,Burgundy,#5E2B2B,TC-034-Onesize-BUR-2,76
+TC-034,,,,,,,,,,,,One size,Black,#1C1B18,TC-034-Onesize-BLA-3,83
+TC-035,Velvet Evening Top,84,Tops,Neruda,Evening,Womens,Stretch velvet,Hand wash cold,Soft velvet top with a graceful asymmetric neckline.,https://images.unsplash.com/photo-1564257631407-4deb1f99d992,active,S,Burgundy,#5E2B2B,TC-035-S-BUR-1,86
+TC-035,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-035-M-BUR-2,93
+TC-035,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-035-L-BUR-3,100
+TC-035,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-035-XL-BUR-4,7
+TC-035,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-035-2XL-BUR-5,14
+TC-035,,,,,,,,,,,,S,Black,#1C1B18,TC-035-S-BLA-6,21
+TC-035,,,,,,,,,,,,M,Black,#1C1B18,TC-035-M-BLA-7,28
+TC-035,,,,,,,,,,,,L,Black,#1C1B18,TC-035-L-BLA-8,35
+TC-035,,,,,,,,,,,,XL,Black,#1C1B18,TC-035-XL-BLA-9,42
+TC-035,,,,,,,,,,,,2XL,Black,#1C1B18,TC-035-2XL-BLA-10,49
+TC-035,,,,,,,,,,,,S,Navy,#26314A,TC-035-S-NAV-11,56
+TC-035,,,,,,,,,,,,M,Navy,#26314A,TC-035-M-NAV-12,63
+TC-035,,,,,,,,,,,,L,Navy,#26314A,TC-035-L-NAV-13,70
+TC-035,,,,,,,,,,,,XL,Navy,#26314A,TC-035-XL-NAV-14,77
+TC-035,,,,,,,,,,,,2XL,Navy,#26314A,TC-035-2XL-NAV-15,84
+TC-036,Utility Cargo Pants,96,Trousers,Kairo,Utility,Mens,Cotton ripstop,Machine wash cold,Relaxed cargo pants with articulated knees.,https://images.unsplash.com/photo-1517841905240-472988babdf9,active,S,Black,#1C1B18,TC-036-S-BLA-1,3
+TC-036,,,,,,,,,,,,M,Black,#1C1B18,TC-036-M-BLA-2,10
+TC-036,,,,,,,,,,,,L,Black,#1C1B18,TC-036-L-BLA-3,17
+TC-036,,,,,,,,,,,,XL,Black,#1C1B18,TC-036-XL-BLA-4,24
+TC-036,,,,,,,,,,,,2XL,Black,#1C1B18,TC-036-2XL-BLA-5,31
+TC-036,,,,,,,,,,,,S,Navy,#26314A,TC-036-S-NAV-6,38
+TC-036,,,,,,,,,,,,M,Navy,#26314A,TC-036-M-NAV-7,45
+TC-036,,,,,,,,,,,,L,Navy,#26314A,TC-036-L-NAV-8,52
+TC-036,,,,,,,,,,,,XL,Navy,#26314A,TC-036-XL-NAV-9,59
+TC-036,,,,,,,,,,,,2XL,Navy,#26314A,TC-036-2XL-NAV-10,66
+TC-036,,,,,,,,,,,,S,Forest,#2F4A37,TC-036-S-FOR-11,73
+TC-036,,,,,,,,,,,,M,Forest,#2F4A37,TC-036-M-FOR-12,80
+TC-036,,,,,,,,,,,,L,Forest,#2F4A37,TC-036-L-FOR-13,87
+TC-036,,,,,,,,,,,,XL,Forest,#2F4A37,TC-036-XL-FOR-14,94
+TC-036,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-036-2XL-FOR-15,1
+TC-037,Longline Bralette,51,Lingerie,Neruda,Minimal,Womens,Organic cotton elastane,Machine wash cold,Comfortable longline bralette with wide straps.,https://images.unsplash.com/photo-1596755389378-c31d21fd1273,active,S,Navy,#26314A,TC-037-S-NAV-1,20
+TC-037,,,,,,,,,,,,M,Navy,#26314A,TC-037-M-NAV-2,27
+TC-037,,,,,,,,,,,,L,Navy,#26314A,TC-037-L-NAV-3,34
+TC-037,,,,,,,,,,,,XL,Navy,#26314A,TC-037-XL-NAV-4,41
+TC-037,,,,,,,,,,,,2XL,Navy,#26314A,TC-037-2XL-NAV-5,48
+TC-037,,,,,,,,,,,,S,Forest,#2F4A37,TC-037-S-FOR-6,55
+TC-037,,,,,,,,,,,,M,Forest,#2F4A37,TC-037-M-FOR-7,62
+TC-037,,,,,,,,,,,,L,Forest,#2F4A37,TC-037-L-FOR-8,69
+TC-037,,,,,,,,,,,,XL,Forest,#2F4A37,TC-037-XL-FOR-9,76
+TC-037,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-037-2XL-FOR-10,83
+TC-037,,,,,,,,,,,,S,Stone,#CABFA9,TC-037-S-STO-11,90
+TC-037,,,,,,,,,,,,M,Stone,#CABFA9,TC-037-M-STO-12,97
+TC-037,,,,,,,,,,,,L,Stone,#CABFA9,TC-037-L-STO-13,4
+TC-037,,,,,,,,,,,,XL,Stone,#CABFA9,TC-037-XL-STO-14,11
+TC-037,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-037-2XL-STO-15,18
+TC-038,Textured Beach Shirt,66,Resortwear,Aldous,Relaxed,Unisex,Cotton gauze,Machine wash cold,Textured beach shirt with oversized proportions.,https://images.unsplash.com/photo-1503342217505-b0a15ec3261c,active,S,Forest,#2F4A37,TC-038-S-FOR-1,37
+TC-038,,,,,,,,,,,,M,Forest,#2F4A37,TC-038-M-FOR-2,44
+TC-038,,,,,,,,,,,,L,Forest,#2F4A37,TC-038-L-FOR-3,51
+TC-038,,,,,,,,,,,,XL,Forest,#2F4A37,TC-038-XL-FOR-4,58
+TC-038,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-038-2XL-FOR-5,65
+TC-038,,,,,,,,,,,,S,Stone,#CABFA9,TC-038-S-STO-6,72
+TC-038,,,,,,,,,,,,M,Stone,#CABFA9,TC-038-M-STO-7,79
+TC-038,,,,,,,,,,,,L,Stone,#CABFA9,TC-038-L-STO-8,86
+TC-038,,,,,,,,,,,,XL,Stone,#CABFA9,TC-038-XL-STO-9,93
+TC-038,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-038-2XL-STO-10,100
+TC-038,,,,,,,,,,,,S,Burgundy,#5E2B2B,TC-038-S-BUR-11,7
+TC-038,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-038-M-BUR-12,14
+TC-038,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-038-L-BUR-13,21
+TC-038,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-038-XL-BUR-14,28
+TC-038,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-038-2XL-BUR-15,35
+TC-039,Leather Gloves,58,Gloves,Kairo,Heritage,Unisex,Sheepskin leather,Professional clean,Supple leather gloves with a cashmere lining.,https://images.unsplash.com/photo-1544966503-7cc5ac882d5f,active,One size,Stone,#CABFA9,TC-039-Onesize-STO-1,54
+TC-039,,,,,,,,,,,,One size,Burgundy,#5E2B2B,TC-039-Onesize-BUR-2,61
+TC-039,,,,,,,,,,,,One size,Black,#1C1B18,TC-039-Onesize-BLA-3,68
+TC-040,Brushed Flannel Shirt,76,Shirts,Aldous,Outdoor,Mens,Cotton flannel,Machine wash cold,Warm brushed flannel shirt in a classic check.,https://images.unsplash.com/photo-1596755094514-f87e34085b2c,active,S,Burgundy,#5E2B2B,TC-040-S-BUR-1,71
+TC-040,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-040-M-BUR-2,78
+TC-040,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-040-L-BUR-3,85
+TC-040,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-040-XL-BUR-4,92
+TC-040,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-040-2XL-BUR-5,99
+TC-040,,,,,,,,,,,,S,Black,#1C1B18,TC-040-S-BLA-6,6
+TC-040,,,,,,,,,,,,M,Black,#1C1B18,TC-040-M-BLA-7,13
+TC-040,,,,,,,,,,,,L,Black,#1C1B18,TC-040-L-BLA-8,20
+TC-040,,,,,,,,,,,,XL,Black,#1C1B18,TC-040-XL-BLA-9,27
+TC-040,,,,,,,,,,,,2XL,Black,#1C1B18,TC-040-2XL-BLA-10,34
+TC-040,,,,,,,,,,,,S,Navy,#26314A,TC-040-S-NAV-11,41
+TC-040,,,,,,,,,,,,M,Navy,#26314A,TC-040-M-NAV-12,48
+TC-040,,,,,,,,,,,,L,Navy,#26314A,TC-040-L-NAV-13,55
+TC-040,,,,,,,,,,,,XL,Navy,#26314A,TC-040-XL-NAV-14,62
+TC-040,,,,,,,,,,,,2XL,Navy,#26314A,TC-040-2XL-NAV-15,69
+TC-041,Asymmetric Knit Dress,125,Dresses,Neruda,Architectural,Womens,Viscose knit,Hand wash cold,Body-skimming knit dress with an asymmetric hem.,https://images.unsplash.com/photo-1566174053879-31528523f8ae,active,S,Black,#1C1B18,TC-041-S-BLA-1,88
+TC-041,,,,,,,,,,,,M,Black,#1C1B18,TC-041-M-BLA-2,95
+TC-041,,,,,,,,,,,,L,Black,#1C1B18,TC-041-L-BLA-3,2
+TC-041,,,,,,,,,,,,XL,Black,#1C1B18,TC-041-XL-BLA-4,9
+TC-041,,,,,,,,,,,,2XL,Black,#1C1B18,TC-041-2XL-BLA-5,16
+TC-041,,,,,,,,,,,,S,Navy,#26314A,TC-041-S-NAV-6,23
+TC-041,,,,,,,,,,,,M,Navy,#26314A,TC-041-M-NAV-7,30
+TC-041,,,,,,,,,,,,L,Navy,#26314A,TC-041-L-NAV-8,37
+TC-041,,,,,,,,,,,,XL,Navy,#26314A,TC-041-XL-NAV-9,44
+TC-041,,,,,,,,,,,,2XL,Navy,#26314A,TC-041-2XL-NAV-10,51
+TC-041,,,,,,,,,,,,S,Forest,#2F4A37,TC-041-S-FOR-11,58
+TC-041,,,,,,,,,,,,M,Forest,#2F4A37,TC-041-M-FOR-12,65
+TC-041,,,,,,,,,,,,L,Forest,#2F4A37,TC-041-L-FOR-13,72
+TC-041,,,,,,,,,,,,XL,Forest,#2F4A37,TC-041-XL-FOR-14,79
+TC-041,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-041-2XL-FOR-15,86
+TC-042,Minimal Watch,145,Watches,Kairo,Minimal,Unisex,Stainless steel, Wipe clean,Minimal analog watch with a leather strap.,https://images.unsplash.com/photo-1524805444758-089113d48a6d,active,One size,Navy,#26314A,TC-042-Onesize-NAV-1,5
+TC-042,,,,,,,,,,,,One size,Forest,#2F4A37,TC-042-Onesize-FOR-2,12
+TC-042,,,,,,,,,,,,One size,Stone,#CABFA9,TC-042-Onesize-STO-3,19
+TC-043,Travel Backpack,132,Bags,Aldous,Functional,Unisex,Recycled polyester,Spot clean,Durable travel backpack with padded laptop sleeve.,https://images.unsplash.com/photo-1553062407-98eeb64c6a62,active,One size,Forest,#2F4A37,TC-043-Onesize-FOR-1,22
+TC-043,,,,,,,,,,,,One size,Stone,#CABFA9,TC-043-Onesize-STO-2,29
+TC-043,,,,,,,,,,,,One size,Burgundy,#5E2B2B,TC-043-Onesize-BUR-3,36
+TC-044,Organic Cotton Socks,18,Socks,Neruda,Essential,Unisex,Organic cotton,Machine wash warm,Everyday ribbed socks with reinforced heels.,https://images.unsplash.com/photo-1586350977771-b3b0abd50c82,active,One size,Stone,#CABFA9,TC-044-Onesize-STO-1,39
+TC-044,,,,,,,,,,,,One size,Burgundy,#5E2B2B,TC-044-Onesize-BUR-2,46
+TC-044,,,,,,,,,,,,One size,Black,#1C1B18,TC-044-Onesize-BLA-3,53
+TC-045,Relaxed Blazer,139,Blazers,Kairo,Smart casual,Unisex,Recycled wool blend,Dry clean only,Softly tailored blazer with a relaxed fit.,https://images.unsplash.com/photo-1594938298603-c8148c4dae35,active,S,Burgundy,#5E2B2B,TC-045-S-BUR-1,56
+TC-045,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-045-M-BUR-2,63
+TC-045,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-045-L-BUR-3,70
+TC-045,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-045-XL-BUR-4,77
+TC-045,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-045-2XL-BUR-5,84
+TC-045,,,,,,,,,,,,S,Black,#1C1B18,TC-045-S-BLA-6,91
+TC-045,,,,,,,,,,,,M,Black,#1C1B18,TC-045-M-BLA-7,98
+TC-045,,,,,,,,,,,,L,Black,#1C1B18,TC-045-L-BLA-8,5
+TC-045,,,,,,,,,,,,XL,Black,#1C1B18,TC-045-XL-BLA-9,12
+TC-045,,,,,,,,,,,,2XL,Black,#1C1B18,TC-045-2XL-BLA-10,19
+TC-045,,,,,,,,,,,,S,Navy,#26314A,TC-045-S-NAV-11,26
+TC-045,,,,,,,,,,,,M,Navy,#26314A,TC-045-M-NAV-12,33
+TC-045,,,,,,,,,,,,L,Navy,#26314A,TC-045-L-NAV-13,40
+TC-045,,,,,,,,,,,,XL,Navy,#26314A,TC-045-XL-NAV-14,47
+TC-045,,,,,,,,,,,,2XL,Navy,#26314A,TC-045-2XL-NAV-15,54
+TC-046,Plaited Sandal,73,Footwear,Neruda,Bohemian,Womens,Leather and rubber,Spot clean,Plaited leather sandals with a cushioned footbed.,https://images.unsplash.com/photo-1562273138-f46be4ebdf33,active,38,Black,#1C1B18,TC-046-38-BLA-1,73
+TC-046,,,,,,,,,,,,40,Black,#1C1B18,TC-046-40-BLA-2,80
+TC-046,,,,,,,,,,,,42,Black,#1C1B18,TC-046-42-BLA-3,87
+TC-046,,,,,,,,,,,,38,Navy,#26314A,TC-046-38-NAV-4,94
+TC-046,,,,,,,,,,,,40,Navy,#26314A,TC-046-40-NAV-5,1
+TC-046,,,,,,,,,,,,42,Navy,#26314A,TC-046-42-NAV-6,8
+TC-046,,,,,,,,,,,,38,Forest,#2F4A37,TC-046-38-FOR-7,15
+TC-046,,,,,,,,,,,,40,Forest,#2F4A37,TC-046-40-FOR-8,22
+TC-046,,,,,,,,,,,,42,Forest,#2F4A37,TC-046-42-FOR-9,29
+TC-047,Heavyweight Hoodie,92,Hoodies,Aldous,Streetwear,Unisex,Organic cotton fleece,Machine wash cold,Heavyweight hoodie with a generous kangaroo pocket.,https://images.unsplash.com/photo-1556821840-3a63f95609a7,active,S,Navy,#26314A,TC-047-S-NAV-1,90
+TC-047,,,,,,,,,,,,M,Navy,#26314A,TC-047-M-NAV-2,97
+TC-047,,,,,,,,,,,,L,Navy,#26314A,TC-047-L-NAV-3,4
+TC-047,,,,,,,,,,,,XL,Navy,#26314A,TC-047-XL-NAV-4,11
+TC-047,,,,,,,,,,,,2XL,Navy,#26314A,TC-047-2XL-NAV-5,18
+TC-047,,,,,,,,,,,,S,Forest,#2F4A37,TC-047-S-FOR-6,25
+TC-047,,,,,,,,,,,,M,Forest,#2F4A37,TC-047-M-FOR-7,32
+TC-047,,,,,,,,,,,,L,Forest,#2F4A37,TC-047-L-FOR-8,39
+TC-047,,,,,,,,,,,,XL,Forest,#2F4A37,TC-047-XL-FOR-9,46
+TC-047,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-047-2XL-FOR-10,53
+TC-047,,,,,,,,,,,,S,Stone,#CABFA9,TC-047-S-STO-11,60
+TC-047,,,,,,,,,,,,M,Stone,#CABFA9,TC-047-M-STO-12,67
+TC-047,,,,,,,,,,,,L,Stone,#CABFA9,TC-047-L-STO-13,74
+TC-047,,,,,,,,,,,,XL,Stone,#CABFA9,TC-047-XL-STO-14,81
+TC-047,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-047-2XL-STO-15,88
+TC-048,Denim Trucker Jacket,128,Jackets,Kairo,Classic,Mens,Organic cotton denim,Machine wash cold,Classic trucker jacket with contrast stitching.,https://images.unsplash.com/photo-1543076447-215ad9ba6923,active,S,Forest,#2F4A37,TC-048-S-FOR-1,7
+TC-048,,,,,,,,,,,,M,Forest,#2F4A37,TC-048-M-FOR-2,14
+TC-048,,,,,,,,,,,,L,Forest,#2F4A37,TC-048-L-FOR-3,21
+TC-048,,,,,,,,,,,,XL,Forest,#2F4A37,TC-048-XL-FOR-4,28
+TC-048,,,,,,,,,,,,2XL,Forest,#2F4A37,TC-048-2XL-FOR-5,35
+TC-048,,,,,,,,,,,,S,Stone,#CABFA9,TC-048-S-STO-6,42
+TC-048,,,,,,,,,,,,M,Stone,#CABFA9,TC-048-M-STO-7,49
+TC-048,,,,,,,,,,,,L,Stone,#CABFA9,TC-048-L-STO-8,56
+TC-048,,,,,,,,,,,,XL,Stone,#CABFA9,TC-048-XL-STO-9,63
+TC-048,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-048-2XL-STO-10,70
+TC-048,,,,,,,,,,,,S,Burgundy,#5E2B2B,TC-048-S-BUR-11,77
+TC-048,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-048-M-BUR-12,84
+TC-048,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-048-L-BUR-13,91
+TC-048,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-048-XL-BUR-14,98
+TC-048,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-048-2XL-BUR-15,5
+TC-049,Leather Mini Skirt,105,Skirts,Neruda,Edgy,Womens,Sheepskin leather,Professional clean,High-waisted leather mini skirt with a clean front.,https://images.unsplash.com/photo-1583496661160-fb5886a13d27,active,S,Stone,#CABFA9,TC-049-S-STO-1,24
+TC-049,,,,,,,,,,,,M,Stone,#CABFA9,TC-049-M-STO-2,31
+TC-049,,,,,,,,,,,,L,Stone,#CABFA9,TC-049-L-STO-3,38
+TC-049,,,,,,,,,,,,XL,Stone,#CABFA9,TC-049-XL-STO-4,45
+TC-049,,,,,,,,,,,,2XL,Stone,#CABFA9,TC-049-2XL-STO-5,52
+TC-049,,,,,,,,,,,,S,Burgundy,#5E2B2B,TC-049-S-BUR-6,59
+TC-049,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-049-M-BUR-7,66
+TC-049,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-049-L-BUR-8,73
+TC-049,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-049-XL-BUR-9,80
+TC-049,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-049-2XL-BUR-10,87
+TC-049,,,,,,,,,,,,S,Black,#1C1B18,TC-049-S-BLA-11,94
+TC-049,,,,,,,,,,,,M,Black,#1C1B18,TC-049-M-BLA-12,1
+TC-049,,,,,,,,,,,,L,Black,#1C1B18,TC-049-L-BLA-13,8
+TC-049,,,,,,,,,,,,XL,Black,#1C1B18,TC-049-XL-BLA-14,15
+TC-049,,,,,,,,,,,,2XL,Black,#1C1B18,TC-049-2XL-BLA-15,22
+TC-050,Recycled Fleece Pullover,86,Fleece,Aldous,Outdoor,Unisex,Recycled polyester,Machine wash cold,Cozy half-zip fleece pullover with a high neck.,https://images.unsplash.com/photo-1548883354-7622d03aca27,active,S,Burgundy,#5E2B2B,TC-050-S-BUR-1,41
+TC-050,,,,,,,,,,,,M,Burgundy,#5E2B2B,TC-050-M-BUR-2,48
+TC-050,,,,,,,,,,,,L,Burgundy,#5E2B2B,TC-050-L-BUR-3,55
+TC-050,,,,,,,,,,,,XL,Burgundy,#5E2B2B,TC-050-XL-BUR-4,62
+TC-050,,,,,,,,,,,,2XL,Burgundy,#5E2B2B,TC-050-2XL-BUR-5,69
+TC-050,,,,,,,,,,,,S,Black,#1C1B18,TC-050-S-BLA-6,76
+TC-050,,,,,,,,,,,,M,Black,#1C1B18,TC-050-M-BLA-7,83
+TC-050,,,,,,,,,,,,L,Black,#1C1B18,TC-050-L-BLA-8,90
+TC-050,,,,,,,,,,,,XL,Black,#1C1B18,TC-050-XL-BLA-9,97
+TC-050,,,,,,,,,,,,2XL,Black,#1C1B18,TC-050-2XL-BLA-10,4
+TC-050,,,,,,,,,,,,S,Navy,#26314A,TC-050-S-NAV-11,11
+TC-050,,,,,,,,,,,,M,Navy,#26314A,TC-050-M-NAV-12,18
+TC-050,,,,,,,,,,,,L,Navy,#26314A,TC-050-L-NAV-13,25
+TC-050,,,,,,,,,,,,XL,Navy,#26314A,TC-050-XL-NAV-14,32
+TC-050,,,,,,,,,,,,2XL,Navy,#26314A,TC-050-2XL-NAV-15,39

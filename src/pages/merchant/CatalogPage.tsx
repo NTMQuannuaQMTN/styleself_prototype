@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useStore } from '../../merchant/useStore'
 import { useAsync } from '../../merchant/useAsync'
 import {
+  deleteAllProducts,
   deleteProduct,
   listProducts,
   type ProductWithVariants,
@@ -51,12 +52,36 @@ function downloadText(filename: string, text: string) {
 export default function CatalogPage() {
   const { activeStore, locations, isManager, memberLocationId } = useStore()
   const canAddProduct = isManager || Boolean(memberLocationId)
+  const [deletingAll, setDeletingAll] = useState(false)
+  const [deleteAllError, setDeleteAllError] = useState<string | null>(null)
   const products = useAsync(
     () => listProducts(activeStore!.id),
     [activeStore?.id],
   )
 
   if (!activeStore) return null
+
+  async function removeAllProducts() {
+    if (
+      !confirm(
+        'Delete all catalog entries? This permanently removes every product, variant, and inventory entry in this store. This cannot be undone.',
+      )
+    )
+      return
+
+    setDeletingAll(true)
+    setDeleteAllError(null)
+    try {
+      await deleteAllProducts(activeStore.id)
+      products.reload()
+    } catch (err) {
+      setDeleteAllError(
+        err instanceof Error ? err.message : 'Could not delete catalog entries.',
+      )
+    } finally {
+      setDeletingAll(false)
+    }
+  }
 
   const stockColHint =
     locations.length > 1
@@ -151,8 +176,23 @@ export default function CatalogPage() {
               >
                 Import CSV
               </Link>
+              {isManager ? (
+                <button
+                  type="button"
+                  onClick={removeAllProducts}
+                  disabled={deletingAll}
+                  className="btn btn-secondary !py-2 text-sm text-[#8f3a24] hover:bg-[#8f3a24]/10"
+                >
+                  {deletingAll ? 'Deleting…' : 'Delete all entries'}
+                </button>
+              ) : null}
             </div>
           </div>
+          {deleteAllError ? (
+            <p className="border-t border-line px-4 py-2 text-xs text-[#8f3a24]">
+              {deleteAllError}
+            </p>
+          ) : null}
         </Card>
       )}
 
