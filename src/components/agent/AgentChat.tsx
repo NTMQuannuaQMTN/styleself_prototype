@@ -32,6 +32,7 @@ type CartItem = {
   size: string | null
   color: string | null
   quantity: number
+  stockQuantity: number
   imageUrl: string | null
 }
 
@@ -198,6 +199,7 @@ export function AgentChat({
         size: it.size,
         color: it.color,
         quantity: it.quantity,
+        stockQuantity: it.stockQuantity,
         imageUrl:
           imgById.get(it.productId) ??
           local.find((l) => l.productId === it.productId)?.imageUrl ??
@@ -354,7 +356,7 @@ export function AgentChat({
   }
 
   function changeCartQuantity(item: CartItem, quantity: number) {
-    const max = stockByVariant.get(cartItemKey(item)) ?? 0
+    const max = item.stockQuantity ?? stockByVariant.get(cartItemKey(item)) ?? 0
     if (!Number.isFinite(quantity)) return
     const next = Math.max(0, Math.min(max, Math.round(quantity)))
     setPendingCartQuantities((current) => ({ ...current, [cartItemKey(item)]: next }))
@@ -494,7 +496,7 @@ export function AgentChat({
                       {cart.map((item) => {
                         const key = cartItemKey(item)
                         const draftQuantity = pendingCartQuantities[key] ?? item.quantity
-                        const maxQuantity = stockByVariant.get(key) ?? 0
+                        const maxQuantity = item.stockQuantity ?? stockByVariant.get(key) ?? 0
                         const changed = draftQuantity !== item.quantity
                         return (
                         <li

@@ -557,6 +557,7 @@ export async function buildCartSummary(
         size: variant?.size ?? null,
         color: variant?.color ?? null,
         quantity: l.quantity,
+        stockQuantity: variant ? variantStock(variant) : 0,
         unitPriceCents: variant?.priceCents ?? p.priceCents,
       }
     })

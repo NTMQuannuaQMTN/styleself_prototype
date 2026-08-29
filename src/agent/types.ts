@@ -129,6 +129,7 @@ export type AgentCart = {
     size: string | null
     color: string | null
     quantity: number
+    stockQuantity: number
     unitPriceCents: number
   }[]
   subtotalCents: number
