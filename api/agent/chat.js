@@ -501,6 +501,7 @@ async function executeTool(name, rawArgs, ctx) {
       if (!id) return { error: "product_id required" };
       const [product] = await ctx.catalog.byIds([id]);
       if (!product) return { error: "product not found" };
+      ctx.lastInventory = product;
       const size = str(rawArgs.size)?.toLowerCase();
       const color = str(rawArgs.color)?.toLowerCase();
       const variants = product.variants.filter(
@@ -766,7 +767,9 @@ function buildSystemPrompt(cfg) {
   ].filter(Boolean).join("\n");
   const howToWork = [
     `TOOLS`,
-    `- Discovery -> search_products. "Tell me more" -> get_product_details. "Is it in stock / in size M" -> check_inventory.`,
+    `- Discovery ("show me...", "something for...", "do you have any...") -> search_products.`,
+    `- A named product the shopper asks about ("do you have the X", "tell me more about X", "what's X like") -> get_product_details with that one id. Always call it \u2014 it renders the product card. Never answer about a specific product from memory or the context block alone.`,
+    `- "Is the X in stock / in size M / at which store" -> check_inventory. It also shows the card.`,
     `- To COMPARE items ("compare the first two", "what's the difference", "X or Y"): call get_product_details ONCE with ALL the product ids together. The UI then renders a comparison TABLE automatically. Do not describe each product in prose \u2014 reply with only ONE sentence saying which suits the shopper's stated needs and why.`,
     `- search_products always returns the closest in-stock options, best fit first. If "exact_match" is false, recommend the nearest ones and say plainly you don't carry an exact match (e.g. no smart casual, but here is the closest casual piece) \u2014 never tell the shopper there is nothing.`,
     `- When the shopper commits to a specific item + size + colour -> add_to_cart. When they are ready to buy -> create_order_preview (it uses the bag and does all the maths).`,
@@ -993,6 +996,16 @@ async function runTurn(openai, model, input) {
       context.recommendedProductIds.push(recId);
     }
     action = { type: "show_products" };
+  }
+  const singleFocus = !products && !(toolCtx.lastCompare && toolCtx.lastCompare.length >= 2) ? (toolCtx.lastDetails?.length === 1 ? toolCtx.lastDetails[0] : void 0) ?? toolCtx.lastInventory : void 0;
+  if (singleFocus) {
+    products = [
+      { ...cardFor(singleFocus, config.currency, finalText, false), recommended: true }
+    ];
+    if (!context.shownProductIds.includes(singleFocus.id)) {
+      context.shownProductIds = [singleFocus.id, ...context.shownProductIds];
+    }
+    if (action.type === "none") action = { type: "show_products" };
   }
   if (toolCtx.lastCompare && toolCtx.lastCompare.length >= 2) {
     const ps = toolCtx.lastCompare;

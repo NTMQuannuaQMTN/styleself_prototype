@@ -32,6 +32,9 @@ type CartItem = {
   imageUrl: string | null
 }
 
+/** Same shape, exported for hosts that render the cart themselves (see onCartChange). */
+export type CartLineView = CartItem
+
 function newConversationId() {
   try {
     return crypto.randomUUID()
@@ -45,12 +48,21 @@ export function AgentChat({
   authToken,
   className = '',
   cartPlacement = 'left',
+  onCartChange,
 }: {
   agentId: string
   /** Only for the merchant's own preview of a not-yet-published agent. */
   authToken?: string
   className?: string
-  cartPlacement?: 'left' | 'preview'
+  /**
+   * 'left' — the widget renders its own floating "Current cart" box beside the chat.
+   * 'external' — it renders no cart box; the host gets the rows via onCartChange
+   * and shows them itself (the merchant Preview page's side rail).
+   * 'preview' — the widget shows a compact cart toggle button in the header while
+   * still managing its own cart state for the host preview experience.
+   */
+  cartPlacement?: 'left' | 'external' | 'preview'
+  onCartChange?: (items: CartLineView[]) => void
 }) {
   const conversationId = useMemo(() => newConversationId(), [])
   const [branding, setBranding] = useState<AgentBranding | null>(null)
@@ -258,15 +270,11 @@ export function AgentChat({
 
   return (
     <div className={`relative ${className}`}>
-      {cartOpen && (
+      {cartPlacement !== 'external' && (
         <aside
           id="agent-cart"
           aria-label="Current shopping cart"
-          className={`mb-3 w-full rounded-[18px] border border-line-strong bg-surface p-3 shadow-[0_20px_50px_-30px_rgba(23,21,15,0.35)] md:mb-0 md:w-44 ${
-            cartPlacement === 'preview'
-              ? 'md:absolute md:right-0 md:top-12 md:z-30'
-              : 'md:absolute md:right-full md:top-12 md:mr-4'
-          }`}
+          className="mb-3 w-full rounded-[18px] border border-line-strong bg-surface p-3 shadow-[0_20px_50px_-30px_rgba(23,21,15,0.35)] md:absolute md:right-full md:top-12 md:mb-0 md:mr-4 md:w-44"
         >
           <div className="flex items-center justify-between gap-2">
             <p className="eyebrow text-[0.55rem]">Current cart</p>
