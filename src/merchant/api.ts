@@ -214,11 +214,11 @@ export async function updateAgent(
   storeId: string,
   patch: Partial<Omit<StoreAgent, 'store_id' | 'updated_at'>>,
 ): Promise<StoreAgent> {
+  // Upsert so a store whose agent row was never seeded still saves.
   return unwrap(
     await supabase
       .from('store_agents')
-      .update(patch)
-      .eq('store_id', storeId)
+      .upsert({ ...patch, store_id: storeId }, { onConflict: 'store_id' })
       .select('*')
       .single(),
   )
