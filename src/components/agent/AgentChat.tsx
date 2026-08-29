@@ -206,127 +206,15 @@ export function AgentChat({
 
   return (
     <div className={`relative ${className}`}>
-      {cartOpen && <aside
-        id="agent-cart"
-        aria-label="Current shopping cart"
-        className={`mb-3 w-full rounded-[18px] border border-line-strong bg-surface p-3 shadow-[0_20px_50px_-30px_rgba(23,21,15,0.35)] md:mb-0 md:w-44 ${
-          cartPlacement === 'preview'
-            ? 'md:absolute md:right-0 md:top-12 md:z-30'
-            : 'md:absolute md:right-full md:top-12 md:mr-4'
-        }`}
-      >
-        <div className="flex items-center justify-between gap-2">
-          <p className="eyebrow text-[0.55rem]">Current cart</p>
-          <span className="text-[0.65rem] text-muted">
-            {cartCount} item{cartCount === 1 ? '' : 's'}
-          </span>
-        </div>
-        {cart.length === 0 ? (
-          <p className="mt-3 text-xs text-muted">Your cart is empty.</p>
-        ) : (
-          <div className="mt-3 space-y-3">
-            {cart.map((item) => (
-              <div key={item.productId} className="flex gap-2">
-                <div className="h-12 w-10 shrink-0 overflow-hidden rounded border border-line bg-accent-soft/50">
-                  {item.imageUrl ? (
-                    <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
-                  ) : null}
-                </div>
-                <div className="min-w-0 text-xs">
-                  <p className="line-clamp-2 text-ink">{item.name}</p>
-                  {item.variantLabel ? (
-                    <p className="text-[0.65rem] text-muted">{item.variantLabel}</p>
-                  ) : null}
-                  <p className="mt-0.5 font-medium text-muted">× {item.quantity}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </aside>}
-      <div className="flex h-full flex-col overflow-hidden rounded-[18px] border border-line-strong bg-surface shadow-[0_30px_70px_-45px_rgba(23,21,15,0.3)]">
-      <div className="flex shrink-0 items-center gap-2 border-b border-line px-4 py-3">
-        <span className="h-1.5 w-1.5 rounded-full bg-success" />
-        <span className="font-display text-sm text-ink">{agentName}</span>
-        {branding && (
-          <span className="ml-auto text-[0.7rem] text-muted">
-            {branding.branchName
-              ? `${branding.storeName} · ${branding.branchName}`
-              : branding.storeName}
-            {branding.preview && ' · preview'}
-          </span>
-        )}
-        {cartPlacement === 'preview' ? (
-          <button
-            type="button"
-            onClick={() => setCartOpen((open) => !open)}
-            aria-expanded={cartOpen}
-            aria-controls="agent-cart"
-            className="ml-auto rounded-full border border-line-strong px-2.5 py-1 text-[0.65rem] text-muted transition-colors hover:border-ink hover:text-ink"
-          >
-            Cart {cartCount}
-          </button>
-        ) : (
-          <span className="rounded-full border border-line-strong px-2 py-0.5 text-[0.65rem] text-muted">
-            Cart {cartCount}
-          </span>
-        )}
-      </div>
-
-      <div
-        ref={scrollRef}
-        className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4"
-      >
-        {status === 'init' ? (
-          <TypingDots />
-        ) : (
-          turns.map((turn, i) => (
-            <ChatMessage
-              key={i}
-              turn={turn}
-              agentName={agentName}
-              onAdd={addToCart}
-              agentId={agentId}
-              conversationId={conversationId}
-              authToken={authToken}
-              onPaid={(order) => {
-                setContext((c) => ({ ...c, cart: [], selectedProductIds: [] }))
-                setCart([])
-                setTurns((t) => [
-                  ...t,
-                  {
-                    role: 'assistant',
-                    text: `Payment received — order ${order.orderId} is confirmed. Anything else I can help you find?`,
-                  },
-                ])
-              }}
-            />
-          ))
-        )}
-        {status === 'thinking' && <TypingDots />}
-      </div>
-
-      <div className="shrink-0 border-t border-line p-3">
-        {turns.length <= 1 && status === 'ready' && (
-          <div className="mb-2 flex flex-wrap gap-1.5">
-            {suggestions.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => send(s)}
-                className="rounded-full border border-line-strong px-2.5 py-1 text-[0.7rem] text-muted transition-colors hover:border-ink hover:text-ink"
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            send(input)
-          }}
-          className="flex gap-2"
+      {cartOpen && (
+        <aside
+          id="agent-cart"
+          aria-label="Current shopping cart"
+          className={`mb-3 w-full rounded-[18px] border border-line-strong bg-surface p-3 shadow-[0_20px_50px_-30px_rgba(23,21,15,0.35)] md:mb-0 md:w-44 ${
+            cartPlacement === 'preview'
+              ? 'md:absolute md:right-0 md:top-12 md:z-30'
+              : 'md:absolute md:right-full md:top-12 md:mr-4'
+          }`}
         >
           <div className="flex items-center justify-between gap-2">
             <p className="eyebrow text-[0.55rem]">Current cart</p>
@@ -402,13 +290,13 @@ export function AgentChat({
                 agentId={agentId}
                 conversationId={conversationId}
                 authToken={authToken}
-                embedKey={embedKey}
-                busy={status !== 'ready'}
-                cardSelection={selections[i]}
-                cardConfirmed={confirmedTurns.has(i)}
-                onCardSelect={(pid, next) => selectCard(i, pid, next)}
-                onCardConfirm={() => confirmCards(i)}
-                onAskDetails={(name) => send(`Tell me more about the ${name}`)}
+                // embedKey={embedKey}
+                // busy={status !== 'ready'}
+                // cardSelection={selections[i]}
+                // cardConfirmed={confirmedTurns.has(i)}
+                // onCardSelect={(pid, next) => selectCard(i, pid, next)}
+                // onCardConfirm={() => confirmCards(i)}
+                // onAskDetails={(name) => send(`Tell me more about the ${name}`)}
                 onPaid={(order) => {
                   setContext((c) => ({ ...c, cart: [], selectedProductIds: [] }))
                   setCart([])
