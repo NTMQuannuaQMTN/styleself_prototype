@@ -6,7 +6,7 @@ import type { Profile } from '../lib/database.types'
 import {
   AuthContext,
   type AuthContextValue,
-  type MerchantSetup,
+  // type MerchantSetup,
   type SignUpArgs,
 } from './context'
 
