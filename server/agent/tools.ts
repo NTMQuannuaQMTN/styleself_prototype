@@ -72,6 +72,8 @@ export type ToolContext = {
   lastSearchWeak?: boolean
   lastCompare?: CatalogProduct[]
   lastDetails?: CatalogProduct[]
+  /** the product a check_inventory call resolved to this turn */
+  lastInventory?: CatalogProduct
   lastOrderPreview?: AgentOrderPreview
   lastOrderDraft?: OrderDraft
   lastOrderProductIds?: string[]
@@ -256,6 +258,7 @@ export async function executeTool(
       if (!id) return { error: 'product_id required' }
       const [product] = await ctx.catalog.byIds([id])
       if (!product) return { error: 'product not found' }
+      ctx.lastInventory = product
       const size = str(rawArgs.size)?.toLowerCase()
       const color = str(rawArgs.color)?.toLowerCase()
       const variants = product.variants.filter(
