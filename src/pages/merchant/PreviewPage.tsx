@@ -12,7 +12,6 @@ export default function PreviewPage() {
   const { session } = useAuth()
   const { activeStore, agent } = useStore()
   const [cart, setCart] = useState<CartLineView[]>([])
-  const [chatSize, setChatSize] = useState<'small' | 'large'>('large')
 
   if (!activeStore) return null
 
@@ -45,14 +44,9 @@ export default function PreviewPage() {
 
       <div className="grid gap-8 lg:grid-cols-[1fr_19rem] lg:items-start">
         {/* Chat -------------------------------------------------------------- */}
-        <div
-          className={`mx-auto w-full lg:mx-0 ${
-            chatSize === 'small' ? 'max-w-[38rem]' : 'max-w-none'
-          }`}
-        >
+        <div className="mx-auto w-full lg:mx-0">
           <div className="mb-3 flex items-center justify-between">
             <p className="eyebrow text-[0.6rem]">Chat window</p>
-            <SizeToggle size={chatSize} onChange={setChatSize} />
           </div>
           <AgentChat
             key={activeStore.id}
@@ -170,28 +164,3 @@ function Step({ n, children }: { n: number; children: ReactNode }) {
   )
 }
 
-function SizeToggle({
-  size,
-  onChange,
-}: {
-  size: 'small' | 'large'
-  onChange: (size: 'small' | 'large') => void
-}) {
-  return (
-    <div className="inline-flex rounded-full border border-line-strong p-0.5 text-[0.65rem]" aria-label="Chat window size">
-      {(['small', 'large'] as const).map((option) => (
-        <button
-          key={option}
-          type="button"
-          aria-pressed={size === option}
-          onClick={() => onChange(option)}
-          className={`rounded-full px-2.5 py-1 capitalize transition-colors ${
-            size === option ? 'bg-ink text-paper' : 'text-muted hover:text-ink'
-          }`}
-        >
-          {option}
-        </button>
-      ))}
-    </div>
-  )
-}
