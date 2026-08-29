@@ -285,8 +285,14 @@ export async function executeTool(
         ? (rawArgs.product_ids as unknown[]).filter((x): x is string => typeof x === 'string')
         : []
       const products = await ctx.catalog.byIds(ids)
-      ctx.lastCompare = products
-      ctx.lastDetails = products
+      // Accumulate across calls in a turn so two single-id lookups still yield a
+      // 2-product comparison table (models sometimes call this once per product).
+      const merged = [...(ctx.lastDetails ?? [])]
+      for (const p of products) {
+        if (!merged.some((m) => m.id === p.id)) merged.push(p)
+      }
+      ctx.lastCompare = merged
+      ctx.lastDetails = merged
       return {
         products: products.map((p) => ({
           id: p.id,

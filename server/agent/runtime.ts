@@ -49,6 +49,13 @@ export type TurnOutput = Pick<
 
 type ChatMsg = OpenAI.Chat.Completions.ChatCompletionMessageParam
 
+/** Keep the first `max` sentences — used to stop the model narrating a table. */
+function firstSentences(s: string, max: number): string {
+  const parts = s.match(/[^.!?]+[.!?]+(\s|$)/g)
+  if (!parts || parts.length <= max) return s.trim()
+  return parts.slice(0, max).join('').trim()
+}
+
 /** The model occasionally reaches for markdown despite the prompt. Flatten it. */
 function stripMarkdown(s: string): string {
   return s
@@ -226,21 +233,28 @@ export async function runTurn(
 
   if (toolCtx.lastCompare && toolCtx.lastCompare.length >= 2) {
     const ps = toolCtx.lastCompare
+    const uniq = (xs: (string | null)[]) => [...new Set(xs.filter(Boolean))] as string[]
     const row = (label: string, get: (p: CatalogProduct) => string) => ({
       label,
       values: ps.map(get),
     })
+    const allRows = [
+      row('Price', (p) => fmtMoney(p.priceCents, config.currency)),
+      row('Style', (p) => p.style ?? '—'),
+      row('Material', (p) => p.material ?? '—'),
+      row('Care', (p) => p.care ?? '—'),
+      row('Colours', (p) => uniq(p.variants.map((v) => v.color)).join(', ') || '—'),
+      row('Sizes', (p) => uniq(p.variants.map((v) => v.size)).join(', ') || '—'),
+      row('In stock', (p) => (totalStock(p) > 0 ? 'Yes' : 'No')),
+    ]
+    // Drop rows where every product has the same value (no signal); keep Price.
+    const rows = allRows.filter((r, i) => i === 0 || new Set(r.values).size > 1)
     comparison = {
       products: ps.map((p) => ({ id: p.id, name: p.name })),
-      rows: [
-        row('Price', (p) => fmtMoney(p.priceCents, config.currency)),
-        row('Style', (p) => p.style ?? '—'),
-        row('Material', (p) => p.material ?? '—'),
-        row('Category', (p) => p.category ?? '—'),
-        row('For', (p) => p.gender ?? '—'),
-        row('In stock', (p) => (totalStock(p) > 0 ? 'Yes' : 'No')),
-      ],
+      rows,
     }
+    // The table carries the detail — trim any paragraph the model wrote over it.
+    finalText = firstSentences(finalText, 2)
     action = { type: 'show_comparison' }
   }
 
