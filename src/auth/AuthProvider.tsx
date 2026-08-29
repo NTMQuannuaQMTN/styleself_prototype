@@ -5,8 +5,10 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import type { Profile, UserRole } from '../lib/database.types'
 import {
   AuthContext,
+  PENDING_MERCHANT_SETUP_KEY,
   PENDING_ROLE_KEY,
   type AuthContextValue,
+  type MerchantSetup,
   type SignUpArgs,
 } from './context'
 
@@ -19,11 +21,28 @@ function readPendingRole(): UserRole | null {
   }
 }
 
+function readPendingMerchantSetup(): MerchantSetup | null {
+  try {
+    const value = localStorage.getItem(PENDING_MERCHANT_SETUP_KEY)
+    return value === 'branch' || value === 'create-store' ? value : null
+  } catch {
+    return null
+  }
+}
+
 function clearPendingRole() {
   try {
     localStorage.removeItem(PENDING_ROLE_KEY)
   } catch {
     /* storage unavailable — nothing to clean up */
+  }
+}
+
+function clearPendingMerchantSetup() {
+  try {
+    localStorage.removeItem(PENDING_MERCHANT_SETUP_KEY)
+  } catch {
+    /* storage unavailable — setup just won't be pre-set */
   }
 }
 
@@ -68,8 +87,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Record the role a visitor picked right before a Google redirect.
   const applyPendingRole = useCallback(async () => {
     const pending = readPendingRole()
-    if (!pending) return
+    const pendingSetup = readPendingMerchantSetup()
+    if (!pending) {
+      if (pendingSetup) clearPendingMerchantSetup()
+      return
+    }
     clearPendingRole()
+    clearPendingMerchantSetup()
     const { error } = await supabase.rpc('set_signup_role', { desired: pending })
     if (error) console.error('Could not set signup role:', error.message)
   }, [])
@@ -119,12 +143,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const signUpWithPassword = useCallback(
-    async ({ email, password, fullName, role }: SignUpArgs) => {
+    async ({ email, password, fullName, role, merchantSetup }: SignUpArgs) => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { full_name: fullName, role },
+          data: {
+            full_name: fullName,
+            role,
+            merchant_setup: merchantSetup ?? null,
+          },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
@@ -142,21 +170,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   )
 
-  const signInWithGoogle = useCallback(async (role?: UserRole) => {
-    try {
-      if (role) localStorage.setItem(PENDING_ROLE_KEY, role)
-    } catch {
-      /* storage unavailable — role just won't be pre-set */
-    }
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: { prompt: 'select_account' },
-      },
-    })
-    if (error) throw error
-  }, [])
+  const signInWithGoogle = useCallback(
+    async (role?: UserRole, merchantSetup?: MerchantSetup) => {
+      try {
+        if (role) localStorage.setItem(PENDING_ROLE_KEY, role)
+        if (role === 'merchant' && merchantSetup) {
+          localStorage.setItem(PENDING_MERCHANT_SETUP_KEY, merchantSetup)
+        } else {
+          localStorage.removeItem(PENDING_MERCHANT_SETUP_KEY)
+        }
+      } catch {
+        /* storage unavailable — role/setup just won't be pre-set */
+      }
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: { prompt: 'select_account' },
+        },
+      })
+      if (error) throw error
+    },
+    [],
+  )
 
   const sendPasswordReset = useCallback(async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {

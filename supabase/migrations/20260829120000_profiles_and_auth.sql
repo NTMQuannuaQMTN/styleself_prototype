@@ -20,15 +20,27 @@ end
 $$;
 
 -- ---------------------------------------------------------------------------
+-- Merchant setup type enum
+-- ---------------------------------------------------------------------------
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'merchant_setup_type') then
+    create type public.merchant_setup_type as enum ('branch', 'create-store');
+  end if;
+end
+$$;
+
+-- ---------------------------------------------------------------------------
 -- profiles
 -- ---------------------------------------------------------------------------
 create table if not exists public.profiles (
-  id          uuid primary key references auth.users (id) on delete cascade,
-  email       text,
-  full_name   text,
-  role        public.user_role not null default 'customer',
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
+  id              uuid primary key references auth.users (id) on delete cascade,
+  email           text,
+  full_name       text,
+  role            public.user_role not null default 'customer',
+  merchant_setup  public.merchant_setup_type,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
 );
 
 comment on table public.profiles is
@@ -74,10 +86,11 @@ create trigger profiles_set_updated_at
 -- ---------------------------------------------------------------------------
 -- Auto-provision a profile when an auth user is created
 --
--- Email/password signups pass `role` and `full_name` in options.data, which
--- lands in raw_user_meta_data. Google OAuth users arrive with `name` but no
--- role, so they default to 'customer' and can be corrected by
--- set_signup_role() immediately after the first sign-in (see below).
+-- Email/password signups pass `role`, `full_name`, and `merchant_setup` in
+-- options.data, which lands in raw_user_meta_data. Google OAuth users arrive
+-- with `name` but no role/setup, so they default to 'customer'/null and can be
+-- corrected by set_signup_role() / set_merchant_setup() immediately after the
+-- first sign-in (see below).
 -- ---------------------------------------------------------------------------
 create or replace function public.handle_new_user()
 returns trigger
@@ -86,7 +99,7 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, email, full_name, role)
+  insert into public.profiles (id, email, full_name, role, merchant_setup)
   values (
     new.id,
     new.email,
@@ -97,7 +110,8 @@ begin
     coalesce(
       (nullif(new.raw_user_meta_data ->> 'role', ''))::public.user_role,
       'customer'
-    )
+    ),
+    (nullif(new.raw_user_meta_data ->> 'merchant_setup', ''))::public.merchant_setup_type
   )
   on conflict (id) do nothing;
   return new;
@@ -140,3 +154,37 @@ $$;
 
 revoke all on function public.set_signup_role(public.user_role) from public, anon;
 grant execute on function public.set_signup_role(public.user_role) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- set_merchant_setup(): let a brand-new merchant signup record the setup choice
+-- (branch vs. create-store) picked on the "How do you want to start?" screen.
+-- Only applies to a freshly created merchant profile, so it can't flip an
+-- established account.
+-- ---------------------------------------------------------------------------
+create or replace function public.set_merchant_setup(desired public.merchant_setup_type)
+returns public.merchant_setup_type
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  result public.merchant_setup_type;
+begin
+  update public.profiles
+     set merchant_setup = desired
+   where id = auth.uid()
+     and role = 'merchant'
+     and created_at > now() - interval '15 minutes'
+     and updated_at = created_at
+  returning merchant_setup into result;
+
+  if result is null then
+    select merchant_setup into result from public.profiles where id = auth.uid();
+  end if;
+
+  return result;
+end;
+$$;
+
+revoke all on function public.set_merchant_setup(public.merchant_setup_type) from public, anon;
+grant execute on function public.set_merchant_setup(public.merchant_setup_type) to authenticated;

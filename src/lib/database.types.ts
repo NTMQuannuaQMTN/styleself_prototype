@@ -7,12 +7,14 @@
  * unknown>`, which interfaces don't satisfy.
  */
 export type UserRole = 'merchant' | 'customer'
+export type MerchantSetupType = 'branch' | 'create-store'
 
 export type Profile = {
   id: string
   email: string | null
   full_name: string | null
   role: UserRole
+  merchant_setup: MerchantSetupType | null
   created_at: string
   updated_at: string
 }
@@ -33,9 +35,14 @@ export type Database = {
         Args: { desired: UserRole }
         Returns: UserRole
       }
+      set_merchant_setup: {
+        Args: { desired: MerchantSetupType }
+        Returns: MerchantSetupType
+      }
     }
     Enums: {
       user_role: UserRole
+      merchant_setup_type: MerchantSetupType
     }
     CompositeTypes: Record<string, never>
   }

@@ -13,7 +13,25 @@ import {
 import { useAuth } from '../../auth/useAuth'
 import { authErrorMessage } from '../../auth/errors'
 import { isRole, ROLE_COPY, ROLES } from '../../auth/roles'
+import type { MerchantSetup } from '../../auth/context'
 import type { UserRole } from '../../lib/database.types'
+
+const MERCHANT_SETUP_OPTIONS: Array<{
+  value: MerchantSetup
+  title: string
+  description: string
+}> = [
+  {
+    value: 'branch',
+    title: 'Join a store as a branch',
+    description: 'Operate under an existing brand and help manage a location or region.',
+  },
+  {
+    value: 'create-store',
+    title: 'Create my own store',
+    description: 'Launch and own a storefront with your own brand and merchandise.',
+  },
+]
 
 function RoleChooser({ onPick }: { onPick: (role: UserRole) => void }) {
   return (
@@ -58,6 +76,45 @@ function RoleChooser({ onPick }: { onPick: (role: UserRole) => void }) {
   )
 }
 
+function MerchantSetupChooser({ onPick }: { onPick: (setup: MerchantSetup) => void }) {
+  return (
+    <AuthShell
+      title="How do you want to start?"
+      subtitle="Choose whether you want to join an existing store or launch your own brand."
+      footer={
+        <>
+          Already have an account?{' '}
+          <Link to="/login" className="font-medium text-ink underline">
+            Log in
+          </Link>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        {MERCHANT_SETUP_OPTIONS.map(({ value, title, description }) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => onPick(value)}
+            className="group flex items-center justify-between rounded-xl border border-line-strong bg-surface p-4 text-left transition-colors hover:border-ink"
+          >
+            <span>
+              <span className="block text-[0.95rem] font-medium text-ink">{title}</span>
+              <span className="mt-0.5 block text-sm text-muted">{description}</span>
+            </span>
+            <span
+              aria-hidden
+              className="ml-3 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-ink"
+            >
+              →
+            </span>
+          </button>
+        ))}
+      </div>
+    </AuthShell>
+  )
+}
+
 export default function SignUpPage() {
   const { signUpWithPassword, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
@@ -67,6 +124,15 @@ export default function SignUpPage() {
   const role = useMemo<UserRole | null>(
     () => (isRole(roleParam) ? roleParam : null),
     [roleParam],
+  )
+  const setupParam = params.get('setup')
+  const merchantSetup = useMemo<MerchantSetup | null>(
+    () =>
+      role === 'merchant' &&
+      (setupParam === 'branch' || setupParam === 'create-store')
+        ? setupParam
+        : null,
+    [role, setupParam],
   )
 
   const [fullName, setFullName] = useState('')
@@ -82,6 +148,16 @@ export default function SignUpPage() {
       <RoleChooser
         onPick={(picked) => {
           setParams({ role: picked }, { replace: true })
+        }}
+      />
+    )
+  }
+
+  if (role === 'merchant' && !merchantSetup) {
+    return (
+      <MerchantSetupChooser
+        onPick={(picked) => {
+          setParams({ role, setup: picked }, { replace: true })
         }}
       />
     )
@@ -107,6 +183,7 @@ export default function SignUpPage() {
           password,
           fullName: fullName.trim(),
           role,
+          merchantSetup: role === 'merchant' ? merchantSetup ?? 'branch' : undefined,
         })
 
       if (alreadyRegistered) {
@@ -131,7 +208,10 @@ export default function SignUpPage() {
     setError(null)
     setGoogleLoading(true)
     try {
-      await signInWithGoogle(role)
+      await signInWithGoogle(
+        role,
+        role === 'merchant' ? merchantSetup ?? undefined : undefined,
+      )
     } catch (err) {
       setError(authErrorMessage(err))
       setGoogleLoading(false)
@@ -161,16 +241,28 @@ export default function SignUpPage() {
     )
   }
 
+  const setupLabel =
+    role === 'merchant' && merchantSetup === 'branch'
+      ? 'branch account'
+      : role === 'merchant' && merchantSetup === 'create-store'
+        ? 'brand account'
+        : null
+
   return (
     <AuthShell
       title={copy.cta}
       subtitle={
         <>
-          Creating a <strong>{copy.label.toLowerCase()}</strong> account.{' '}
+          Creating a <strong>{copy.label.toLowerCase()}</strong> account{setupLabel ? <> for a <strong>{setupLabel}</strong></> : null}.{' '}
           <button
             type="button"
             className="text-ink underline"
-            onClick={() => setParams({}, { replace: true })}
+            onClick={() =>
+              setParams(
+                role === 'merchant' ? { role: 'merchant' } : {},
+                { replace: true },
+              )
+            }
           >
             Change
           </button>
