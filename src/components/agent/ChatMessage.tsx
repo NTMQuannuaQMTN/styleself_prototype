@@ -26,6 +26,12 @@ export function ChatMessage({
   agentId,
   conversationId,
   authToken,
+  busy,
+  cardSelection,
+  cardConfirmed,
+  onCardSelect,
+  onCardConfirm,
+  onAskDetails,
   onPaid,
 }: {
   turn: Turn
@@ -33,6 +39,12 @@ export function ChatMessage({
   agentId: string
   conversationId: string
   authToken?: string
+  busy?: boolean
+  cardSelection?: Record<string, CardSelection>
+  cardConfirmed?: boolean
+  onCardSelect?: (productId: string, next: CardSelection | null) => void
+  onCardConfirm?: () => void
+  onAskDetails?: (productName: string) => void
   onPaid?: (order: AgentOrderConfirmation) => void
 }) {
   if (turn.role === 'user') {

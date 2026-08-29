@@ -290,13 +290,12 @@ export function AgentChat({
                 agentId={agentId}
                 conversationId={conversationId}
                 authToken={authToken}
-                // embedKey={embedKey}
-                // busy={status !== 'ready'}
-                // cardSelection={selections[i]}
-                // cardConfirmed={confirmedTurns.has(i)}
-                // onCardSelect={(pid, next) => selectCard(i, pid, next)}
-                // onCardConfirm={() => confirmCards(i)}
-                // onAskDetails={(name) => send(`Tell me more about the ${name}`)}
+                busy={status !== 'ready'}
+                cardSelection={selections[i]}
+                cardConfirmed={confirmedTurns.has(i)}
+                onCardSelect={(pid, next) => selectCard(i, pid, next)}
+                onCardConfirm={() => confirmCards(i)}
+                onAskDetails={(name) => send(`Tell me more about the ${name}`)}
                 onPaid={(order) => {
                   setContext((c) => ({ ...c, cart: [], selectedProductIds: [] }))
                   setCart([])
