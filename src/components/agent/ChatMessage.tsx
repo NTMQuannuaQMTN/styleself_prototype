@@ -1,6 +1,7 @@
 import type {
   AgentCart,
   AgentComparison,
+  AgentOrderConfirmation,
   AgentOrderPreview,
   AgentProductCard,
 } from '../../agent/types'
@@ -25,12 +26,14 @@ export function ChatMessage({
   agentId,
   conversationId,
   authToken,
+  onPaid,
 }: {
   turn: Turn
   agentName: string
   agentId: string
   conversationId: string
   authToken?: string
+  onPaid?: (order: AgentOrderConfirmation) => void
 }) {
   if (turn.role === 'user') {
     return (
@@ -62,6 +65,7 @@ export function ChatMessage({
           orderDraftToken={turn.orderDraftToken}
           preview={turn.orderPreview}
           authToken={authToken}
+          onPaid={onPaid}
         />
       )}
     </div>

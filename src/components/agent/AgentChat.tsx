@@ -155,6 +155,16 @@ export function AgentChat({
               agentId={agentId}
               conversationId={conversationId}
               authToken={authToken}
+              onPaid={(order) => {
+                setContext((c) => ({ ...c, cart: [], selectedProductIds: [] }))
+                setTurns((t) => [
+                  ...t,
+                  {
+                    role: 'assistant',
+                    text: `Payment received — order ${order.orderId} is confirmed. Anything else I can help you find?`,
+                  },
+                ])
+              }}
             />
           ))
         )}
