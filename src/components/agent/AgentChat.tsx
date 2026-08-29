@@ -39,6 +39,8 @@ export function AgentChat({
   const [fatal, setFatal] = useState<string | null>(null)
   const [input, setInput] = useState('')
   const [cart, setCart] = useState<{ product: AgentProductCard; quantity: number }[]>([])
+  // Keep the cart visible from the first paint; it starts empty and updates in place.
+  const [cartOpen, setCartOpen] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // open the conversation (no model call server-side)
@@ -144,11 +146,12 @@ export function AgentChat({
 
   return (
     <div className={`relative ${className}`}>
-      <aside
+      {cartOpen && <aside
+        id="agent-cart"
         aria-label="Current shopping cart"
         className={`mb-3 w-full rounded-[18px] border border-line-strong bg-surface p-3 shadow-[0_20px_50px_-30px_rgba(23,21,15,0.35)] md:mb-0 md:w-44 ${
           cartPlacement === 'preview'
-            ? 'md:fixed md:left-[18rem] md:top-32 md:z-30'
+            ? 'md:absolute md:right-0 md:top-12 md:z-30'
             : 'md:absolute md:right-full md:top-12 md:mr-4'
         }`}
       >
@@ -177,7 +180,7 @@ export function AgentChat({
             ))}
           </div>
         )}
-      </aside>
+      </aside>}
       <div className="flex h-full flex-col overflow-hidden rounded-[18px] border border-line-strong bg-surface shadow-[0_30px_70px_-45px_rgba(23,21,15,0.3)]">
       <div className="flex shrink-0 items-center gap-2 border-b border-line px-4 py-3">
         <span className="h-1.5 w-1.5 rounded-full bg-success" />
@@ -190,9 +193,21 @@ export function AgentChat({
             {branding.preview && ' · preview'}
           </span>
         )}
-        <span className="rounded-full border border-line-strong px-2 py-0.5 text-[0.65rem] text-muted">
-          Cart {cartCount}
-        </span>
+        {cartPlacement === 'preview' ? (
+          <button
+            type="button"
+            onClick={() => setCartOpen((open) => !open)}
+            aria-expanded={cartOpen}
+            aria-controls="agent-cart"
+            className="ml-auto rounded-full border border-line-strong px-2.5 py-1 text-[0.65rem] text-muted transition-colors hover:border-ink hover:text-ink"
+          >
+            Cart {cartCount}
+          </button>
+        ) : (
+          <span className="rounded-full border border-line-strong px-2 py-0.5 text-[0.65rem] text-muted">
+            Cart {cartCount}
+          </span>
+        )}
       </div>
 
       <div
@@ -207,6 +222,7 @@ export function AgentChat({
               key={i}
               turn={turn}
               agentName={agentName}
+              onAdd={addToCart}
               agentId={agentId}
               conversationId={conversationId}
               authToken={authToken}

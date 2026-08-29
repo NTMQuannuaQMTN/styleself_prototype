@@ -7,7 +7,7 @@ export function CartCard({ cart }: { cart: AgentCart }) {
 
   return (
     <div className="rounded-xl border border-line-strong bg-surface p-3.5">
-      <p className="eyebrow text-[0.58rem]">In your bag</p>
+      <p className="eyebrow text-[0.58rem]">In your cart</p>
       <ul className="mt-2 space-y-1.5">
         {cart.items.map((it, i) => (
           <li key={i} className="flex items-baseline justify-between gap-3 text-sm">
