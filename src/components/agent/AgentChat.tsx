@@ -8,8 +8,18 @@ import {
   type AgentProductCard,
 } from '../../agent/types'
 import { ChatMessage, TypingDots, type Turn } from './ChatMessage'
+import type { AgentCart } from '../../agent/types'
 
 const HISTORY_LIMIT = 8
+
+type CartItem = {
+  productId: string
+  name: string
+  variantLabel: string | null
+  quantity: number
+  imageUrl: string | null
+  source: 'chat' | 'button'
+}
 
 function newConversationId() {
   try {
@@ -38,7 +48,9 @@ export function AgentChat({
   const [status, setStatus] = useState<'init' | 'ready' | 'thinking'>('init')
   const [fatal, setFatal] = useState<string | null>(null)
   const [input, setInput] = useState('')
-  const [cart, setCart] = useState<{ product: AgentProductCard; quantity: number }[]>([])
+  // The "Current cart" box. `chat` items mirror the agent's server-side bag;
+  // `button` items were added with the product-card button.
+  const [cart, setCart] = useState<CartItem[]>([])
   // Keep the cart visible from the first paint; it starts empty and updates in place.
   const [cartOpen, setCartOpen] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -76,15 +88,49 @@ export function AgentChat({
 
   function addToCart(product: AgentProductCard) {
     setCart((items) => {
-      const existing = items.find((item) => item.product.id === product.id)
+      const existing = items.find((i) => i.productId === product.id)
       if (existing) {
-        return items.map((item) =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item,
+        return items.map((i) =>
+          i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i,
         )
       }
-      return [...items, { product, quantity: 1 }]
+      return [
+        ...items,
+        {
+          productId: product.id,
+          name: product.name,
+          variantLabel: null,
+          quantity: 1,
+          imageUrl: product.imageUrl,
+          source: 'button',
+        },
+      ]
+    })
+  }
+
+  /** Reconcile the box with the agent's server bag after a chat turn. */
+  function syncCartFromReply(
+    serverCart: AgentCart | undefined,
+    knownProducts: AgentProductCard[],
+  ) {
+    const imgById = new Map(knownProducts.map((p) => [p.id, p.imageUrl]))
+    setCart((local) => {
+      const chatItems: CartItem[] = (serverCart?.items ?? []).map((it) => ({
+        productId: it.productId,
+        name: it.name,
+        variantLabel: it.variantLabel,
+        quantity: it.quantity,
+        imageUrl:
+          imgById.get(it.productId) ??
+          local.find((l) => l.productId === it.productId)?.imageUrl ??
+          null,
+        source: 'chat',
+      }))
+      const chatIds = new Set(chatItems.map((i) => i.productId))
+      const keptButtons = local.filter(
+        (i) => i.source === 'button' && !chatIds.has(i.productId),
+      )
+      return [...chatItems, ...keptButtons]
     })
   }
 
@@ -112,6 +158,11 @@ export function AgentChat({
     }
     setContext(res.context)
     if (res.agent) setBranding(res.agent)
+    const known = [
+      ...nextTurns.flatMap((t) => t.products ?? []),
+      ...(res.products ?? []),
+    ]
+    syncCartFromReply(res.cart, known)
     setTurns((t) => [
       ...t,
       {
@@ -165,16 +216,19 @@ export function AgentChat({
           <p className="mt-3 text-xs text-muted">Your cart is empty.</p>
         ) : (
           <div className="mt-3 space-y-3">
-            {cart.map(({ product, quantity }) => (
-              <div key={product.id} className="flex gap-2">
+            {cart.map((item) => (
+              <div key={item.productId} className="flex gap-2">
                 <div className="h-12 w-10 shrink-0 overflow-hidden rounded border border-line bg-accent-soft/50">
-                  {product.imageUrl ? (
-                    <img src={product.imageUrl} alt="" className="h-full w-full object-cover" />
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
                   ) : null}
                 </div>
                 <div className="min-w-0 text-xs">
-                  <p className="line-clamp-2 text-ink">{product.name}</p>
-                  <p className="mt-0.5 font-medium text-muted">× {quantity}</p>
+                  <p className="line-clamp-2 text-ink">{item.name}</p>
+                  {item.variantLabel ? (
+                    <p className="text-[0.65rem] text-muted">{item.variantLabel}</p>
+                  ) : null}
+                  <p className="mt-0.5 font-medium text-muted">× {item.quantity}</p>
                 </div>
               </div>
             ))}
@@ -226,9 +280,9 @@ export function AgentChat({
               agentId={agentId}
               conversationId={conversationId}
               authToken={authToken}
-              onAdd={addToCart}
               onPaid={(order) => {
                 setContext((c) => ({ ...c, cart: [], selectedProductIds: [] }))
+                setCart([])
                 setTurns((t) => [
                   ...t,
                   {
