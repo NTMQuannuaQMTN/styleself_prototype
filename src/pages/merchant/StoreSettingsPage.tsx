@@ -159,6 +159,7 @@ function DetailsCard({
           value={n}
           onChange={(e) => setN(e.target.value)}
           disabled={!canEdit}
+          plain={!canEdit}
         />
         <TextField
           label="Branch name"
@@ -167,6 +168,7 @@ function DetailsCard({
           placeholder="Orchard"
           hint="Used in the store switcher to tell branches apart."
           disabled={!canEdit}
+          plain={!canEdit}
         />
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField
@@ -175,6 +177,7 @@ function DetailsCard({
             onChange={(e) => setAddr(e.target.value)}
             placeholder="391 Orchard Rd"
             disabled={!canEdit}
+          plain={!canEdit}
           />
           <TextField
             label="Location"
@@ -182,6 +185,7 @@ function DetailsCard({
             onChange={(e) => setC(e.target.value)}
             placeholder="Singapore"
             disabled={!canEdit}
+          plain={!canEdit}
           />
         </div>
         {error ? <InlineError>{error}</InlineError> : null}
@@ -257,14 +261,17 @@ function SlugCard({
           <span className="field-label">Agent URL</span>
           <div className="flex items-center gap-1.5">
             <span className="text-sm text-muted">styleself.app/agent/</span>
-            <input
-              className="field-input flex-1"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              disabled={!canEdit}
-            />
+            {canEdit ? (
+              <input
+                className="field-input flex-1"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+              />
+            ) : (
+              <span className="py-1.5 text-sm text-ink">{value}</span>
+            )}
           </div>
-          {normalized !== value && (
+          {canEdit && normalized !== value && (
             <p className="mt-1.5 text-xs text-muted">
               Saved as <code>{normalized || '—'}</code>
             </p>

@@ -20,6 +20,7 @@ export default function DeployPage() {
   const [copied, setCopied] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [keyShown, setKeyShown] = useState(false)
 
   const counts = useAsync(
     () => getDashboardCounts(activeStore!.id),
@@ -29,7 +30,11 @@ export default function DeployPage() {
   if (!activeStore) return null
   const store = activeStore
 
+  // The real key is always used for copy / open; only the on-screen text is masked.
+  const maskedKey = `${store.embed_key.slice(0, 3)}${'•'.repeat(24)}`
+  const shownKey = keyShown ? store.embed_key : maskedKey
   const agentUrl = `${window.location.origin}/agent/${store.slug}?k=${store.embed_key}`
+  const shownUrl = `${window.location.origin}/agent/${store.slug}?k=${shownKey}`
   const snippet = `<iframe
   src="${agentUrl}"
   title="${store.name} — Shopping assistant"
@@ -37,6 +42,7 @@ export default function DeployPage() {
   height="640"
   style="border:0;border-radius:16px;max-width:480px"
 ></iframe>`
+  const shownSnippet = snippet.replace(agentUrl, shownUrl)
 
   const checklist = [
     { label: 'Agent configured', done: !!agent },
@@ -129,7 +135,7 @@ export default function DeployPage() {
               </p>
             </div>
             <pre className="mt-3 overflow-x-auto rounded-lg border border-line bg-paper p-3.5 font-mono text-[0.72rem] leading-relaxed text-ink-soft">
-              <code>{snippet}</code>
+              <code>{shownSnippet}</code>
             </pre>
             <button
               type="button"
@@ -138,6 +144,9 @@ export default function DeployPage() {
             >
               {copied ? 'Copied to clipboard' : 'Copy embed code'}
             </button>
+            <p className="mt-1.5 text-center text-[0.66rem] text-muted">
+              The key is hidden above — Copy still copies the full working code.
+            </p>
             <a
               href={agentUrl}
               target="_blank"
@@ -149,12 +158,21 @@ export default function DeployPage() {
           </Card>
 
           <Card>
-            <p className="eyebrow text-[0.6rem]">Embed key</p>
+            <div className="flex items-center justify-between">
+              <p className="eyebrow text-[0.6rem]">Embed key</p>
+              <button
+                type="button"
+                onClick={() => setKeyShown((s) => !s)}
+                className="text-[0.66rem] text-accent hover:underline"
+              >
+                {keyShown ? 'Hide' : 'Show'}
+              </button>
+            </div>
             <p className="mt-1 text-xs text-muted">
               The <code>?k=</code> in the snippet ties the embed to this store.
             </p>
             <p className="mt-2 break-all rounded-lg border border-line bg-paper px-3 py-2 font-mono text-[0.72rem] text-ink-soft">
-              {store.embed_key}
+              {shownKey}
             </p>
             {isOwner ? (
               <div className="mt-3 space-y-2.5">

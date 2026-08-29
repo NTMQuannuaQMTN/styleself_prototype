@@ -132,6 +132,7 @@ function AttributeFields({
         rows={3}
         placeholder="Relaxed-fit linen blazer, half-lined, natural shoulder."
         disabled={disabled}
+        plain={disabled}
       />
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField
@@ -140,6 +141,7 @@ function AttributeFields({
           onChange={(e) => set('brand')(e.target.value)}
           placeholder="Urban Thread"
           disabled={disabled}
+          plain={disabled}
         />
         <TextField
           label="Category"
@@ -147,6 +149,7 @@ function AttributeFields({
           onChange={(e) => set('category')(e.target.value)}
           placeholder="Jackets"
           disabled={disabled}
+          plain={disabled}
         />
         <TextField
           label="Style"
@@ -154,12 +157,14 @@ function AttributeFields({
           onChange={(e) => set('style')(e.target.value)}
           placeholder="Smart casual"
           disabled={disabled}
+          plain={disabled}
         />
         <SelectField
           label="Gender"
           value={attrs.gender}
           onChange={(e) => set('gender')(e.target.value)}
           disabled={disabled}
+          plain={disabled}
         >
           {GENDERS.map((g) => (
             <option key={g} value={g}>
@@ -173,6 +178,7 @@ function AttributeFields({
           onChange={(e) => set('material')(e.target.value)}
           placeholder="100% linen"
           disabled={disabled}
+          plain={disabled}
         />
         <TextField
           label={`Price (${currency})`}
@@ -181,6 +187,7 @@ function AttributeFields({
           onChange={(e) => onPrice(e.target.value)}
           placeholder="89"
           disabled={disabled}
+          plain={disabled}
         />
       </div>
       <TextField
@@ -189,6 +196,7 @@ function AttributeFields({
         onChange={(e) => set('care')(e.target.value)}
         placeholder="Machine wash cold, hang dry"
         disabled={disabled}
+        plain={disabled}
       />
     </>
   )
@@ -528,6 +536,7 @@ function EditProduct({
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={!canManage}
+              plain={!canManage}
             />
             <TextField
               label="Product code / SKU"
@@ -536,6 +545,7 @@ function EditProduct({
               placeholder="LB-001"
               hint="Match key for CSV import."
               disabled={!canManage}
+              plain={!canManage}
             />
           </div>
           <AttributeFields
@@ -552,12 +562,14 @@ function EditProduct({
             onChange={(e) => setImageUrl(e.target.value)}
             placeholder="https://…"
             disabled={!canManage}
+            plain={!canManage}
           />
           <SelectField
             label="Status"
             value={status}
             onChange={(e) => setStatus(e.target.value as ProductStatus)}
             disabled={!canManage}
+            plain={!canManage}
           >
             {STATUSES.map((s) => (
               <option key={s}>{s}</option>
@@ -841,6 +853,10 @@ function InventoryInput({
 }) {
   const [value, setValue] = useState(String(initial))
   const [state, setState] = useState<'idle' | 'saving' | 'error'>('idle')
+
+  if (disabled) {
+    return <span className="text-sm text-ink">{initial}</span>
+  }
 
   async function commit() {
     const qty = Math.max(0, Math.round(Number(value) || 0))
