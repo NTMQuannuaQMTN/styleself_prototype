@@ -17,6 +17,7 @@ import {
 export default function LocationsPage() {
   const { activeStore, locations, isManager, refreshStore } = useStore()
   const [error, setError] = useState<string | null>(null)
+  const primaryCount = locations.filter((location) => location.is_primary).length
 
   if (!activeStore) return null
 
@@ -36,7 +37,11 @@ export default function LocationsPage() {
             key={loc.id}
             location={loc}
             canManage={isManager}
-            canDelete={isManager && locations.length > 1}
+            canDelete={
+              isManager &&
+              locations.length > 1 &&
+              (!loc.is_primary || primaryCount > 1)
+            }
             onChange={async (patch) => {
               setError(null)
               try {
@@ -47,6 +52,13 @@ export default function LocationsPage() {
               }
             }}
             onDelete={async () => {
+              if (
+                !window.confirm(
+                  `Remove the location “${loc.name}”? Inventory records for this location will also be removed.`,
+                )
+              ) {
+                return
+              }
               setError(null)
               try {
                 await deleteLocation(loc.id)
@@ -181,13 +193,21 @@ function LocationRow({
           >
             Edit
           </button>
-          {canDelete && !location.is_primary && (
+          {canDelete && (
             <button
               type="button"
               className="btn btn-secondary !px-3 !py-1.5 text-xs"
-              onClick={onDelete}
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true)
+                try {
+                  await onDelete()
+                } finally {
+                  setBusy(false)
+                }
+              }}
             >
-              Delete
+              {busy ? 'Removing…' : 'Remove'}
             </button>
           )}
         </div>

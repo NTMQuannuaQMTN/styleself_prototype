@@ -210,6 +210,7 @@ function CreateProduct({
     locations.find((l) => l.is_primary) ?? locations[0] ?? null
 
   const [name, setName] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
   const [price, setPrice] = useState('')
   const [attrs, setAttrs] = useState<Attributes>(EMPTY_ATTRS)
   const [rows, setRows] = useState<VariantRow[]>([])
@@ -248,6 +249,7 @@ function CreateProduct({
         name,
         priceCents: cents,
         currency,
+        imageUrl: imageUrl.trim() || undefined,
         description: attrs.description,
         brand: attrs.brand,
         style: attrs.style,
@@ -293,6 +295,13 @@ function CreateProduct({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Linen Blazer"
+          />
+          <TextField
+            label="Image URL"
+            type="url"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            placeholder="https://example.com/product.jpg"
           />
           <AttributeFields
             attrs={attrs}
