@@ -123,6 +123,8 @@ export type Product = {
   id: string
   store_id: string
   location_id: string | null
+  /** Merchant-assigned product code, unique within a store. CSV import key. */
+  merchant_sku: string | null
   name: string
   description: string | null
   brand: string | null
@@ -203,6 +205,7 @@ export type Database = {
         {
           store_id: string
           location_id?: string | null
+          merchant_sku?: string | null
           name: string
           description?: string | null
           brand?: string | null

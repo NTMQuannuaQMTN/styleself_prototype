@@ -32,8 +32,10 @@ Run them **in order** in the SQL Editor (or `supabase db push`):
    `set_store_live(store, bool)` **SECURITY DEFINER** RPC restricts going
    live/offline to the store **owner**.
 
-This file is fully idempotent — **re-run it** to pick up every column / policy
-added since your last run.
+The catalog migration file is fully idempotent — **re-run it** to pick up every
+column / policy added since your last run. The follow-up files use
+`add column if not exists` and `create ... if not exists`, so they are safe to
+re-run too.
 
 **Dashboard** — open the SQL Editor and run each file's contents in order.
 

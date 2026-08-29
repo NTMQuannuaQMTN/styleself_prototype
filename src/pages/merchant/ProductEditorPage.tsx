@@ -213,6 +213,7 @@ function CreateProduct({
     locations.find((l) => l.is_primary) ?? locations[0] ?? null
 
   const [name, setName] = useState('')
+  const [merchantSku, setMerchantSku] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [price, setPrice] = useState('')
   const [attrs, setAttrs] = useState<Attributes>(EMPTY_ATTRS)
@@ -250,6 +251,7 @@ function CreateProduct({
       const product = await createProduct({
         storeId,
         locationId,
+        merchantSku: merchantSku.trim() || undefined,
         name,
         priceCents: cents,
         currency,
@@ -296,13 +298,22 @@ function CreateProduct({
         </InlineError>
       ) : (
         <form onSubmit={submit} className="max-w-xl space-y-4">
-          <TextField
-            label="Name"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Linen Blazer"
-          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextField
+              label="Name"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Linen Blazer"
+            />
+            <TextField
+              label="Product code / SKU"
+              value={merchantSku}
+              onChange={(e) => setMerchantSku(e.target.value)}
+              placeholder="LB-001"
+              hint="Optional. Used to match this product on CSV import."
+            />
+          </div>
           <TextField
             label="Image URL"
             type="url"
@@ -431,6 +442,7 @@ function EditProduct({
   onDeleted: () => void
 }) {
   const [name, setName] = useState(product.name)
+  const [merchantSku, setMerchantSku] = useState(product.merchant_sku ?? '')
   const [price, setPrice] = useState(moneyToInput(product.price_cents))
   const [imageUrl, setImageUrl] = useState(product.image_url ?? '')
   const [status, setStatus] = useState<ProductStatus>(product.status)
@@ -461,6 +473,7 @@ function EditProduct({
       const t = (v: string) => v.trim() || null
       await updateProduct(product.id, {
         name: name.trim(),
+        merchant_sku: t(merchantSku),
         description: t(attrs.description),
         brand: t(attrs.brand),
         style: t(attrs.style),
@@ -508,12 +521,22 @@ function EditProduct({
 
       <div className="grid gap-8 lg:grid-cols-[1fr_0.8fr]">
         <form onSubmit={saveDetails} className="space-y-4">
-          <TextField
-            label="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={!canManage}
-          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextField
+              label="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={!canManage}
+            />
+            <TextField
+              label="Product code / SKU"
+              value={merchantSku}
+              onChange={(e) => setMerchantSku(e.target.value)}
+              placeholder="LB-001"
+              hint="Match key for CSV import."
+              disabled={!canManage}
+            />
+          </div>
           <AttributeFields
             attrs={attrs}
             onChange={setAttrs}
