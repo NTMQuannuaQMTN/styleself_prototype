@@ -23,6 +23,9 @@ type DraftPayload = {
   locationId: string | null
   currency: string
   totalCents: number
+  /** Agent payment mandate minted with the order preview (see runtime.ts). */
+  mandateId: string
+  mandateLimitCents: number
   exp: number
 }
 
@@ -32,6 +35,12 @@ type AuthPayload = {
   agentId: string
   conversationId: string
   buyerName: string
+  /** Carried to the pay step so the Visa pipeline can tokenize the card. */
+  cardLast4: string
+  cardBrand: string | null
+  /** Agent payment mandate echoed from the draft — enforced at authorize time. */
+  mandateId: string
+  mandateLimitCents: number
   exp: number
 }
 
@@ -99,8 +108,9 @@ export async function handleCheckout(
 
   if (action === 'authorize') {
     const buyerName = str(req.buyerName)
-    const card = (req.card ?? {}) as { last4?: unknown }
+    const card = (req.card ?? {}) as { last4?: unknown; brand?: unknown }
     const last4 = str(card.last4)
+    const brand = str(card.brand) ?? null
 
     if (!buyerName || buyerName.length < 2) {
       return fail(400, 'bad_request', 'Enter the cardholder name.')
@@ -120,6 +130,10 @@ export async function handleCheckout(
         agentId,
         conversationId,
         buyerName,
+        cardLast4: last4,
+        cardBrand: brand,
+        mandateId: draft.mandateId,
+        mandateLimitCents: draft.mandateLimitCents,
         iat: now,
         exp: now + 10 * 60 * 1000,
       },
@@ -161,7 +175,13 @@ export async function handleCheckout(
     currency: draft.currency,
     items: draft.items,
     merchantName: resolved.merchantName,
+    cardLast4: auth.cardLast4 ?? '0000',
+    cardBrand: auth.cardBrand ?? null,
     settlement: resolved.settlement,
+    mandate: {
+      mandateId: auth.mandateId ?? draft.mandateId,
+      limitCents: auth.mandateLimitCents ?? draft.mandateLimitCents,
+    },
   }
 
   const result =

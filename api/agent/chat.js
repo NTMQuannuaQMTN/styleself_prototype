@@ -1040,6 +1040,7 @@ async function runTurn(openai, model, input) {
       d.items.map((i) => [i.variantId, i.quantity, i.unitPriceCents])
     );
     const draftHash = sha256Hex(`${canonical}|${d.totalCents}|${d.fulfillment}`);
+    const mandateId = sha256Hex(`${input.conversationId}|${draftHash}|mandate`).slice(0, 24);
     orderDraftToken = sign(
       {
         kind: "draft",
@@ -1057,6 +1058,8 @@ async function runTurn(openai, model, input) {
         feesCents: d.feesCents,
         totalCents: d.totalCents,
         currency: d.currency,
+        mandateId,
+        mandateLimitCents: d.totalCents,
         iat: now,
         exp: now + DRAFT_TTL_MS
       },

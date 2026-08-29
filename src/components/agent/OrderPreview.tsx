@@ -179,6 +179,11 @@ export function OrderPreview({
               Some items may be low or out of stock — the agent can suggest an alternative.
             </p>
           )}
+          <p className="mt-2 rounded-lg bg-paper px-3 py-2 text-[0.7rem] text-muted">
+            <span className="text-ink-soft">You authorize the agent</span> to charge your
+            card up to {money(preview.totalCents)} for this order. Nothing is charged until
+            you confirm below.
+          </p>
           <button
             type="button"
             onClick={() => setStage('identity')}
@@ -297,24 +302,72 @@ export function OrderPreview({
               <dt>Order</dt>
               <dd className="font-mono text-ink-soft">{order.orderId}</dd>
             </div>
+            {order.visa ? (
+              <div className="flex justify-between gap-3">
+                <dt>Network token</dt>
+                <dd className="text-right text-ink-soft">
+                  ••{order.visa.networkToken.last4}
+                  <span className="text-muted"> · Visa Token Service</span>
+                </dd>
+              </div>
+            ) : null}
             <div className="flex justify-between">
-              <dt>Visa authorization</dt>
-              <dd className="font-mono text-ink-soft">{order.visaAuthCode}</dd>
+              <dt>Authorization</dt>
+              <dd className="font-mono text-ink-soft">
+                {order.visaAuthCode}
+                {order.visa ? (
+                  <span className="font-sans text-muted">
+                    {' '}· {order.visa.decision} · {order.visa.processorResponse}
+                  </span>
+                ) : null}
+              </dd>
             </div>
+            {order.visa ? (
+              <div className="flex justify-between">
+                <dt>3-D Secure</dt>
+                <dd className="text-ink-soft">
+                  ECI {order.visa.threeDSEci} · authenticated
+                </dd>
+              </div>
+            ) : null}
+            {order.visa?.agentMandate ? (
+              <div className="flex justify-between gap-3">
+                <dt>Agent mandate</dt>
+                <dd className="text-right text-ink-soft">
+                  within limit ✓
+                  <span className="text-muted">
+                    {' '}· up to {money(order.visa.agentMandate.limitCents)}
+                  </span>
+                </dd>
+              </div>
+            ) : null}
             <div className="flex justify-between">
               <dt>Charged</dt>
               <dd className="text-ink-soft">{money(order.totalCents)}</dd>
             </div>
+            {order.visa ? (
+              <div className="flex justify-between gap-3">
+                <dt>Settlement</dt>
+                <dd className="text-right text-ink-soft">
+                  {order.visa.clearing.rail}
+                  <span className="text-muted">
+                    {' '}· net {money(order.visa.clearing.netToMerchantCents)}
+                  </span>
+                </dd>
+              </div>
+            ) : null}
             {order.settlement ? (
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-3">
                 <dt>Settles to</dt>
-                <dd className="text-ink-soft">{order.settlement}</dd>
+                <dd className="text-right text-ink-soft">{order.settlement}</dd>
               </div>
             ) : null}
           </dl>
           <p className="text-[0.68rem] text-muted">
-            Simulated Visa Payments Stack — nothing was charged. In production the card is
-            tokenized and the order is settled here.
+            Simulated Visa Payments Stack — nothing was charged. Your authorization capped the
+            agent at this amount, then the payment moved through tokenization (VTS), a 3-D
+            Secure authorization checked against that mandate, capture, and Visa Direct
+            settlement to the merchant.
           </p>
         </div>
       )}
