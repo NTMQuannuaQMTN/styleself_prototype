@@ -21,6 +21,7 @@ export interface StoreContextValue {
   /** Active store's agent config + locations (loaded alongside the store). */
   agent: StoreAgent | null
   locations: StoreLocation[]
+  memberLocationId: string | null
   /** Count of pending requests to join the active store (managers only). */
   incomingRequestCount: number
   storeDataLoading: boolean

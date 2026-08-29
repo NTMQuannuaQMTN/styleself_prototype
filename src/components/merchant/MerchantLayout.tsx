@@ -16,15 +16,30 @@ const NAV = [
 ]
 
 function StoreSwitcher() {
-  const { memberships, activeStore, setActiveStore } = useStore()
+  const { memberships, activeStore, locations, setActiveStore } = useStore()
+  const locationDetails = locations
+    .map((location) => {
+      const address = [location.city, location.address]
+        .filter(Boolean)
+        .join(' · ')
+      return `${location.name}${address ? ` — ${address}` : ''}${location.is_primary ? ' (Primary)' : ''}`
+    })
   if (memberships.length < 2) {
     return (
       <div className="px-3 py-2">
         <p className="font-display text-sm text-ink">{activeStore?.name}</p>
-        <p className="text-xs text-muted">
-          {(activeStore && storeLabel(activeStore)) ||
-            (activeStore?.slug ? `/agent/${activeStore.slug}` : '')}
-        </p>
+        {activeStore && storeLabel(activeStore) ? (
+          <p className="text-xs text-muted">{storeLabel(activeStore)}</p>
+        ) : null}
+        {locationDetails.length > 0 && (
+          <div className="mt-2 space-y-0.5 border-t border-line pt-2">
+            {locationDetails.map((detail) => (
+              <p key={detail} className="text-xs text-muted">
+                {detail}
+              </p>
+            ))}
+          </div>
+        )}
       </div>
     )
   }
@@ -46,6 +61,15 @@ function StoreSwitcher() {
           )
         })}
       </select>
+      {locationDetails.length > 0 && (
+        <div className="mt-2 space-y-0.5 border-t border-line pt-2">
+          {locationDetails.map((detail) => (
+            <p key={detail} className="text-xs text-muted">
+              {detail}
+            </p>
+          ))}
+        </div>
+      )}
     </label>
   )
 }

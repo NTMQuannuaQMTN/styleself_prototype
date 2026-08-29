@@ -18,7 +18,8 @@ function stockOf(p: ProductWithVariants) {
 }
 
 export default function CatalogPage() {
-  const { activeStore, isManager } = useStore()
+  const { activeStore, isManager, memberLocationId } = useStore()
+  const canAddProduct = isManager || Boolean(memberLocationId)
   const products = useAsync(
     () => listProducts(activeStore!.id),
     [activeStore?.id],
@@ -33,7 +34,7 @@ export default function CatalogPage() {
         title="Products"
         description="What the agent can discover, compare, and sell."
         action={
-          isManager ? (
+          canAddProduct ? (
             <Link to="/merchant/catalog/new" className="btn btn-primary">
               Add product
             </Link>
@@ -50,7 +51,7 @@ export default function CatalogPage() {
           title="No products yet"
           description="Add your first product so the agent has something to recommend."
           action={
-            isManager ? (
+            canAddProduct ? (
               <Link to="/merchant/catalog/new" className="btn btn-primary">
                 Add product
               </Link>

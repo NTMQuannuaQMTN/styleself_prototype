@@ -119,9 +119,9 @@ function ChooseMode({ onPick }: { onPick: (mode: Mode) => void }) {
         onClick={() => onPick('create')}
         className="group rounded-[14px] border border-line-strong bg-surface p-5 text-left transition-colors hover:border-ink"
       >
-        <p className="font-display text-base text-ink">Create a new store</p>
+        <p className="font-display text-base text-ink">Create a new brand</p>
         <p className="mt-1 text-sm text-muted">
-          Start fresh. You'll be the owner and can invite your team.
+          Create a new store brand. You'll be the owner and can add branches and invite your team.
         </p>
       </button>
       <button
@@ -129,9 +129,9 @@ function ChooseMode({ onPick }: { onPick: (mode: Mode) => void }) {
         onClick={() => onPick('join')}
         className="group rounded-[14px] border border-line-strong bg-surface p-5 text-left transition-colors hover:border-ink"
       >
-        <p className="font-display text-base text-ink">Join an existing store</p>
+        <p className="font-display text-base text-ink">Join an existing brand as a branch</p>
         <p className="mt-1 text-sm text-muted">
-          For multi-location retailers — request access and an owner approves.
+          Join an existing brand as a new branch. Your request will be sent to the brand owner for approval.
         </p>
       </button>
     </div>
@@ -345,7 +345,6 @@ function JoinResult({
               </span>
             ) : null}
           </p>
-          <p className="text-xs text-muted">/agent/{store.slug}</p>
         </div>
         {sent ? (
           <span className="text-xs font-medium text-success">Request sent</span>

@@ -41,6 +41,7 @@ export type Store = {
 export type StoreMember = {
   store_id: string
   user_id: string
+  location_id: string | null
   role: StoreMemberRole
   created_at: string
 }
@@ -117,6 +118,7 @@ export type StoreJoinRequest = {
 export type Product = {
   id: string
   store_id: string
+  location_id: string | null
   name: string
   description: string | null
   brand: string | null
@@ -196,6 +198,7 @@ export type Database = {
         Product,
         {
           store_id: string
+          location_id?: string | null
           name: string
           description?: string | null
           brand?: string | null
