@@ -26,6 +26,7 @@ export function ChatMessage({
   agentId,
   conversationId,
   authToken,
+  onAdd,
   onPaid,
 }: {
   turn: Turn
@@ -33,6 +34,7 @@ export function ChatMessage({
   agentId: string
   conversationId: string
   authToken?: string
+  onAdd?: (product: AgentProductCard) => void
   onPaid?: (order: AgentOrderConfirmation) => void
 }) {
   if (turn.role === 'user') {

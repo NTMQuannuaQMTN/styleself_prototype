@@ -210,6 +210,7 @@ export function AgentChat({
               agentId={agentId}
               conversationId={conversationId}
               authToken={authToken}
+              onAdd={addToCart}
               onPaid={(order) => {
                 setContext((c) => ({ ...c, cart: [], selectedProductIds: [] }))
                 setTurns((t) => [
