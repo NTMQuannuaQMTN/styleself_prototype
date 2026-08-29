@@ -86,6 +86,8 @@ export type AgentProductCard = {
   stockLevel?: 'in' | 'low' | 'out'
   /** units left when stockLevel === 'low' (drives "Only 3 left") */
   unitsLeft?: number
+  /** exact total stock used to cap cart quantity controls */
+  stockQuantity?: number
   /** one-line "why this fits you", lifted from the agent's reply */
   reason?: string
   /** true when this was surfaced as a near-match, not an exact one */
