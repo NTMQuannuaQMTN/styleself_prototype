@@ -2,7 +2,12 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '../../merchant/useStore'
 import { useAsync } from '../../merchant/useAsync'
-import { getDashboardCounts, setStoreLive } from '../../merchant/api'
+import {
+  getDashboardCounts,
+  rotateEmbedKey,
+  setStoreLive,
+  updateStore,
+} from '../../merchant/api'
 import {
   Card,
   InlineError,
@@ -24,7 +29,7 @@ export default function DeployPage() {
   if (!activeStore) return null
   const store = activeStore
 
-  const agentUrl = `${window.location.origin}/agent/${store.slug}`
+  const agentUrl = `${window.location.origin}/agent/${store.slug}?k=${store.embed_key}`
   const snippet = `<iframe
   src="${agentUrl}"
   title="${store.name} — Shopping assistant"
@@ -61,6 +66,39 @@ export default function DeployPage() {
     setBusy(true)
     try {
       await setStoreLive(store.id, !store.agent_live)
+      await refreshStore()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function regenerateKey() {
+    if (
+      !window.confirm(
+        'Generate a new embed key? Any embed already on your site stops working until you paste the new code.',
+      )
+    ) {
+      return
+    }
+    setError(null)
+    setBusy(true)
+    try {
+      await rotateEmbedKey(store.id)
+      await refreshStore()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not regenerate.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function toggleKeyRequired() {
+    setError(null)
+    setBusy(true)
+    try {
+      await updateStore(store.id, { embed_key_required: !store.embed_key_required })
       await refreshStore()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update.')
@@ -108,6 +146,47 @@ export default function DeployPage() {
             >
               Open the agent in a new tab →
             </a>
+          </Card>
+
+          <Card>
+            <p className="eyebrow text-[0.6rem]">Embed key</p>
+            <p className="mt-1 text-xs text-muted">
+              The <code>?k=</code> in the snippet ties the embed to this store.
+            </p>
+            <p className="mt-2 break-all rounded-lg border border-line bg-paper px-3 py-2 font-mono text-[0.72rem] text-ink-soft">
+              {store.embed_key}
+            </p>
+            {isOwner ? (
+              <div className="mt-3 space-y-2.5">
+                <button
+                  type="button"
+                  onClick={regenerateKey}
+                  disabled={busy}
+                  className="btn btn-secondary !py-2 text-sm"
+                >
+                  Regenerate key
+                </button>
+                <label className="flex items-start gap-2 text-xs text-ink-soft">
+                  <input
+                    type="checkbox"
+                    checked={store.embed_key_required}
+                    onChange={toggleKeyRequired}
+                    disabled={busy}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="font-medium text-ink">Require this key</span> — also
+                    reject embeds that load with <em>no</em> <code>?k=</code> at all. (A
+                    wrong key is always rejected.) Turn on once your site uses the snippet
+                    above.
+                  </span>
+                </label>
+              </div>
+            ) : (
+              <p className="mt-2 text-xs text-muted">
+                Only the owner can regenerate the key or change enforcement.
+              </p>
+            )}
           </Card>
 
           {error ? <InlineError>{error}</InlineError> : null}

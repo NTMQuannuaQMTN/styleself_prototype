@@ -1159,6 +1159,21 @@ async function handleAgentChat(body, authHeader, rawEnv) {
         }
       };
     }
+    if (!authHeader && store.embed_key) {
+      const key = typeof req.embedKey === "string" ? req.embedKey.trim() : "";
+      const wrong = key !== "" && key !== store.embed_key;
+      const missing = key === "" && store.embed_key_required;
+      if (wrong || missing) {
+        return {
+          status: 403,
+          body: {
+            ok: false,
+            error: "forbidden",
+            message: "This embed is not authorised. Re-copy the code from the Deploy page."
+          }
+        };
+      }
+    }
     const [{ data: agentRow }, { data: locRows }] = await Promise.all([
       supabase.from("store_agents").select("*").eq("store_id", store.id).maybeSingle(),
       supabase.from("store_locations").select("id, name, is_primary").eq("store_id", store.id).order("is_primary", { ascending: false })

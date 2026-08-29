@@ -120,6 +120,24 @@ export async function handleAgentChat(
       }
     }
 
+    // A wrong ?k= is always rejected; a MISSING one only when the owner requires
+    // it. An authenticated merchant preview is always exempt.
+    if (!authHeader && store.embed_key) {
+      const key = typeof req.embedKey === 'string' ? req.embedKey.trim() : ''
+      const wrong = key !== '' && key !== store.embed_key
+      const missing = key === '' && store.embed_key_required
+      if (wrong || missing) {
+        return {
+          status: 403,
+          body: {
+            ok: false,
+            error: 'forbidden',
+            message: 'This embed is not authorised. Re-copy the code from the Deploy page.',
+          },
+        }
+      }
+    }
+
     const [{ data: agentRow }, { data: locRows }] = await Promise.all([
       supabase.from('store_agents').select('*').eq('store_id', store.id).maybeSingle(),
       supabase

@@ -167,6 +167,7 @@ export async function updateStore(
       | 'payout_bank_name'
       | 'payout_account_name'
       | 'payout_account_last4'
+      | 'embed_key_required'
     >
   >,
 ): Promise<Store> {
@@ -184,6 +185,13 @@ export async function updateStore(
 export async function setStoreLive(storeId: string, live: boolean): Promise<Store> {
   return unwrap(
     await supabase.rpc('set_store_live', { p_store: storeId, p_live: live }),
+  ) as Store
+}
+
+/** Owner-only: generate a new embed key (breaks any embed already on a site). */
+export async function rotateEmbedKey(storeId: string): Promise<Store> {
+  return unwrap(
+    await supabase.rpc('rotate_embed_key', { p_store: storeId }),
   ) as Store
 }
 

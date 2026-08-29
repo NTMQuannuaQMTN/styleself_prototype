@@ -21,6 +21,7 @@ export function OrderPreview({
   orderDraftToken,
   preview,
   authToken,
+  embedKey,
   readOnly = false,
   buyer: buyerProp,
   onBuyerChange,
@@ -31,6 +32,7 @@ export function OrderPreview({
   orderDraftToken?: string
   preview: AgentOrderPreview
   authToken?: string
+  embedKey?: string
   /** In-chat copy: show the summary only, no payment controls. */
   readOnly?: boolean
   /** Lift card details to the parent so they survive the panel remounting. */
@@ -125,6 +127,7 @@ export function OrderPreview({
       {
         agentId,
         conversationId,
+        embedKey,
         orderDraftToken,
         buyerName: name.trim(),
         card: { last4: digits.slice(-4), brand },
@@ -145,7 +148,7 @@ export function OrderPreview({
     setStage('processing')
     setError(null)
     const res = await executePayment(
-      { agentId, conversationId, orderDraftToken, authorizationToken },
+      { agentId, conversationId, embedKey, orderDraftToken, authorizationToken },
       authToken,
     )
     if (res.ok && res.kind === 'order') {

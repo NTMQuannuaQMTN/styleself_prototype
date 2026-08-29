@@ -78,7 +78,7 @@ api/agent/checkout.js       #   "
 | `/forgot-password`, `/reset-password` | Password recovery |
 | `/auth/callback` | OAuth + email-confirmation redirect target |
 | `/merchant` | `RequireAuth` → onboarding or Agent Studio (`agent`, `catalog`, `locations`, `team`, `deploy`, `orders`, `preview`, `settings`); `/merchant/account` for profile |
-| `/agent/:agentId` | **Public, no auth** — the deployed Fashion Commerce Agent, embeddable via `<iframe>`. `agentId` = the store's slug; `/agent/demo` runs on a built-in sample catalog. |
+| `/agent/:agentId?k=<embed_key>` | **Public, no auth** — the deployed Fashion Commerce Agent, embeddable via `<iframe>`. `agentId` = the store's slug; `k` = the store's embed key (enforced only when the owner enables it on Deploy). `/agent/demo` needs no key. |
 | `POST /api/agent/chat` | Agent runtime (not a page). Node/serverless. |
 | `POST /api/agent/checkout` | Deterministic payment flow — `authorize` + `pay`. No AI. |
 
@@ -93,7 +93,8 @@ one and request to join — an owner approves) or land in the Agent Studio:
   (persisted; **owner-only** to edit, others see it read-only)
 - **Orders** — every sale completed through the agent (buyer, items, total, Visa
   auth code), visible to all store members
-- **Deploy** — embed snippet + go-live toggle (**owner-only** to publish)
+- **Deploy** — embed snippet (carries a per-store `?k=` embed key; owner can
+  regenerate it and opt into enforcing it) + go-live toggle (**owner-only**)
 - **Store settings → Payout account** — settlement destination (last-4 only),
   owner-only; echoed on the shopper's order confirmation
 - **Catalog** — products with variants and per-location inventory. Add them one at

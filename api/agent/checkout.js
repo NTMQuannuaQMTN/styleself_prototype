@@ -399,9 +399,12 @@ async function handleCheckout(body, authHeader, rawEnv) {
   if (!Array.isArray(draft.items) || draft.items.length === 0) {
     return fail(400, "bad_request", "The order is empty.");
   }
-  const resolved = await resolveAgent(agentId, authHeader, env);
+  const resolved = await resolveAgent(agentId, authHeader, str(req.embedKey), env);
   if (resolved === "unconfigured") {
     return fail(500, "server", "The agent backend is not configured.");
+  }
+  if (resolved === "forbidden") {
+    return fail(403, "forbidden", "This embed is not authorised for checkout.");
   }
   if (!resolved) return fail(404, "not_found", "No agent found at this address.");
   if (action === "authorize") {
@@ -465,7 +468,7 @@ async function handleCheckout(body, authHeader, rawEnv) {
   }
   return { status: 200, body: result };
 }
-async function resolveAgent(agentId, authHeader, env) {
+async function resolveAgent(agentId, authHeader, embedKey, env) {
   if (agentId === "demo") {
     return {
       kind: "demo",
@@ -483,6 +486,12 @@ async function resolveAgent(agentId, authHeader, env) {
   });
   const { data: store } = await supabase.from("stores").select("*").eq("slug", agentId).maybeSingle();
   if (!store) return null;
+  if (!authHeader && store.embed_key) {
+    const key = (embedKey ?? "").trim();
+    const wrong = key !== "" && key !== store.embed_key;
+    const missing = key === "" && store.embed_key_required;
+    if (wrong || missing) return "forbidden";
+  }
   const [{ data: agentRow }, { data: locRows }] = await Promise.all([
     supabase.from("store_agents").select("currency").eq("store_id", store.id).maybeSingle(),
     supabase.from("store_locations").select("id, name, is_primary").eq("store_id", store.id).order("is_primary", { ascending: false })
