@@ -21,7 +21,12 @@ const MerchantLayout = lazy(() =>
 const CompleteProfilePage = lazy(
   () => import('./pages/merchant/CompleteProfilePage'),
 )
-const SettingsPage = lazy(() => import('./pages/merchant/SettingsPage'))
+const AccountSettingsPage = lazy(
+  () => import('./pages/merchant/AccountSettingsPage'),
+)
+const StoreSettingsPage = lazy(
+  () => import('./pages/merchant/StoreSettingsPage'),
+)
 const OnboardingPage = lazy(() => import('./pages/merchant/OnboardingPage'))
 const DashboardPage = lazy(() => import('./pages/merchant/DashboardPage'))
 const AgentStudioPage = lazy(() => import('./pages/merchant/AgentStudioPage'))
@@ -78,7 +83,7 @@ export function AppRoutes() {
         >
           {/* Account-level — no store required */}
           <Route path="complete-profile" element={<CompleteProfilePage />} />
-          <Route path="settings" element={<SettingsPage />} />
+          <Route path="account" element={<AccountSettingsPage />} />
 
           {/* Store-scoped */}
           <Route element={<StoreProvider />}>
@@ -93,6 +98,7 @@ export function AppRoutes() {
               <Route path="team" element={<TeamPage />} />
               <Route path="deploy" element={<DeployPage />} />
               <Route path="preview" element={<PreviewPage />} />
+              <Route path="settings" element={<StoreSettingsPage />} />
             </Route>
           </Route>
         </Route>

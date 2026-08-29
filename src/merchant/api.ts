@@ -45,7 +45,9 @@ export async function listMyJoinRequests(): Promise<
 
 export async function createStore(input: {
   name: string
+  branchName?: string | null
   headquarters?: string | null
+  city?: string | null
   userId: string
 }): Promise<Store> {
   return unwrap(
@@ -53,11 +55,27 @@ export async function createStore(input: {
       .from('stores')
       .insert({
         name: input.name.trim(),
+        branch_name: input.branchName?.trim() || null,
         headquarters: input.headquarters?.trim() || null,
+        city: input.city?.trim() || null,
         created_by: input.userId,
       })
       .select('*')
       .single(),
+  )
+}
+
+/** Differentiator shown next to a store name: branch name, else address, else city. */
+export function storeLabel(store: {
+  branch_name?: string | null
+  headquarters?: string | null
+  city?: string | null
+}): string | null {
+  return (
+    store.branch_name?.trim() ||
+    store.headquarters?.trim() ||
+    store.city?.trim() ||
+    null
   )
 }
 
@@ -77,6 +95,7 @@ export async function searchStores(query: string): Promise<Store[]> {
 export async function requestToJoin(input: {
   storeId: string
   userId: string
+  location?: string
   message?: string
 }): Promise<StoreJoinRequest> {
   return unwrap(
@@ -85,6 +104,7 @@ export async function requestToJoin(input: {
       .insert({
         store_id: input.storeId,
         user_id: input.userId,
+        requester_location: input.location?.trim() || null,
         message: input.message?.trim() || null,
       })
       .select('*')
@@ -111,7 +131,12 @@ export async function getStore(storeId: string): Promise<Store> {
 
 export async function updateStore(
   storeId: string,
-  patch: Partial<Pick<Store, 'name' | 'headquarters' | 'agent_live'>>,
+  patch: Partial<
+    Pick<
+      Store,
+      'name' | 'branch_name' | 'headquarters' | 'city' | 'agent_live' | 'slug'
+    >
+  >,
 ): Promise<Store> {
   return unwrap(
     await supabase
@@ -121,6 +146,19 @@ export async function updateStore(
       .select('*')
       .single(),
   )
+}
+
+export async function deleteStore(storeId: string): Promise<void> {
+  const { error } = await supabase.from('stores').delete().eq('id', storeId)
+  if (error) throw new Error(error.message)
+}
+
+/** slugify for the public agent URL — lowercase, hyphenated, no leading/trailing. */
+export function toSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }
 
 export async function getAgent(storeId: string): Promise<StoreAgent> {

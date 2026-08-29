@@ -27,7 +27,11 @@ export type Store = {
   id: string
   name: string
   slug: string
+  branch_name: string | null
+  /** street address */
   headquarters: string | null
+  /** city / area */
+  city: string | null
   agent_live: boolean
   created_by: string | null
   created_at: string
@@ -68,6 +72,7 @@ export type StoreJoinRequest = {
   user_id: string
   status: JoinRequestStatus
   message: string | null
+  requester_location: string | null
   requester_name: string | null
   requester_email: string | null
   created_at: string
@@ -124,7 +129,13 @@ export type Database = {
       profiles: Table<Profile, Partial<Omit<Profile, 'id'>> & { id: string }>
       stores: Table<
         Store,
-        { name: string; headquarters?: string | null; created_by: string }
+        {
+          name: string
+          branch_name?: string | null
+          headquarters?: string | null
+          city?: string | null
+          created_by: string
+        }
       >
       store_members: Table<StoreMember>
       store_agents: Table<StoreAgent, { store_id: string } & Partial<StoreAgent>>
@@ -140,7 +151,12 @@ export type Database = {
       >
       store_join_requests: Table<
         StoreJoinRequest,
-        { store_id: string; user_id: string; message?: string | null }
+        {
+          store_id: string
+          user_id: string
+          message?: string | null
+          requester_location?: string | null
+        }
       >
       products: Table<
         Product,

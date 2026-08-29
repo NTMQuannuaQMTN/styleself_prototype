@@ -72,12 +72,12 @@ export function AppHeader() {
                   ) : null}
                 </div>
                 <Link
-                  to="/merchant/settings"
+                  to="/merchant/account"
                   role="menuitem"
                   onClick={() => setOpen(false)}
                   className="block w-full px-3.5 py-2.5 text-left text-sm text-ink-soft transition-colors hover:bg-black/[0.03]"
                 >
-                  Settings
+                  Account
                 </Link>
                 <button
                   type="button"

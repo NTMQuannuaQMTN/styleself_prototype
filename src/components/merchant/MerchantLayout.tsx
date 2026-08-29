@@ -1,6 +1,7 @@
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { AppHeader } from '../app/AppHeader'
 import { useStore } from '../../merchant/useStore'
+import { storeLabel } from '../../merchant/api'
 import { FullPageSpinner } from '../../auth/guards'
 
 const NAV = [
@@ -11,6 +12,7 @@ const NAV = [
   { to: '/merchant/team', label: 'Team', badgeKey: 'team' as const },
   { to: '/merchant/deploy', label: 'Deploy' },
   { to: '/merchant/preview', label: 'Preview' },
+  { to: '/merchant/settings', label: 'Settings' },
 ]
 
 function StoreSwitcher() {
@@ -20,7 +22,8 @@ function StoreSwitcher() {
       <div className="px-3 py-2">
         <p className="font-display text-sm text-ink">{activeStore?.name}</p>
         <p className="text-xs text-muted">
-          {activeStore?.slug ? `styleself.ai/${activeStore.slug}` : ''}
+          {(activeStore && storeLabel(activeStore)) ||
+            (activeStore?.slug ? `/agent/${activeStore.slug}` : '')}
         </p>
       </div>
     )
@@ -33,11 +36,15 @@ function StoreSwitcher() {
         value={activeStore?.id ?? ''}
         onChange={(e) => setActiveStore(e.target.value)}
       >
-        {memberships.map((m) => (
-          <option key={m.store.id} value={m.store.id}>
-            {m.store.name}
-          </option>
-        ))}
+        {memberships.map((m) => {
+          const detail = storeLabel(m.store)
+          return (
+            <option key={m.store.id} value={m.store.id}>
+              {m.store.name}
+              {detail ? ` · ${detail}` : ''}
+            </option>
+          )
+        })}
       </select>
     </label>
   )
