@@ -10,9 +10,20 @@ import {
   PageHeader,
 } from '../../components/merchant/ui'
 
-function stockOf(p: ProductWithVariants) {
+function stockOf(p: ProductWithVariants, locationId?: string | null) {
   return p.variants.reduce(
-    (sum, v) => sum + v.inventory.reduce((s, i) => s + i.quantity, 0),
+    (sum, v) =>
+      sum +
+      v.inventory.reduce(
+        (s, i) =>
+          s +
+          (locationId && i.location_id !== locationId
+            ? 0
+            : Number.isFinite(Number(i.quantity))
+              ? Number(i.quantity)
+              : 0),
+        0,
+      ),
     0,
   )
 }
@@ -91,7 +102,9 @@ export default function CatalogPage() {
                 <p className="text-sm text-ink">
                   {formatMoney(p.price_cents, p.currency)}
                 </p>
-                <p className="text-xs text-muted">{stockOf(p)} in stock</p>
+                <p className="text-xs text-muted">
+                  Stock number: {stockOf(p, memberLocationId)}
+                </p>
               </div>
               <span
                 className={`shrink-0 rounded-full px-2 py-0.5 text-[0.62rem] uppercase tracking-[0.1em] ${

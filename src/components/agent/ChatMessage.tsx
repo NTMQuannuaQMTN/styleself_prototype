@@ -18,9 +18,11 @@ export type Turn = {
 export function ChatMessage({
   turn,
   agentName,
+  onAdd,
 }: {
   turn: Turn
   agentName: string
+  onAdd?: (product: AgentProductCard) => void
 }) {
   if (turn.role === 'user') {
     return (
@@ -43,7 +45,7 @@ export function ChatMessage({
         </p>
       )}
       {turn.products && turn.products.length > 0 && (
-        <ProductCards products={turn.products} />
+        <ProductCards products={turn.products} onAdd={onAdd} />
       )}
       {turn.comparison && <ComparisonCard comparison={turn.comparison} />}
       {turn.orderPreview && <OrderPreview preview={turn.orderPreview} />}
