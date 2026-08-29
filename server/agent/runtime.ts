@@ -118,6 +118,7 @@ function cardFor(
     colors,
     sizes,
     stockLevel,
+    stockQuantity: stock,
     ...(stockLevel === 'low' ? { unitsLeft: stock } : {}),
     reason: reasonFor(p.name, reply),
     ...(nearestMatch ? { nearestMatch: true } : {}),

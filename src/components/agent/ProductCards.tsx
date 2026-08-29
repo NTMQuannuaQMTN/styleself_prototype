@@ -273,6 +273,7 @@ export function AddControl({
   compact?: boolean
 }) {
   const out = product.stockLevel === 'out'
+  const maxQuantity = product.stockQuantity ?? product.unitsLeft ?? 0
   const colors = product.colors ?? []
   const colorNames = colors.map((c) => c.name)
   const sizes = product.sizes ?? []
@@ -297,7 +298,7 @@ export function AddControl({
           type="button"
           onClick={() =>
             onSelect({
-              quantity: 1,
+              quantity: Math.min(1, maxQuantity),
               size: sizes[0] ?? null,
               color: colorNames[0] ?? null,
             })
@@ -336,14 +337,26 @@ export function AddControl({
           >
             −
           </button>
-          <span className="min-w-[1.5rem] text-center text-[0.78rem] font-medium text-ink">
-            {sel.quantity}
-          </span>
+          <input
+            type="number"
+            min={1}
+            max={maxQuantity}
+            value={sel.quantity}
+            onChange={(e) => {
+              const next = Number(e.target.value)
+              if (Number.isFinite(next)) {
+                patch({ quantity: Math.max(1, Math.min(maxQuantity, Math.round(next))) })
+              }
+            }}
+            aria-label={`Quantity for ${product.name}`}
+            disabled={disabled}
+            className="w-10 border-0 bg-transparent text-center text-[0.78rem] text-ink outline-none"
+          />
           <button
             type="button"
             aria-label="Increase"
-            onClick={() => patch({ quantity: sel.quantity + 1 })}
-            disabled={disabled}
+            onClick={() => patch({ quantity: Math.min(maxQuantity, sel.quantity + 1) })}
+            disabled={disabled || sel.quantity >= maxQuantity}
             className="px-2.5 py-1 text-sm text-ink disabled:opacity-50"
           >
             +

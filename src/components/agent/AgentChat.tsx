@@ -80,6 +80,7 @@ export function AgentChat({
   const [detail, setDetail] = useState<AgentProductCard | null>(null)
   // The "Current cart" box — mirrors the agent's server-side bag after each turn.
   const [cart, setCart] = useState<CartItem[]>([])
+  const [pendingCartQuantities, setPendingCartQuantities] = useState<Record<string, number>>({})
   // Keep the cart visible from the first paint; it starts empty and updates in place.
   const [cartOpen, setCartOpen] = useState(true)
   // The Checkout panel (top-right) holds the payment flow; the in-chat copy is
@@ -285,6 +286,35 @@ export function AgentChat({
     'What do you have for a formal dinner?',
   ]
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0)
+  const stockByProduct = new Map(
+    turns.flatMap((turn) => turn.products ?? []).map((product) => [
+      product.id,
+      product.stockQuantity ?? product.unitsLeft ?? 0,
+    ]),
+  )
+
+  function changeCartQuantity(item: CartItem, quantity: number) {
+    const max = stockByProduct.get(item.productId) ?? 0
+    if (!Number.isFinite(quantity)) return
+    const next = Math.max(1, Math.min(max, Math.round(quantity)))
+    setPendingCartQuantities((current) => ({ ...current, [item.productId]: next }))
+  }
+
+  function confirmCartQuantity(item: CartItem) {
+    const next = pendingCartQuantities[item.productId]
+    if (next == null || next === item.quantity) return
+    setCart((current) => current.map((line) =>
+      line.productId === item.productId ? { ...line, quantity: next } : line,
+    ))
+    setPendingCartQuantities((current) => {
+      const updated = { ...current }
+      delete updated[item.productId]
+      return updated
+    })
+    send(
+      `Set the quantity of ${item.name}${item.variantLabel ? ` (${item.variantLabel})` : ''} to ${next}`,
+    )
+  }
 
   return (
     <div className={`relative ${className}`}>
@@ -312,11 +342,61 @@ export function AgentChat({
                     ) : null}
                   </div>
                   <div className="min-w-0 text-xs">
+                    {(() => {
+                      const draftQuantity = pendingCartQuantities[item.productId] ?? item.quantity
+                      const changed = draftQuantity !== item.quantity
+                      return (
+                        <>
                     <p className="line-clamp-2 text-ink">{item.name}</p>
                     {item.variantLabel ? (
                       <p className="text-[0.65rem] text-muted">{item.variantLabel}</p>
                     ) : null}
-                    <p className="mt-0.5 font-medium text-muted">× {item.quantity}</p>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        aria-label={`Decrease ${item.name} quantity`}
+                        onClick={() =>
+                            draftQuantity <= 1
+                            ? undefined
+                            : changeCartQuantity(item, draftQuantity - 1)
+                        }
+                        disabled={status !== 'ready' || draftQuantity <= 1}
+                        className="h-5 w-5 rounded border border-line-strong text-xs text-ink disabled:opacity-40"
+                      >
+                        −
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        max={stockByProduct.get(item.productId) ?? 0}
+                        value={draftQuantity}
+                        onChange={(e) => changeCartQuantity(item, Number(e.target.value))}
+                        aria-label={`Quantity for ${item.name}`}
+                        disabled={status !== 'ready'}
+                        className="w-9 rounded border border-line-strong bg-surface px-1 py-0.5 text-center text-[0.65rem] text-ink"
+                      />
+                      <button
+                        type="button"
+                        aria-label={`Increase ${item.name} quantity`}
+                        onClick={() => changeCartQuantity(item, draftQuantity + 1)}
+                        disabled={
+                          status !== 'ready' ||
+                          draftQuantity >= (stockByProduct.get(item.productId) ?? 0)
+                        }
+                        className="h-5 w-5 rounded border border-line-strong text-xs text-ink disabled:opacity-40"
+                      >
+                        +
+                      </button>
+                      <span className="text-[0.65rem] text-muted">in bag</span>
+                    </div>
+                    {changed && (
+                      <button type="button" onClick={() => confirmCartQuantity(item)} disabled={status !== 'ready'} className="mt-1 rounded-full bg-ink px-2 py-1 text-[0.62rem] font-medium text-paper disabled:opacity-50">
+                        Confirm change
+                      </button>
+                    )}
+                        </>
+                      )
+                    })()}
                   </div>
                 </div>
               ))}
