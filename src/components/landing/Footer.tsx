@@ -3,9 +3,9 @@ import { Container } from './primitives'
 import { ROUTES } from './routes'
 
 const LINKS: { label: string; to: string; external?: boolean }[] = [
-  { label: 'How It Works', to: '#how-it-works', external: true },
+  { label: 'Architecture', to: '#architecture', external: true },
+  { label: 'Trust & Security', to: '#security', external: true },
   { label: 'For Merchants', to: '#for-merchants', external: true },
-  { label: 'The Experience', to: '#experience', external: true },
   { label: 'Log In', to: ROUTES.login },
   { label: 'Get Started', to: ROUTES.signup },
 ]
