@@ -298,9 +298,11 @@ export function OrderPreview({
             <span aria-hidden>✓</span> {order.message}
           </p>
           <dl className="space-y-1 text-[0.72rem] text-muted">
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-3">
               <dt>Order</dt>
-              <dd className="font-mono text-ink-soft">{order.orderId}</dd>
+              <dd className="break-all text-right font-mono text-ink-soft">
+                {order.orderId}
+              </dd>
             </div>
             {order.visa ? (
               <div className="flex justify-between gap-3">
