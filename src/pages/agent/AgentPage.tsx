@@ -14,10 +14,10 @@ export default function AgentPage() {
   const { agentId = 'demo' } = useParams()
 
   return (
-    <div className="flex min-h-screen flex-col bg-paper">
-      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col p-3 sm:p-4">
-        <AgentChat agentId={agentId} className="min-h-[32rem] flex-1" />
-        <p className="mt-2 text-center text-[0.68rem] text-muted">
+    <div className="flex h-dvh flex-col overflow-hidden bg-paper">
+      <div className="mx-auto flex w-full min-h-0 max-w-lg flex-1 flex-col p-3 sm:p-4">
+        <AgentChat agentId={agentId} className="min-h-0 flex-1" />
+        <p className="mt-2 shrink-0 text-center text-[0.68rem] text-muted">
           Shopping assistant by{' '}
           <span className="font-display italic text-ink">StyleSelf</span>
         </p>

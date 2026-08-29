@@ -125,7 +125,7 @@ export function AgentChat({
     <div
       className={`flex flex-col overflow-hidden rounded-[18px] border border-line-strong bg-surface shadow-[0_30px_70px_-45px_rgba(23,21,15,0.3)] ${className}`}
     >
-      <div className="flex items-center gap-2 border-b border-line px-4 py-3">
+      <div className="flex shrink-0 items-center gap-2 border-b border-line px-4 py-3">
         <span className="h-1.5 w-1.5 rounded-full bg-success" />
         <span className="font-display text-sm text-ink">{agentName}</span>
         {branding && (
@@ -138,7 +138,10 @@ export function AgentChat({
         )}
       </div>
 
-      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4"
+      >
         {status === 'init' ? (
           <TypingDots />
         ) : (
@@ -149,7 +152,7 @@ export function AgentChat({
         {status === 'thinking' && <TypingDots />}
       </div>
 
-      <div className="border-t border-line p-3">
+      <div className="shrink-0 border-t border-line p-3">
         {turns.length <= 1 && status === 'ready' && (
           <div className="mb-2 flex flex-wrap gap-1.5">
             {suggestions.map((s) => (
