@@ -65,12 +65,14 @@ export function AgentBubble({
 export function ProductCard({
   name,
   price,
-  tone,
+  image,
+  alt,
   highlight = false,
 }: {
   name: string
   price: string
-  tone: string
+  image: string
+  alt?: string
   highlight?: boolean
 }) {
   return (
@@ -81,12 +83,15 @@ export function ProductCard({
           : 'border-line bg-surface hover:border-line-strong'
       }`}
     >
-      <div
-        className="mb-2 aspect-[4/5] w-full rounded-lg"
-        style={{
-          background: `linear-gradient(150deg, ${tone} 0%, rgba(255,255,255,0.35) 120%)`,
-        }}
-      />
+      <div className="mb-2 aspect-[4/5] w-full overflow-hidden rounded-lg bg-paper">
+        <img
+          src={image}
+          alt={alt ?? name}
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover"
+        />
+      </div>
       <span className="text-xs font-medium leading-tight text-ink">{name}</span>
       <span className="mt-0.5 text-xs text-muted">{price}</span>
     </div>

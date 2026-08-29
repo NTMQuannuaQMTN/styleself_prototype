@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../auth/useAuth'
 import { NAV_LINKS, ROUTES } from './routes'
 
 export function Navbar() {
+  const { session, loading } = useAuth()
+  const authed = !loading && !!session
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -50,15 +53,29 @@ export function Navbar() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link
-            to={ROUTES.login}
-            className="text-sm text-ink-soft transition-colors hover:text-ink"
-          >
-            Log In
-          </Link>
-          <Link to={ROUTES.merchantSignup} className="btn btn-primary !px-4 !py-2.5 text-sm">
-            Get Started
-          </Link>
+          {authed ? (
+            <Link
+              to={ROUTES.app}
+              className="btn btn-primary !px-4 !py-2.5 text-sm"
+            >
+              Go to dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                to={ROUTES.login}
+                className="text-sm text-ink-soft transition-colors hover:text-ink"
+              >
+                Log In
+              </Link>
+              <Link
+                to={ROUTES.merchantSignup}
+                className="btn btn-primary !px-4 !py-2.5 text-sm"
+              >
+                Deploy Your Agent
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -108,20 +125,32 @@ export function Navbar() {
             </a>
           ))}
           <div className="mt-3 flex flex-col gap-3 border-t border-line pt-4">
-            <Link
-              to={ROUTES.login}
-              onClick={() => setMenuOpen(false)}
-              className="btn btn-secondary w-full"
-            >
-              Log In
-            </Link>
-            <Link
-              to={ROUTES.merchantSignup}
-              onClick={() => setMenuOpen(false)}
-              className="btn btn-primary w-full"
-            >
-              Get Started
-            </Link>
+            {authed ? (
+              <Link
+                to={ROUTES.app}
+                onClick={() => setMenuOpen(false)}
+                className="btn btn-primary w-full"
+              >
+                Go to dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to={ROUTES.login}
+                  onClick={() => setMenuOpen(false)}
+                  className="btn btn-secondary w-full"
+                >
+                  Log In
+                </Link>
+                <Link
+                  to={ROUTES.merchantSignup}
+                  onClick={() => setMenuOpen(false)}
+                  className="btn btn-primary w-full"
+                >
+                  Deploy Your Agent
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

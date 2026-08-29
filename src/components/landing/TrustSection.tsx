@@ -1,4 +1,7 @@
 import { Container, Reveal } from './primitives'
+import { DEMO_PRODUCTS } from './products'
+
+const BLAZER = DEMO_PRODUCTS[0]
 
 const GUARANTEES = [
   'Transaction preview',
@@ -14,12 +17,14 @@ export function TrustSection() {
         <Reveal>
           <p className="eyebrow mb-4 !text-paper/55">Trust &amp; consent</p>
           <h2 className="text-3xl leading-[1.12] text-paper sm:text-4xl">
-            AI that acts with{' '}
-            <span className="italic text-accent-soft">your permission.</span>
+            The agent does the work.{' '}
+            <span className="italic text-accent-soft">
+              The customer stays in control.
+            </span>
           </h2>
           <p className="mt-5 text-base leading-relaxed text-paper/70">
-            StyleSelf handles the shopping work while keeping every purchase
-            transparent and under your control.
+            Every agent-driven transaction is transparent and explicitly
+            authorized — no unrestricted autonomous payments.
           </p>
 
           <ul className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -37,7 +42,7 @@ export function TrustSection() {
           </ul>
 
           <p className="mt-8 font-display text-lg text-paper">
-            The agent can do the work. You stay in control.
+            Preview, confirm, verify, authorize — in that order, every time.
           </p>
         </Reveal>
 
@@ -46,12 +51,12 @@ export function TrustSection() {
             <p className="eyebrow text-[0.6rem]">Purchase review</p>
 
             <div className="mt-4 flex items-center gap-3 border-b border-line pb-4">
-              <div
-                className="h-14 w-11 shrink-0 rounded-md"
-                style={{
-                  background:
-                    'linear-gradient(150deg, #d8c7ad 0%, rgba(255,255,255,0.4) 120%)',
-                }}
+              <img
+                src={BLAZER.image}
+                alt={BLAZER.alt}
+                loading="lazy"
+                decoding="async"
+                className="h-14 w-11 shrink-0 rounded-md object-cover"
               />
               <div>
                 <p className="text-sm font-medium text-ink">Linen Blazer</p>

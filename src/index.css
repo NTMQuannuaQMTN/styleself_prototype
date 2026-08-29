@@ -95,6 +95,45 @@
     border-color: var(--color-ink);
     background-color: rgba(23, 21, 15, 0.03);
   }
+
+  .btn[disabled],
+  .btn:disabled {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  .field-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-ink-soft);
+    margin-bottom: 0.4rem;
+  }
+
+  .field-input {
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid var(--color-line-strong);
+    background-color: var(--color-surface);
+    padding: 0.7rem 0.85rem;
+    font-size: 0.925rem;
+    color: var(--color-ink);
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
+  }
+
+  .field-input::placeholder {
+    color: color-mix(in srgb, var(--color-muted) 75%, transparent);
+  }
+
+  .field-input:focus {
+    outline: none;
+    border-color: var(--color-ink);
+    box-shadow: 0 0 0 3px rgba(23, 21, 15, 0.08);
+  }
+
+  .field-input[aria-invalid='true'] {
+    border-color: #b4482f;
+  }
 }
 
 /* Scroll reveal */

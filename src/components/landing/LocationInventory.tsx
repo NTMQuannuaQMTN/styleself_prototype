@@ -2,20 +2,16 @@ import type { ReactNode } from 'react'
 import { Container, Reveal, SectionHeading } from './primitives'
 import { AgentBubble } from './chat'
 
-function StoreCard({
-  children,
-  meta,
-}: {
-  children: ReactNode
-  meta: string
-}) {
+function StoreCard({ children, meta }: { children: ReactNode; meta: string }) {
   return (
     <div className="rounded-[18px] border border-line-strong bg-surface p-6 shadow-[0_30px_60px_-45px_rgba(23,21,15,0.28)]">
       <div className="flex items-baseline justify-between">
         <p className="font-display text-lg tracking-tight text-ink">
           Urban Thread
         </p>
-        <span className="text-xs text-muted">{meta}</span>
+        <span className="text-xs uppercase tracking-[0.12em] text-muted">
+          {meta}
+        </span>
       </div>
       <div className="my-5 h-px bg-line" />
       <p className="text-sm font-medium text-ink">Black Linen Shirt</p>
@@ -31,13 +27,14 @@ export function LocationInventory() {
       <Container>
         <Reveal>
           <SectionHeading
-            eyebrow="Any store size"
+            eyebrow="Any merchant size"
             title={
               <>
-                One agent. <span className="italic text-accent">Any store size.</span>
+                Built for one store or{' '}
+                <span className="italic text-accent">one hundred.</span>
               </>
             }
-            intro="StyleSelf answers real inventory questions — whether you run one shop or forty."
+            intro="The agent answers real inventory questions — whether the merchant runs a single shop or a national chain."
           />
         </Reveal>
 
@@ -51,13 +48,13 @@ export function LocationInventory() {
               </div>
             </StoreCard>
             <AgentBubble>
-              Yes — the black linen shirt in M is available at your store.
+              Yes — the black linen shirt in M is available.
             </AgentBubble>
           </Reveal>
 
           <Reveal delay={100} className="flex flex-col gap-4">
             <p className="eyebrow">Multi-location retailer</p>
-            <StoreCard meta="4 locations">
+            <StoreCard meta="3 locations">
               <ul className="overflow-hidden rounded-lg border border-line text-sm">
                 {[
                   { loc: 'Orchard', qty: 4 },
@@ -77,10 +74,18 @@ export function LocationInventory() {
               </ul>
             </StoreCard>
             <AgentBubble>
-              It's available at Orchard and VivoCity. Orchard has the most stock.
+              It's available at Orchard and VivoCity. Orchard currently has the
+              most stock.
             </AgentBubble>
           </Reveal>
         </div>
+
+        <Reveal className="mt-12">
+          <p className="font-display text-xl text-ink">
+            One agent architecture.{' '}
+            <span className="italic text-accent">Any merchant size.</span>
+          </p>
+        </Reveal>
       </Container>
     </section>
   )

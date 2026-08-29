@@ -1,8 +1,10 @@
-/** Destinations for landing-page CTAs. Auth screens arrive in a later phase. */
+/** Destinations for landing-page CTAs. */
 export const ROUTES = {
   login: '/login',
+  signup: '/create-account',
   merchantSignup: '/create-account?role=merchant',
   customerSignup: '/create-account?role=customer',
+  app: '/app',
 } as const
 
 export const NAV_LINKS = [
