@@ -27,6 +27,7 @@ export const DEMO_PRODUCTS: AgentProduct[] = [
     category: 'Jackets',
     description:
       'Relaxed-fit oatmeal linen blazer, half-lined, natural shoulder. Smart casual.',
+    attributes: 'Urban Thread linen relaxed-fit smart-casual mens unlined',
     priceCents: 8900,
     imageUrl: linenBlazer,
     stockByLocation: { orchard: 4, vivocity: 2, jurong: 0 },
@@ -37,6 +38,7 @@ export const DEMO_PRODUCTS: AgentProduct[] = [
     category: 'Shirts',
     description:
       'Lightweight taupe overshirt with chest pockets. Casual layering piece.',
+    attributes: 'Urban Thread cotton relaxed-fit casual mens machine-washable',
     priceCents: 7200,
     imageUrl: relaxedOvershirt,
     stockByLocation: { orchard: 6, vivocity: 3, jurong: 5 },
@@ -47,6 +49,7 @@ export const DEMO_PRODUCTS: AgentProduct[] = [
     category: 'Jackets',
     description:
       'Structured navy tailored jacket. Formal, dinner-ready, sharp shoulder.',
+    attributes: 'Urban Thread wool tailored formal mens dry-clean',
     priceCents: 12900,
     imageUrl: tailoredJacket,
     stockByLocation: { orchard: 2, vivocity: 1, jurong: 0 },
@@ -55,7 +58,9 @@ export const DEMO_PRODUCTS: AgentProduct[] = [
     id: 'oxford-shirt',
     name: 'Oxford Shirt',
     category: 'Shirts',
-    description: 'Classic white cotton oxford. Works under a blazer or on its own.',
+    description:
+      'Classic white cotton oxford. Works under a blazer or on its own.',
+    attributes: 'Urban Thread cotton classic-fit smart-casual unisex machine-washable',
     priceCents: 4900,
     imageUrl: null,
     stockByLocation: { orchard: 12, vivocity: 8, jurong: 10 },
@@ -64,7 +69,9 @@ export const DEMO_PRODUCTS: AgentProduct[] = [
     id: 'wool-trousers',
     name: 'Wool Trousers',
     category: 'Trousers',
-    description: 'Charcoal tapered wool trousers with a clean drape. Smart casual to formal.',
+    description:
+      'Charcoal tapered wool trousers with a clean drape. Smart casual to formal.',
+    attributes: 'Urban Thread wool tapered smart-casual formal mens',
     priceCents: 9800,
     imageUrl: null,
     stockByLocation: { orchard: 5, vivocity: 4, jurong: 2 },

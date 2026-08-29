@@ -33,6 +33,15 @@ export default function PreviewPage() {
             name: p.name,
             category: p.category,
             description: p.description,
+            attributes: [
+              p.brand,
+              p.style,
+              p.gender,
+              p.material,
+              p.care,
+            ]
+              .filter(Boolean)
+              .join(' '),
             priceCents: p.price_cents,
             imageUrl: p.image_url,
             stockByLocation,

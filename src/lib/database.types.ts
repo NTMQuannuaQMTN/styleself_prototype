@@ -80,6 +80,11 @@ export type Product = {
   store_id: string
   name: string
   description: string | null
+  brand: string | null
+  style: string | null
+  gender: string | null
+  material: string | null
+  care: string | null
   category: string | null
   price_cents: number
   currency: string
@@ -89,10 +94,12 @@ export type Product = {
   updated_at: string
 }
 
+/** One (size, color/pattern) combination of a product. */
 export type ProductVariant = {
   id: string
   product_id: string
-  label: string
+  size: string | null
+  color: string | null
   sku: string | null
   price_cents: number | null
   created_at: string
@@ -141,6 +148,11 @@ export type Database = {
           store_id: string
           name: string
           description?: string | null
+          brand?: string | null
+          style?: string | null
+          gender?: string | null
+          material?: string | null
+          care?: string | null
           category?: string | null
           price_cents?: number
           currency?: string
@@ -152,7 +164,8 @@ export type Database = {
         ProductVariant,
         {
           product_id: string
-          label: string
+          size?: string | null
+          color?: string | null
           sku?: string | null
           price_cents?: number | null
         }

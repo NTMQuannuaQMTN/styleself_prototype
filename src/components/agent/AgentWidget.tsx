@@ -6,6 +6,8 @@ export type AgentProduct = {
   name: string
   category: string | null
   description: string | null
+  /** brand / style / gender / material / care — folded into the search text */
+  attributes: string
   priceCents: number
   imageUrl: string | null
   /** locationId -> units in stock */
@@ -64,8 +66,9 @@ function search(products: AgentProduct[], query: string) {
   const scored = products
     .filter((p) => totalStock(p) > 0)
     .map((p) => {
-      const haystack =
-        `${p.name} ${p.category ?? ''} ${p.description ?? ''}`.toLowerCase()
+      const haystack = `${p.name} ${p.category ?? ''} ${
+        p.description ?? ''
+      } ${p.attributes}`.toLowerCase()
       let score = terms.reduce((s, t) => s + (haystack.includes(t) ? 1 : 0), 0)
       if (terms.length === 0) score = 1
       if (cap !== null && p.priceCents <= cap) score += 1

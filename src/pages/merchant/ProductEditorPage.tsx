@@ -11,6 +11,7 @@ import {
   getProduct,
   setInventory,
   updateProduct,
+  variantLabel,
   type ProductWithVariants,
 } from '../../merchant/api'
 import { moneyToInput, parseMoney } from '../../merchant/money'
@@ -26,7 +27,32 @@ import {
 } from '../../components/merchant/ui'
 
 const STATUSES: ProductStatus[] = ['active', 'draft', 'archived']
+const GENDERS = ['', 'Mens', 'Womens', 'Unisex', 'Kids']
+const COMMON_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'One size']
 
+type Attributes = {
+  description: string
+  brand: string
+  style: string
+  gender: string
+  material: string
+  care: string
+  category: string
+}
+
+const EMPTY_ATTRS: Attributes = {
+  description: '',
+  brand: '',
+  style: '',
+  gender: '',
+  material: '',
+  care: '',
+  category: '',
+}
+
+type VariantRow = { size: string; color: string; qty: string }
+
+// ---------------------------------------------------------------------------
 export default function ProductEditorPage() {
   const { productId } = useParams()
   const { activeStore, agent, locations, isManager } = useStore()
@@ -44,6 +70,7 @@ export default function ProductEditorPage() {
       <CreateProduct
         storeId={activeStore.id}
         currency={agent?.currency ?? 'USD'}
+        locations={locations}
         disabled={!isManager}
         onCreated={(id) => navigate(`/merchant/catalog/${id}`, { replace: true })}
       />
@@ -76,22 +103,135 @@ export default function ProductEditorPage() {
 }
 
 // ---------------------------------------------------------------------------
+function AttributeFields({
+  attrs,
+  onChange,
+  currency,
+  price,
+  onPrice,
+  disabled,
+}: {
+  attrs: Attributes
+  onChange: (next: Attributes) => void
+  currency: string
+  price: string
+  onPrice: (v: string) => void
+  disabled?: boolean
+}) {
+  const set = (k: keyof Attributes) => (v: string) =>
+    onChange({ ...attrs, [k]: v })
+
+  return (
+    <>
+      <TextArea
+        label="Description"
+        value={attrs.description}
+        onChange={(e) => set('description')(e.target.value)}
+        rows={3}
+        placeholder="Relaxed-fit linen blazer, half-lined, natural shoulder."
+        disabled={disabled}
+      />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <TextField
+          label="Brand"
+          value={attrs.brand}
+          onChange={(e) => set('brand')(e.target.value)}
+          placeholder="Urban Thread"
+          disabled={disabled}
+        />
+        <TextField
+          label="Category"
+          value={attrs.category}
+          onChange={(e) => set('category')(e.target.value)}
+          placeholder="Jackets"
+          disabled={disabled}
+        />
+        <TextField
+          label="Style"
+          value={attrs.style}
+          onChange={(e) => set('style')(e.target.value)}
+          placeholder="Smart casual"
+          disabled={disabled}
+        />
+        <SelectField
+          label="Gender"
+          value={attrs.gender}
+          onChange={(e) => set('gender')(e.target.value)}
+          disabled={disabled}
+        >
+          {GENDERS.map((g) => (
+            <option key={g} value={g}>
+              {g || '—'}
+            </option>
+          ))}
+        </SelectField>
+        <TextField
+          label="Material"
+          value={attrs.material}
+          onChange={(e) => set('material')(e.target.value)}
+          placeholder="100% linen"
+          disabled={disabled}
+        />
+        <TextField
+          label={`Price (${currency})`}
+          inputMode="decimal"
+          value={price}
+          onChange={(e) => onPrice(e.target.value)}
+          placeholder="89"
+          disabled={disabled}
+        />
+      </div>
+      <TextField
+        label="Care instructions"
+        value={attrs.care}
+        onChange={(e) => set('care')(e.target.value)}
+        placeholder="Machine wash cold, hang dry"
+        disabled={disabled}
+      />
+    </>
+  )
+}
+
+// ---------------------------------------------------------------------------
 function CreateProduct({
   storeId,
   currency,
+  locations,
   disabled,
   onCreated,
 }: {
   storeId: string
   currency: string
+  locations: StoreLocation[]
   disabled: boolean
   onCreated: (id: string) => void
 }) {
+  const primaryLocation =
+    locations.find((l) => l.is_primary) ?? locations[0] ?? null
+
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
-  const [category, setCategory] = useState('')
+  const [attrs, setAttrs] = useState<Attributes>(EMPTY_ATTRS)
+  const [rows, setRows] = useState<VariantRow[]>([])
+  const [size, setSize] = useState('')
+  const [color, setColor] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  function addRow(nextSize: string, nextColor: string) {
+    const s = nextSize.trim()
+    const c = nextColor.trim()
+    if (!s && !c) return
+    const dupe = rows.some(
+      (r) =>
+        r.size.toLowerCase() === s.toLowerCase() &&
+        r.color.toLowerCase() === c.toLowerCase(),
+    )
+    if (dupe) return
+    setRows((r) => [...r, { size: s, color: c, qty: '0' }])
+    setSize('')
+    setColor('')
+  }
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -106,10 +246,29 @@ function CreateProduct({
       const product = await createProduct({
         storeId,
         name,
-        category,
         priceCents: cents,
         currency,
+        description: attrs.description,
+        brand: attrs.brand,
+        style: attrs.style,
+        gender: attrs.gender,
+        material: attrs.material,
+        care: attrs.care,
+        category: attrs.category,
       })
+
+      for (const row of rows) {
+        const variant = await createVariant({
+          productId: product.id,
+          size: row.size || null,
+          color: row.color || null,
+        })
+        const qty = Math.max(0, Math.round(Number(row.qty) || 0))
+        if (primaryLocation && qty > 0) {
+          await setInventory(variant.id, primaryLocation.id, qty)
+        }
+      }
+
       onCreated(product.id)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create product.')
@@ -122,12 +281,12 @@ function CreateProduct({
       <PageHeader
         eyebrow="Catalog"
         title="New product"
-        description="Add the basics now — variants and inventory come next."
+        description="Add the details, then the size / colour combinations and how many are in stock."
       />
       {disabled ? (
         <InlineError>Only owners and admins can add products.</InlineError>
       ) : (
-        <form onSubmit={submit} className="max-w-lg space-y-4">
+        <form onSubmit={submit} className="max-w-xl space-y-4">
           <TextField
             label="Name"
             required
@@ -135,22 +294,95 @@ function CreateProduct({
             onChange={(e) => setName(e.target.value)}
             placeholder="Linen Blazer"
           />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextField
-              label={`Price (${currency})`}
-              required
-              inputMode="decimal"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="89"
-            />
-            <TextField
-              label="Category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="Jackets"
-            />
+          <AttributeFields
+            attrs={attrs}
+            onChange={setAttrs}
+            currency={currency}
+            price={price}
+            onPrice={setPrice}
+          />
+
+          <div>
+            <p className="field-label">Sizes, colours &amp; stock</p>
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {COMMON_SIZES.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setSize(s)}
+                  className="rounded-full border border-line-strong px-2.5 py-1 text-xs text-muted transition-colors hover:border-ink hover:text-ink"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-end gap-2">
+              <TextField
+                label="Size"
+                className="w-24"
+                value={size}
+                onChange={(e) => setSize(e.target.value)}
+                placeholder="M"
+              />
+              <TextField
+                label="Colour / pattern"
+                className="min-w-32 flex-1"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                placeholder="Navy"
+              />
+              <button
+                type="button"
+                className="btn btn-secondary shrink-0"
+                onClick={() => addRow(size, color)}
+              >
+                Add
+              </button>
+            </div>
+
+            {rows.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {rows.map((row, i) => (
+                  <div
+                    key={`${row.size}|${row.color}`}
+                    className="flex items-center gap-3"
+                  >
+                    <span className="w-32 shrink-0 text-sm font-medium text-ink">
+                      {variantLabel(row)}
+                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      value={row.qty}
+                      onChange={(e) => {
+                        const next = [...rows]
+                        next[i] = { ...row, qty: e.target.value }
+                        setRows(next)
+                      }}
+                      className="w-20 rounded-md border border-line-strong bg-surface px-2 py-1 text-sm"
+                    />
+                    <span className="text-xs text-muted">in stock</span>
+                    <button
+                      type="button"
+                      onClick={() => setRows(rows.filter((_, j) => j !== i))}
+                      className="ml-auto text-xs text-muted hover:text-[#8f3a24]"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <p className="text-xs text-muted">
+                  Stock is recorded at{' '}
+                  {primaryLocation?.name ?? 'your store'}
+                  {locations.length > 1
+                    ? ' — set the other locations from the product page.'
+                    : '.'}
+                </p>
+              </div>
+            )}
           </div>
+
           {error ? <InlineError>{error}</InlineError> : null}
           <div className="flex gap-3">
             <button type="submit" className="btn btn-primary" disabled={busy}>
@@ -183,11 +415,18 @@ function EditProduct({
   onDeleted: () => void
 }) {
   const [name, setName] = useState(product.name)
-  const [description, setDescription] = useState(product.description ?? '')
-  const [category, setCategory] = useState(product.category ?? '')
   const [price, setPrice] = useState(moneyToInput(product.price_cents))
   const [imageUrl, setImageUrl] = useState(product.image_url ?? '')
   const [status, setStatus] = useState<ProductStatus>(product.status)
+  const [attrs, setAttrs] = useState<Attributes>({
+    description: product.description ?? '',
+    brand: product.brand ?? '',
+    style: product.style ?? '',
+    gender: product.gender ?? '',
+    material: product.material ?? '',
+    care: product.care ?? '',
+    category: product.category ?? '',
+  })
 
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -203,10 +442,16 @@ function EditProduct({
     }
     setSaving(true)
     try {
+      const t = (v: string) => v.trim() || null
       await updateProduct(product.id, {
         name: name.trim(),
-        description: description.trim() || null,
-        category: category.trim() || null,
+        description: t(attrs.description),
+        brand: t(attrs.brand),
+        style: t(attrs.style),
+        gender: t(attrs.gender),
+        material: t(attrs.material),
+        care: t(attrs.care),
+        category: t(attrs.category),
         price_cents: cents,
         image_url: imageUrl.trim() || null,
         status,
@@ -220,6 +465,14 @@ function EditProduct({
       setSaving(false)
     }
   }
+
+  const summary = [
+    ['Brand', attrs.brand],
+    ['Style', attrs.style],
+    ['Gender', attrs.gender],
+    ['Material', attrs.material],
+    ['Care', attrs.care],
+  ].filter(([, v]) => v)
 
   return (
     <div className="space-y-8">
@@ -245,29 +498,14 @@ function EditProduct({
             onChange={(e) => setName(e.target.value)}
             disabled={!canManage}
           />
-          <TextArea
-            label="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            placeholder="Relaxed-fit linen blazer, half-lined, natural shoulder."
+          <AttributeFields
+            attrs={attrs}
+            onChange={setAttrs}
+            currency={currency}
+            price={price}
+            onPrice={setPrice}
             disabled={!canManage}
           />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextField
-              label={`Price (${currency})`}
-              inputMode="decimal"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              disabled={!canManage}
-            />
-            <TextField
-              label="Category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              disabled={!canManage}
-            />
-          </div>
           <TextField
             label="Image URL"
             value={imageUrl}
@@ -331,6 +569,19 @@ function EditProduct({
               No image
             </div>
           )}
+          {summary.length > 0 && (
+            <dl className="rounded-[14px] border border-line bg-surface p-4 text-sm">
+              {summary.map(([k, v]) => (
+                <div
+                  key={k}
+                  className="flex justify-between gap-3 py-1 first:pt-0 last:pb-0"
+                >
+                  <dt className="text-muted">{k}</dt>
+                  <dd className="text-right text-ink">{v}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
         </div>
       </div>
 
@@ -359,19 +610,26 @@ function VariantsSection({
   canManage: boolean
   onReload: () => void
 }) {
-  const [label, setLabel] = useState('')
+  const [size, setSize] = useState('')
+  const [color, setColor] = useState('')
   const [sku, setSku] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function addVariant(e: FormEvent) {
     e.preventDefault()
-    if (!label.trim()) return
+    if (!size.trim() && !color.trim()) return
     setError(null)
     setBusy(true)
     try {
-      await createVariant({ productId: product.id, label, sku })
-      setLabel('')
+      await createVariant({
+        productId: product.id,
+        size: size || null,
+        color: color || null,
+        sku,
+      })
+      setSize('')
+      setColor('')
       setSku('')
       onReload()
     } catch (err) {
@@ -383,23 +641,23 @@ function VariantsSection({
 
   return (
     <Card>
-      <p className="font-display text-lg text-ink">Variants & inventory</p>
+      <p className="font-display text-lg text-ink">Sizes, colours &amp; stock</p>
       <p className="mt-1 text-sm text-muted">
-        Add sizes or colors, then set stock per location.
+        How many are left for every size / colour, per location.
       </p>
 
       {product.variants.length === 0 ? (
         <p className="mt-4 text-sm text-muted">
-          No variants yet. Add one below (e.g. “Size M” or “M / Black”).
+          No variants yet. Add a size and/or colour below.
         </p>
       ) : (
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[32rem] border-collapse text-sm">
             <thead>
               <tr className="border-b border-line text-left text-xs uppercase tracking-[0.1em] text-muted">
-                <th className="py-2 pr-3 font-medium">Variant</th>
+                <th className="py-2 pr-3 font-medium">Size · Colour</th>
                 {locations.map((loc) => (
-                  <th key={loc.id} className="py-2 px-2 font-medium">
+                  <th key={loc.id} className="px-2 py-2 font-medium">
                     {loc.name}
                   </th>
                 ))}
@@ -410,10 +668,8 @@ function VariantsSection({
               {product.variants.map((v) => (
                 <tr key={v.id} className="border-b border-line last:border-0">
                   <td className="py-2 pr-3">
-                    <p className="font-medium text-ink">{v.label}</p>
-                    {v.sku && (
-                      <p className="text-xs text-muted">{v.sku}</p>
-                    )}
+                    <p className="font-medium text-ink">{variantLabel(v)}</p>
+                    {v.sku && <p className="text-xs text-muted">{v.sku}</p>}
                   </td>
                   {locations.map((loc) => {
                     const row = v.inventory.find(
@@ -458,25 +714,32 @@ function VariantsSection({
           className="mt-5 flex flex-wrap items-end gap-3 border-t border-line pt-5"
         >
           <TextField
-            label="Variant label"
-            className="min-w-36 flex-1"
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            placeholder="Size M"
+            label="Size"
+            className="w-24"
+            value={size}
+            onChange={(e) => setSize(e.target.value)}
+            placeholder="M"
+          />
+          <TextField
+            label="Colour / pattern"
+            className="min-w-32 flex-1"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            placeholder="Navy"
           />
           <TextField
             label="SKU (optional)"
-            className="min-w-36 flex-1"
+            className="min-w-28 flex-1"
             value={sku}
             onChange={(e) => setSku(e.target.value)}
-            placeholder="LB-M"
+            placeholder="LB-M-NVY"
           />
           <button
             type="submit"
             className="btn btn-secondary shrink-0"
             disabled={busy}
           >
-            {busy ? 'Adding…' : 'Add variant'}
+            {busy ? 'Adding…' : 'Add'}
           </button>
         </form>
       )}

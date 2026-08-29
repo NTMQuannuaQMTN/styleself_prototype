@@ -206,13 +206,22 @@ export async function deleteLocation(id: string): Promise<void> {
 export type TeamMember = StoreMember & { profile: Profile | null }
 
 export async function listMembers(storeId: string): Promise<TeamMember[]> {
-  return unwrap(
+  // Two-step (not a PostgREST embed) so it works regardless of how the
+  // store_members -> profiles FK is wired. The co-store RLS policy on profiles
+  // lets a member read their teammates' rows.
+  const members = unwrap(
     await supabase
       .from('store_members')
-      .select('*, profile:profiles(*)')
+      .select('*')
       .eq('store_id', storeId)
       .order('created_at', { ascending: true }),
-  ) as unknown as TeamMember[]
+  )
+  const ids = [...new Set(members.map((m) => m.user_id))]
+  const profiles = ids.length
+    ? unwrap(await supabase.from('profiles').select('*').in('id', ids))
+    : []
+  const byId = new Map(profiles.map((p) => [p.id, p]))
+  return members.map((m) => ({ ...m, profile: byId.get(m.user_id) ?? null }))
 }
 
 export async function listPendingRequests(
@@ -277,24 +286,47 @@ export async function getProduct(id: string): Promise<ProductWithVariants> {
   ) as unknown as ProductWithVariants
 }
 
-export async function createProduct(input: {
-  storeId: string
-  name: string
-  description?: string
-  category?: string
-  priceCents: number
-  currency: string
-  imageUrl?: string
-  status?: Product['status']
-}): Promise<Product> {
+export type ProductAttributes = {
+  description?: string | null
+  brand?: string | null
+  style?: string | null
+  gender?: string | null
+  material?: string | null
+  care?: string | null
+  category?: string | null
+}
+
+function cleanAttributes(a: ProductAttributes) {
+  const trim = (v: string | null | undefined) =>
+    typeof v === 'string' ? v.trim() || null : (v ?? null)
+  return {
+    description: trim(a.description),
+    brand: trim(a.brand),
+    style: trim(a.style),
+    gender: trim(a.gender),
+    material: trim(a.material),
+    care: trim(a.care),
+    category: trim(a.category),
+  }
+}
+
+export async function createProduct(
+  input: {
+    storeId: string
+    name: string
+    priceCents: number
+    currency: string
+    imageUrl?: string
+    status?: Product['status']
+  } & ProductAttributes,
+): Promise<Product> {
   return unwrap(
     await supabase
       .from('products')
       .insert({
         store_id: input.storeId,
         name: input.name.trim(),
-        description: input.description?.trim() || null,
-        category: input.category?.trim() || null,
+        ...cleanAttributes(input),
         price_cents: input.priceCents,
         currency: input.currency,
         image_url: input.imageUrl?.trim() || null,
@@ -312,6 +344,11 @@ export async function updateProduct(
       Product,
       | 'name'
       | 'description'
+      | 'brand'
+      | 'style'
+      | 'gender'
+      | 'material'
+      | 'care'
       | 'category'
       | 'price_cents'
       | 'currency'
@@ -331,7 +368,8 @@ export async function deleteProduct(id: string): Promise<void> {
 
 export async function createVariant(input: {
   productId: string
-  label: string
+  size?: string | null
+  color?: string | null
   sku?: string
   priceCents?: number | null
 }): Promise<ProductVariant> {
@@ -340,13 +378,22 @@ export async function createVariant(input: {
       .from('product_variants')
       .insert({
         product_id: input.productId,
-        label: input.label.trim(),
+        size: input.size?.trim() || null,
+        color: input.color?.trim() || null,
         sku: input.sku?.trim() || null,
         price_cents: input.priceCents ?? null,
       })
       .select('*')
       .single(),
   )
+}
+
+/** Human label for a (size, color) variant: "M · Navy", "One size", "Charcoal". */
+export function variantLabel(v: {
+  size?: string | null
+  color?: string | null
+}): string {
+  return [v.size, v.color].filter(Boolean).join(' · ') || 'Default'
 }
 
 export async function deleteVariant(id: string): Promise<void> {

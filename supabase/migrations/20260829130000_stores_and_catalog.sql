@@ -83,14 +83,25 @@ create trigger stores_updated_at before update on public.stores
 
 -- ===========================================================================
 -- store_members
+--
+-- user_id -> profiles(id) (not auth.users) so PostgREST can embed the member's
+-- profile in a single query. profiles.id is itself an FK to auth.users, so the
+-- cascade behaviour is unchanged.
 -- ===========================================================================
 create table if not exists public.store_members (
   store_id   uuid not null references public.stores (id) on delete cascade,
-  user_id    uuid not null references auth.users (id) on delete cascade,
+  user_id    uuid not null references public.profiles (id) on delete cascade,
   role       public.store_member_role not null default 'member',
   created_at timestamptz not null default now(),
   primary key (store_id, user_id)
 );
+
+-- Idempotent: re-point an existing table's FK from auth.users to profiles.
+alter table public.store_members
+  drop constraint if exists store_members_user_id_fkey;
+alter table public.store_members
+  add constraint store_members_user_id_fkey
+  foreign key (user_id) references public.profiles (id) on delete cascade;
 
 -- SECURITY DEFINER membership checks — used in policies without RLS recursion.
 create or replace function public.is_store_member(p_store uuid)
@@ -190,7 +201,7 @@ create trigger on_store_created after insert on public.stores
 create table if not exists public.store_join_requests (
   id              uuid primary key default gen_random_uuid(),
   store_id        uuid not null references public.stores (id) on delete cascade,
-  user_id         uuid not null references auth.users (id) on delete cascade,
+  user_id         uuid not null references public.profiles (id) on delete cascade,
   status          public.join_request_status not null default 'pending',
   message         text,
   requester_name  text,
@@ -199,6 +210,12 @@ create table if not exists public.store_join_requests (
   decided_at      timestamptz,
   decided_by      uuid references auth.users (id) on delete set null
 );
+
+alter table public.store_join_requests
+  drop constraint if exists store_join_requests_user_id_fkey;
+alter table public.store_join_requests
+  add constraint store_join_requests_user_id_fkey
+  foreign key (user_id) references public.profiles (id) on delete cascade;
 
 create unique index if not exists store_join_requests_pending_uniq
   on public.store_join_requests (store_id, user_id)
@@ -265,6 +282,12 @@ create table if not exists public.products (
   store_id    uuid not null references public.stores (id) on delete cascade,
   name        text not null check (char_length(name) between 1 and 200),
   description text,
+  -- Merchandising attributes the agent reasons over.
+  brand       text,
+  style       text,           -- e.g. "Smart casual", "Streetwear"
+  gender      text,           -- mens | womens | unisex | kids (free text)
+  material    text,           -- e.g. "100% linen"
+  care        text,           -- e.g. "Machine wash cold, hang dry"
   category    text,
   price_cents integer not null default 0 check (price_cents >= 0),
   currency    text not null default 'USD',
@@ -274,18 +297,47 @@ create table if not exists public.products (
   updated_at  timestamptz not null default now()
 );
 
+-- Idempotent: brings an already-created products table up to date.
+alter table public.products add column if not exists brand text;
+alter table public.products add column if not exists style text;
+alter table public.products add column if not exists gender text;
+alter table public.products add column if not exists material text;
+alter table public.products add column if not exists care text;
+alter table public.products drop column if exists tags;
+drop index if exists public.products_tags_gin;
+
 drop trigger if exists products_updated_at on public.products;
 create trigger products_updated_at before update on public.products
   for each row execute function public.set_updated_at();
 
+-- A variant is one (size, color/pattern) combination of a product. Stock is
+-- tracked per variant per location in `inventory`.
 create table if not exists public.product_variants (
   id          uuid primary key default gen_random_uuid(),
   product_id  uuid not null references public.products (id) on delete cascade,
-  label       text not null,
+  size        text,
+  color       text,           -- colour / pattern
   sku         text,
   price_cents integer check (price_cents is null or price_cents >= 0),
   created_at  timestamptz not null default now()
 );
+
+alter table public.product_variants add column if not exists size text;
+alter table public.product_variants add column if not exists color text;
+alter table public.product_variants drop column if exists label;
+
+do $$
+begin
+  alter table public.product_variants
+    add constraint product_variants_has_dimension
+    check (coalesce(size, '') <> '' or coalesce(color, '') <> '');
+exception
+  when duplicate_object then null;
+end
+$$;
+
+create unique index if not exists product_variants_combo_uniq
+  on public.product_variants (product_id, coalesce(size, ''), coalesce(color, ''));
 
 create table if not exists public.inventory (
   variant_id  uuid not null references public.product_variants (id) on delete cascade,
