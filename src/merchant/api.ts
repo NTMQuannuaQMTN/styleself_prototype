@@ -187,6 +187,13 @@ export async function setStoreLive(storeId: string, live: boolean): Promise<Stor
   ) as Store
 }
 
+/** Owner-only: generate a new embed key (breaks any embed already on a site). */
+export async function rotateEmbedKey(storeId: string): Promise<Store> {
+  return unwrap(
+    await supabase.rpc('rotate_embed_key', { p_store: storeId }),
+  ) as Store
+}
+
 export async function deleteStore(storeId: string): Promise<void> {
   const { error } = await supabase.from('stores').delete().eq('id', storeId)
   if (error) throw new Error(error.message)

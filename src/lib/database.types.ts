@@ -33,6 +33,8 @@ export type Store = {
   /** city / area */
   city: string | null
   agent_live: boolean
+  /** Token carried in the iframe embed URL (?k=). Registration, not a secret. */
+  embed_key: string
   /** Payout destination for completed orders (settlement is simulated). */
   payout_bank_name: string | null
   payout_account_name: string | null
@@ -260,6 +262,10 @@ export type Database = {
       }
       set_store_live: {
         Args: { p_store: string; p_live: boolean }
+        Returns: Store
+      }
+      rotate_embed_key: {
+        Args: { p_store: string }
         Returns: Store
       }
     }

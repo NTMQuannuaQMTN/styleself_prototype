@@ -33,7 +33,12 @@ Run them **in order** in the SQL Editor (or `supabase db push`):
    `payout_account_last4` (settlement destination, last-4 only); the
    `set_store_live(store, bool)` **SECURITY DEFINER** RPC restricts going
    live/offline to the store **owner**.
-7. [`migrations/20260829220000_variant_color_hex.sql`](migrations/20260829220000_variant_color_hex.sql)
+7. [`migrations/20260829220000_store_embed_key.sql`](migrations/20260829220000_store_embed_key.sql)
+   — `stores.embed_key` (unique, auto-generated). The iframe loads as
+   `/agent/<slug>?k=<embed_key>` and the backend rejects an anonymous call whose
+   key doesn't match; `rotate_embed_key(store)` (**SECURITY DEFINER**, owner-only)
+   issues a fresh one.
+8. [`migrations/20260829230000_variant_color_hex.sql`](migrations/20260829230000_variant_color_hex.sql)
    — `product_variants.color_hex` (optional `#RRGGBB`, `CHECK`ed) for an accurate
    storefront swatch. Display-only; the colour NAME in `product_variants.color` is
    still what the agent matches on. RLS unchanged.

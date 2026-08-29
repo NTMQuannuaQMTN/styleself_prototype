@@ -26,6 +26,7 @@ export function ChatMessage({
   agentId,
   conversationId,
   authToken,
+  embedKey,
   cardSelection,
   cardConfirmed,
   busy,
@@ -39,6 +40,7 @@ export function ChatMessage({
   agentId: string
   conversationId: string
   authToken?: string
+  embedKey?: string
   /** picks for this turn's product block, by product id */
   cardSelection?: Record<string, CardSelection>
   cardConfirmed?: boolean
@@ -86,6 +88,7 @@ export function ChatMessage({
           orderDraftToken={turn.orderDraftToken}
           preview={turn.orderPreview}
           authToken={authToken}
+          embedKey={embedKey}
           onPaid={onPaid}
         />
       )}

@@ -1,6 +1,6 @@
 -- StyleSelf — optional swatch colour for a variant
 --
--- Apply after 20260829210000_store_payout_and_deploy.sql.
+-- Apply after 20260829220000_store_embed_key.sql.
 --
 -- `product_variants.color` is the shopper-facing colour name ("Oatmeal", "Sky
 -- Blue") — the agent matches on it, so it must stay clean text. This adds an
