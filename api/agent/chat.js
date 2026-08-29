@@ -526,8 +526,12 @@ async function executeTool(name, rawArgs, ctx) {
     case "compare_products": {
       const ids = Array.isArray(rawArgs.product_ids) ? rawArgs.product_ids.filter((x) => typeof x === "string") : [];
       const products = await ctx.catalog.byIds(ids);
-      ctx.lastCompare = products;
-      ctx.lastDetails = products;
+      const merged = [...ctx.lastDetails ?? []];
+      for (const p of products) {
+        if (!merged.some((m) => m.id === p.id)) merged.push(p);
+      }
+      ctx.lastCompare = merged;
+      ctx.lastDetails = merged;
       return {
         products: products.map((p) => ({
           id: p.id,
@@ -762,7 +766,8 @@ function buildSystemPrompt(cfg) {
   ].filter(Boolean).join("\n");
   const howToWork = [
     `TOOLS`,
-    `- Discovery -> search_products. "Tell me more" / "what's the difference" -> get_product_details with the relevant ids. "Is it in stock / in size M" -> check_inventory.`,
+    `- Discovery -> search_products. "Tell me more" -> get_product_details. "Is it in stock / in size M" -> check_inventory.`,
+    `- To COMPARE items ("compare the first two", "what's the difference", "X or Y"): call get_product_details ONCE with ALL the product ids together. The UI then renders a comparison TABLE automatically. Do not describe each product in prose \u2014 reply with only ONE sentence saying which suits the shopper's stated needs and why.`,
     `- search_products always returns the closest in-stock options, best fit first. If "exact_match" is false, recommend the nearest ones and say plainly you don't carry an exact match (e.g. no smart casual, but here is the closest casual piece) \u2014 never tell the shopper there is nothing.`,
     `- When the shopper commits to a specific item + size + colour -> add_to_cart. When they are ready to buy -> create_order_preview (it uses the bag and does all the maths).`,
     `- The "shown products" and "bag" lists below tell you what "the first one" / "the cheaper one" / "that" refer to. Use those ids directly \u2014 no extra search.`,
@@ -823,6 +828,11 @@ function sign(payload, secret) {
 var MAX_TOOL_ROUNDS = 3;
 var MAX_HISTORY = 8;
 var DRAFT_TTL_MS = 15 * 60 * 1e3;
+function firstSentences(s, max) {
+  const parts = s.match(/[^.!?]+[.!?]+(\s|$)/g);
+  if (!parts || parts.length <= max) return s.trim();
+  return parts.slice(0, max).join("").trim();
+}
 function stripMarkdown(s) {
   return s.replace(/\*\*(.+?)\*\*/g, "$1").replace(/(^|\s)\*(\S.*?\S)\*(?=\s|$)/g, "$1$2").replace(/^#{1,6}\s+/gm, "").replace(/^\s*[-*]\s+/gm, "").replace(/^\s*\d+\.\s+/gm, "").replace(/`([^`]+)`/g, "$1").replace(/\n{3,}/g, "\n\n").trim();
 }
@@ -986,21 +996,26 @@ async function runTurn(openai, model, input) {
   }
   if (toolCtx.lastCompare && toolCtx.lastCompare.length >= 2) {
     const ps = toolCtx.lastCompare;
+    const uniq = (xs) => [...new Set(xs.filter(Boolean))];
     const row = (label, get) => ({
       label,
       values: ps.map(get)
     });
+    const allRows = [
+      row("Price", (p) => fmtMoney(p.priceCents, config.currency)),
+      row("Style", (p) => p.style ?? "\u2014"),
+      row("Material", (p) => p.material ?? "\u2014"),
+      row("Care", (p) => p.care ?? "\u2014"),
+      row("Colours", (p) => uniq(p.variants.map((v2) => v2.color)).join(", ") || "\u2014"),
+      row("Sizes", (p) => uniq(p.variants.map((v2) => v2.size)).join(", ") || "\u2014"),
+      row("In stock", (p) => totalStock(p) > 0 ? "Yes" : "No")
+    ];
+    const rows = allRows.filter((r, i) => i === 0 || new Set(r.values).size > 1);
     comparison = {
       products: ps.map((p) => ({ id: p.id, name: p.name })),
-      rows: [
-        row("Price", (p) => fmtMoney(p.priceCents, config.currency)),
-        row("Style", (p) => p.style ?? "\u2014"),
-        row("Material", (p) => p.material ?? "\u2014"),
-        row("Category", (p) => p.category ?? "\u2014"),
-        row("For", (p) => p.gender ?? "\u2014"),
-        row("In stock", (p) => totalStock(p) > 0 ? "Yes" : "No")
-      ]
+      rows
     };
+    finalText = firstSentences(finalText, 2);
     action = { type: "show_comparison" };
   }
   if (orderPreview && toolCtx.lastOrderDraft && toolCtx.lastOrderDraft.items.length > 0) {

@@ -26,13 +26,13 @@ Run them **in order** in the SQL Editor (or `supabase db push`):
    re-validates price and stock from live rows, writes the order, and decrements
    `inventory` in one transaction. Idempotent on `(conversation_id, draft_hash)`.
    `/agent/demo` never hits the database.
-5. [`migrations/20260829180000_store_payout_and_deploy.sql`](migrations/20260829180000_store_payout_and_deploy.sql)
+5. `20260829200000_product_merchant_sku.sql` — `products.merchant_sku` + a
+   partial unique index `(store_id, merchant_sku)` — the CSV import's match key.
+6. [`migrations/20260829210000_store_payout_and_deploy.sql`](migrations/20260829210000_store_payout_and_deploy.sql)
    — `stores` gains `payout_bank_name` / `payout_account_name` /
    `payout_account_last4` (settlement destination, last-4 only); the
    `set_store_live(store, bool)` **SECURITY DEFINER** RPC restricts going
    live/offline to the store **owner**.
-6. `20260829200000_product_merchant_sku.sql` — `products.merchant_sku` + a
-   partial unique index `(store_id, merchant_sku)` — the CSV import's match key.
 7. [`migrations/20260829220000_variant_color_hex.sql`](migrations/20260829220000_variant_color_hex.sql)
    — `product_variants.color_hex` (optional `#RRGGBB`, `CHECK`ed) for an accurate
    storefront swatch. Display-only; the colour NAME in `product_variants.color` is
