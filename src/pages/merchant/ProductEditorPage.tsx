@@ -55,7 +55,7 @@ type VariantRow = { size: string; color: string; qty: string }
 // ---------------------------------------------------------------------------
 export default function ProductEditorPage() {
   const { productId } = useParams()
-  const { activeStore, agent, locations, isManager } = useStore()
+  const { activeStore, agent, locations, isManager, memberLocationId } = useStore()
   const navigate = useNavigate()
 
   const loaded = useAsync(
@@ -71,7 +71,8 @@ export default function ProductEditorPage() {
         storeId={activeStore.id}
         currency={agent?.currency ?? 'USD'}
         locations={locations}
-        disabled={!isManager}
+        disabled={!isManager && !memberLocationId}
+        locationId={memberLocationId}
         onCreated={(id) => navigate(`/merchant/catalog/${id}`, { replace: true })}
       />
     )
@@ -95,7 +96,7 @@ export default function ProductEditorPage() {
       product={loaded.data}
       locations={locations}
       currency={agent?.currency ?? 'USD'}
-      canManage={isManager}
+      canManage={isManager || loaded.data.location_id === memberLocationId}
       onReload={loaded.reload}
       onDeleted={() => navigate('/merchant/catalog', { replace: true })}
     />
@@ -198,12 +199,14 @@ function CreateProduct({
   currency,
   locations,
   disabled,
+  locationId,
   onCreated,
 }: {
   storeId: string
   currency: string
   locations: StoreLocation[]
   disabled: boolean
+  locationId: string | null
   onCreated: (id: string) => void
 }) {
   const primaryLocation =
@@ -246,6 +249,7 @@ function CreateProduct({
     try {
       const product = await createProduct({
         storeId,
+        locationId,
         name,
         priceCents: cents,
         currency,
@@ -286,7 +290,10 @@ function CreateProduct({
         description="Add the details, then the size / colour combinations and how many are in stock."
       />
       {disabled ? (
-        <InlineError>Only owners and admins can add products.</InlineError>
+        <InlineError>
+          You need an assigned branch to add products. Owners and admins can
+          add products for any branch.
+        </InlineError>
       ) : (
         <form onSubmit={submit} className="max-w-xl space-y-4">
           <TextField

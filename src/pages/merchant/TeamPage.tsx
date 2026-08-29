@@ -143,6 +143,21 @@ export default function TeamPage() {
                   {m.profile?.email && (
                     <p className="text-xs text-muted">{m.profile.email}</p>
                   )}
+                  {m.location ? (
+                    <p className="text-xs text-muted">
+                      Branch: {m.location.name}
+                      {[m.location.city, m.location.address]
+                        .filter(Boolean)
+                        .map((detail) => ` · ${detail}`)
+                        .join('')}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted">
+                      {m.role === 'owner' || m.role === 'admin'
+                        ? 'All branches'
+                        : 'No branch assigned'}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="rounded-full border border-line-strong px-2.5 py-0.5 text-[0.62rem] uppercase tracking-[0.12em] text-muted">

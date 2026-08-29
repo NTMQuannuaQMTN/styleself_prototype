@@ -20,15 +20,20 @@ function unwrap<T>(res: { data: T | null; error: { message: string } | null }): 
 // ---------------------------------------------------------------------------
 // Memberships / onboarding
 // ---------------------------------------------------------------------------
-export type Membership = { role: StoreMemberRole; store: Store }
+export type Membership = {
+  role: StoreMemberRole
+  location_id: string | null
+  store: Store
+}
 
-export async function listMyMemberships(): Promise<Membership[]> {
+export async function listMyMemberships(userId: string): Promise<Membership[]> {
   const rows = unwrap(
     await supabase
       .from('store_members')
-      .select('role, store:stores(*)')
+      .select('role, location_id, store:stores(*)')
+      .eq('user_id', userId)
       .order('created_at', { ascending: true }),
-  ) as unknown as { role: StoreMemberRole; store: Store }[]
+  ) as unknown as { role: StoreMemberRole; location_id: string | null; store: Store }[]
   return rows.filter((r) => r.store)
 }
 
@@ -71,12 +76,14 @@ export function storeLabel(store: {
   headquarters?: string | null
   city?: string | null
 }): string | null {
-  return (
+  const label =
     store.branch_name?.trim() ||
     store.headquarters?.trim() ||
     store.city?.trim() ||
     null
-  )
+
+  // Do not show numeric-only branch/address metadata beside the store name.
+  return label && !/^\d+$/.test(label) ? label : null
 }
 
 export async function searchStores(query: string): Promise<Store[]> {
@@ -241,7 +248,10 @@ export async function deleteLocation(id: string): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
-export type TeamMember = StoreMember & { profile: Profile | null }
+export type TeamMember = StoreMember & {
+  profile: Profile | null
+  location: StoreLocation | null
+}
 
 export async function listMembers(storeId: string): Promise<TeamMember[]> {
   // Two-step (not a PostgREST embed) so it works regardless of how the
@@ -255,11 +265,31 @@ export async function listMembers(storeId: string): Promise<TeamMember[]> {
       .order('created_at', { ascending: true }),
   )
   const ids = [...new Set(members.map((m) => m.user_id))]
+  const locationIds = [
+    ...new Set(
+      members
+        .map((m) => m.location_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ]
   const profiles = ids.length
     ? unwrap(await supabase.from('profiles').select('*').in('id', ids))
     : []
+  const locations = locationIds.length
+    ? unwrap(
+        await supabase
+          .from('store_locations')
+          .select('*')
+          .in('id', locationIds),
+      )
+    : []
   const byId = new Map(profiles.map((p) => [p.id, p]))
-  return members.map((m) => ({ ...m, profile: byId.get(m.user_id) ?? null }))
+  const locationById = new Map(locations.map((location) => [location.id, location]))
+  return members.map((m) => ({
+    ...m,
+    profile: byId.get(m.user_id) ?? null,
+    location: m.location_id ? locationById.get(m.location_id) ?? null : null,
+  }))
 }
 
 export async function listPendingRequests(
@@ -351,6 +381,7 @@ function cleanAttributes(a: ProductAttributes) {
 export async function createProduct(
   input: {
     storeId: string
+    locationId?: string | null
     name: string
     priceCents: number
     currency: string
@@ -363,6 +394,7 @@ export async function createProduct(
       .from('products')
       .insert({
         store_id: input.storeId,
+        location_id: input.locationId ?? null,
         name: input.name.trim(),
         ...cleanAttributes(input),
         price_cents: input.priceCents,

@@ -12,35 +12,37 @@ import {
 } from '../../components/merchant/ui'
 
 export default function LocationsPage() {
-  const { activeStore, locations, isManager, refreshStore } = useStore()
+  const { activeStore, locations, isManager, memberLocationId, refreshStore } = useStore()
 
   if (!activeStore) return null
-
-  const primary = locations.find((l) => l.is_primary) ?? locations[0] ?? null
 
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Location"
-        title="Store location"
-        description="Where this branch is. Inventory is tracked against it so the agent can tell customers what's in stock here."
+        eyebrow="Locations"
+        title={locations.length > 1 ? 'Store locations' : 'Store location'}
+        description="Manage the locations where your products are available."
       />
 
-      {!primary ? (
+      {locations.length === 0 ? (
         <EmptyState
-          title="No location on this store"
+          title="No locations on this store"
           description="This shouldn't happen — try reloading."
         />
       ) : (
-        <LocationForm
-          key={primary.id}
-          location={primary}
-          canEdit={isManager}
-          onSave={async (patch) => {
-            await updateLocation(primary.id, patch)
-            await refreshStore()
-          }}
-        />
+        <div className="space-y-4">
+          {locations.map((location) => (
+            <LocationForm
+              key={location.id}
+              location={location}
+              canEdit={isManager || location.id === memberLocationId}
+              onSave={async (patch) => {
+                await updateLocation(location.id, patch)
+                await refreshStore()
+              }}
+            />
+          ))}
+        </div>
       )}
     </div>
   )

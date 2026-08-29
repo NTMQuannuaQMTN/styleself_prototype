@@ -56,7 +56,7 @@ export function StoreProvider() {
 
   const refreshMemberships = useCallback(async () => {
     const [mems, reqs] = await Promise.all([
-      listMyMemberships(),
+      listMyMemberships(userId as string),
       listMyJoinRequests(),
     ])
     if (!mounted.current) return
@@ -68,7 +68,7 @@ export function StoreProvider() {
       if (current && mems.some((m) => m.store.id === current)) return current
       return mems[0]?.store.id ?? null
     })
-  }, [])
+  }, [userId])
 
   useEffect(() => {
     mounted.current = true
@@ -92,6 +92,8 @@ export function StoreProvider() {
 
   const activeRoleForId =
     memberships.find((m) => m.store.id === activeStoreId)?.role ?? null
+  const activeMemberLocationId =
+    memberships.find((m) => m.store.id === activeStoreId)?.location_id ?? null
   const activeIsManager =
     activeRoleForId === 'owner' || activeRoleForId === 'admin'
 
@@ -116,14 +118,14 @@ export function StoreProvider() {
       if (!mounted.current) return
       setActiveStoreRow(store)
       setAgent(agentRow)
-      setLocations(locs)
+      setLocations(activeIsManager || !activeMemberLocationId ? locs : locs.filter((location) => location.id === activeMemberLocationId))
       setIncomingRequestCount(pending.length)
     } catch (err) {
       console.error('Failed to load store data:', err)
     } finally {
       if (mounted.current) setStoreDataLoading(false)
     }
-  }, [activeStoreId, activeIsManager])
+  }, [activeStoreId, activeIsManager, activeMemberLocationId])
 
   useEffect(() => {
     void refreshStore()
@@ -143,6 +145,7 @@ export function StoreProvider() {
       isManager: activeIsManager,
       agent,
       locations,
+      memberLocationId: activeMemberLocationId,
       incomingRequestCount,
       storeDataLoading,
       setActiveStore,
@@ -158,6 +161,7 @@ export function StoreProvider() {
       activeIsManager,
       agent,
       locations,
+      activeMemberLocationId,
       incomingRequestCount,
       storeDataLoading,
       setActiveStore,
