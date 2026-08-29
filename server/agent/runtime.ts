@@ -113,6 +113,8 @@ function cardFor(
     inStock: stock > 0,
     style: p.style,
     material: p.material,
+    care: p.care,
+    description: p.description,
     colors,
     sizes,
     stockLevel,

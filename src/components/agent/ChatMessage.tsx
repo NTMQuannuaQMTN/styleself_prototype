@@ -31,6 +31,7 @@ export function ChatMessage({
   onCardSelect,
   onCardConfirm,
   onAskDetails,
+  onOpenDetail,
 }: {
   turn: Turn
   agentName: string
@@ -43,6 +44,7 @@ export function ChatMessage({
   onCardSelect?: (productId: string, next: CardSelection | null) => void
   onCardConfirm?: () => void
   onAskDetails?: (productName: string) => void
+  onOpenDetail?: (product: AgentProductCard) => void
 }) {
   if (turn.role === 'user') {
     return (
@@ -71,6 +73,7 @@ export function ChatMessage({
           onSelect={(id, next) => onCardSelect?.(id, next)}
           onConfirm={() => onCardConfirm?.()}
           onAskDetails={(name) => onAskDetails?.(name)}
+          onOpenDetail={(p) => onOpenDetail?.(p)}
         />
       )}
       {turn.comparison && <ComparisonCard comparison={turn.comparison} />}
