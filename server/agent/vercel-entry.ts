@@ -1,10 +1,15 @@
+import { handleAgentChat } from './handler'
+
 /**
- * Production agent endpoint (Vercel serverless / any Node function host).
- * Set OPENAI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY in the host's env.
+ * Source for the Vercel serverless function. `npm run build:fn` bundles this
+ * (with all of server/agent/*) into `api/agent/chat.js`, which is what Vercel
+ * actually deploys — Vercel's per-file TS transpile does not follow imports out
+ * of the `api/` directory, so the function has to be pre-bundled.
+ *
+ * Env: OPENAI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY.
  */
 
-// The model + tool loop can take a while; the platform default (10s on Vercel
-// Hobby) is too short and surfaces to the client as a non-JSON gateway error.
+// Model + tool loop can exceed the 10s platform default (Vercel Hobby).
 export const maxDuration = 60
 
 export default async function handler(
@@ -23,10 +28,6 @@ export default async function handler(
   }
 
   try {
-    // Imported lazily so a module-load failure (missing dep, bad resolution) is
-    // caught here and returned as JSON instead of crashing the invocation.
-    const { handleAgentChat } = await import('../../server/agent/handler')
-
     const auth = req.headers['authorization']
     const authHeader = Array.isArray(auth) ? auth[0] : auth
     const body =
