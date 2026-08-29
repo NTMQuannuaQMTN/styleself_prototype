@@ -45,12 +45,17 @@ create table if not exists public.stores (
   id           uuid primary key default gen_random_uuid(),
   name         text not null check (char_length(name) between 1 and 120),
   slug         text not null unique,
-  headquarters text,
+  branch_name  text,           -- label for this particular store, e.g. "Orchard"
+  headquarters text,           -- street address
+  city         text,           -- city / area
   agent_live   boolean not null default false,
   created_by   uuid references auth.users (id) on delete set null,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
+
+alter table public.stores add column if not exists branch_name text;
+alter table public.stores add column if not exists city text;
 
 create or replace function public.stores_set_slug()
 returns trigger language plpgsql as $$
@@ -184,8 +189,14 @@ begin
   insert into public.store_agents (store_id) values (new.id)
   on conflict do nothing;
 
-  insert into public.store_locations (store_id, name, city, is_primary)
-  values (new.id, 'Main store', new.headquarters, true);
+  insert into public.store_locations (store_id, name, address, city, is_primary)
+  values (
+    new.id,
+    coalesce(nullif(new.branch_name, ''), 'Main store'),
+    new.headquarters,
+    new.city,
+    true
+  );
 
   return new;
 end
@@ -406,9 +417,10 @@ drop policy if exists store_members_select on public.store_members;
 create policy store_members_select on public.store_members for select to authenticated
   using (public.is_store_member(store_id));
 
+-- Only the owner can remove members (and never themselves).
 drop policy if exists store_members_delete on public.store_members;
 create policy store_members_delete on public.store_members for delete to authenticated
-  using (public.is_store_manager(store_id) and user_id <> auth.uid());
+  using (public.store_role_is_owner(store_id) and user_id <> auth.uid());
 -- (inserts happen only through SECURITY DEFINER functions/triggers)
 
 -- store_agents: members read, managers write.

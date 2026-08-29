@@ -43,7 +43,9 @@ export default function StoreSettingsPage() {
       <div className="space-y-6">
         <DetailsCard
           name={store.name}
-          headquarters={store.headquarters ?? ''}
+          branchName={store.branch_name ?? ''}
+          address={store.headquarters ?? ''}
+          city={store.city ?? ''}
           canEdit={isManager}
           onSave={async (patch) => {
             await updateStore(store.id, patch)
@@ -81,21 +83,36 @@ export default function StoreSettingsPage() {
 
 function DetailsCard({
   name,
-  headquarters,
+  branchName,
+  address,
+  city,
   canEdit,
   onSave,
 }: {
   name: string
-  headquarters: string
+  branchName: string
+  address: string
+  city: string
   canEdit: boolean
-  onSave: (patch: { name: string; headquarters: string | null }) => Promise<void>
+  onSave: (patch: {
+    name: string
+    branch_name: string | null
+    headquarters: string | null
+    city: string | null
+  }) => Promise<void>
 }) {
   const [n, setN] = useState(name)
-  const [hq, setHq] = useState(headquarters)
+  const [branch, setBranch] = useState(branchName)
+  const [addr, setAddr] = useState(address)
+  const [c, setC] = useState(city)
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const dirty = n.trim() !== name.trim() || hq.trim() !== headquarters.trim()
+  const dirty =
+    n.trim() !== name.trim() ||
+    branch.trim() !== branchName.trim() ||
+    addr.trim() !== address.trim() ||
+    c.trim() !== city.trim()
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -106,7 +123,12 @@ function DetailsCard({
     setError(null)
     setBusy(true)
     try {
-      await onSave({ name: n.trim(), headquarters: hq.trim() || null })
+      await onSave({
+        name: n.trim(),
+        branch_name: branch.trim() || null,
+        headquarters: addr.trim() || null,
+        city: c.trim() || null,
+      })
       setSaved(true)
       window.setTimeout(() => setSaved(false), 2500)
     } catch (err) {
@@ -127,12 +149,29 @@ function DetailsCard({
           disabled={!canEdit}
         />
         <TextField
-          label="Headquarters"
-          value={hq}
-          onChange={(e) => setHq(e.target.value)}
-          placeholder="Singapore"
+          label="Branch name"
+          value={branch}
+          onChange={(e) => setBranch(e.target.value)}
+          placeholder="Orchard"
+          hint="Used in the store switcher to tell branches apart."
           disabled={!canEdit}
         />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextField
+            label="Address"
+            value={addr}
+            onChange={(e) => setAddr(e.target.value)}
+            placeholder="391 Orchard Rd"
+            disabled={!canEdit}
+          />
+          <TextField
+            label="Location"
+            value={c}
+            onChange={(e) => setC(e.target.value)}
+            placeholder="Singapore"
+            disabled={!canEdit}
+          />
+        </div>
         {error ? <InlineError>{error}</InlineError> : null}
         {canEdit && (
           <div className="flex items-center gap-3">

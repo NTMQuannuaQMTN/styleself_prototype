@@ -45,7 +45,9 @@ export async function listMyJoinRequests(): Promise<
 
 export async function createStore(input: {
   name: string
+  branchName?: string | null
   headquarters?: string | null
+  city?: string | null
   userId: string
 }): Promise<Store> {
   return unwrap(
@@ -53,11 +55,27 @@ export async function createStore(input: {
       .from('stores')
       .insert({
         name: input.name.trim(),
+        branch_name: input.branchName?.trim() || null,
         headquarters: input.headquarters?.trim() || null,
+        city: input.city?.trim() || null,
         created_by: input.userId,
       })
       .select('*')
       .single(),
+  )
+}
+
+/** Differentiator shown next to a store name: branch name, else address, else city. */
+export function storeLabel(store: {
+  branch_name?: string | null
+  headquarters?: string | null
+  city?: string | null
+}): string | null {
+  return (
+    store.branch_name?.trim() ||
+    store.headquarters?.trim() ||
+    store.city?.trim() ||
+    null
   )
 }
 
@@ -113,7 +131,12 @@ export async function getStore(storeId: string): Promise<Store> {
 
 export async function updateStore(
   storeId: string,
-  patch: Partial<Pick<Store, 'name' | 'headquarters' | 'agent_live' | 'slug'>>,
+  patch: Partial<
+    Pick<
+      Store,
+      'name' | 'branch_name' | 'headquarters' | 'city' | 'agent_live' | 'slug'
+    >
+  >,
 ): Promise<Store> {
   return unwrap(
     await supabase

@@ -18,7 +18,8 @@ import {
 
 export default function TeamPage() {
   const { user } = useAuth()
-  const { activeStore, isManager, refreshStore } = useStore()
+  const { activeStore, activeRole, isManager, refreshStore } = useStore()
+  const isOwner = activeRole === 'owner'
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
 
@@ -53,7 +54,7 @@ export default function TeamPage() {
       <PageHeader
         eyebrow="Team"
         title="Team & access"
-        description="Owners and admins can approve join requests and manage members."
+        description="Owners and admins approve join requests. Only the owner can remove members."
       />
 
       {error ? <InlineError>{error}</InlineError> : null}
@@ -147,7 +148,7 @@ export default function TeamPage() {
                   <span className="rounded-full border border-line-strong px-2.5 py-0.5 text-[0.62rem] uppercase tracking-[0.12em] text-muted">
                     {m.role}
                   </span>
-                  {isManager &&
+                  {isOwner &&
                     m.user_id !== user?.id &&
                     m.role !== 'owner' && (
                       <button

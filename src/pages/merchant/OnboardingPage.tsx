@@ -10,6 +10,7 @@ import {
   createStore,
   requestToJoin,
   searchStores,
+  storeLabel,
 } from '../../merchant/api'
 import type { Store } from '../../lib/database.types'
 
@@ -147,7 +148,9 @@ function CreateStore({
   onDone: () => Promise<void>
 }) {
   const [name, setName] = useState('')
-  const [hq, setHq] = useState('')
+  const [branch, setBranch] = useState('')
+  const [address, setAddress] = useState('')
+  const [city, setCity] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -156,7 +159,13 @@ function CreateStore({
     setError(null)
     setBusy(true)
     try {
-      await createStore({ name, headquarters: hq, userId })
+      await createStore({
+        name,
+        branchName: branch,
+        headquarters: address,
+        city,
+        userId,
+      })
       await onDone()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create the store.')
@@ -174,12 +183,26 @@ function CreateStore({
         placeholder="Urban Thread"
       />
       <TextField
-        label="Headquarters (optional)"
-        value={hq}
-        onChange={(e) => setHq(e.target.value)}
-        placeholder="Singapore"
-        hint="Used to label your first location."
+        label="Branch name (optional)"
+        value={branch}
+        onChange={(e) => setBranch(e.target.value)}
+        placeholder="Orchard"
+        hint="Shown in the store switcher to tell branches apart."
       />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <TextField
+          label="Address (optional)"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          placeholder="391 Orchard Rd"
+        />
+        <TextField
+          label="Location (optional)"
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          placeholder="Singapore"
+        />
+      </div>
       {error ? <InlineError>{error}</InlineError> : null}
       <div className="flex gap-3 pt-1">
         <button type="submit" className="btn btn-primary" disabled={busy}>
@@ -313,10 +336,16 @@ function JoinResult({
     <li className="rounded-[12px] border border-line bg-surface p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-ink">{store.name}</p>
-          <p className="text-xs text-muted">
-            {store.headquarters || 'No location set'} · /agent/{store.slug}
+          <p className="text-sm font-medium text-ink">
+            {store.name}
+            {storeLabel(store) ? (
+              <span className="font-normal text-muted">
+                {' '}
+                · {storeLabel(store)}
+              </span>
+            ) : null}
           </p>
+          <p className="text-xs text-muted">/agent/{store.slug}</p>
         </div>
         {sent ? (
           <span className="text-xs font-medium text-success">Request sent</span>
