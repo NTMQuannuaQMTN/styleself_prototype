@@ -8,7 +8,7 @@ import type {
   AgentReply,
   ChatTurn,
 } from '../../src/agent/types'
-import type { Catalog, CatalogProduct } from './catalog'
+import type { Catalog, CatalogProduct, CatalogVariant } from './catalog'
 import { totalStock } from './catalog'
 import { buildSystemPrompt, contextBlock, type MerchantConfig } from './prompt'
 import {
@@ -69,7 +69,39 @@ function stripMarkdown(s: string): string {
     .trim()
 }
 
-function cardFor(p: CatalogProduct, currency: string): AgentProductCard {
+const LOW_STOCK_AT = 5
+
+function variantStock(v: CatalogVariant): number {
+  return Object.values(v.stockByLocation).reduce((a, b) => a + b, 0)
+}
+
+/** Pull the sentence that mentions this product out of the agent's reply. */
+function reasonFor(name: string, reply: string): string | undefined {
+  const sentences = reply.match(/[^.!?]+[.!?]?/g) ?? []
+  const lower = name.toLowerCase()
+  const hit = sentences.find((s) => s.toLowerCase().includes(lower))?.trim()
+  if (!hit || hit.length < 12 || hit.length > 220) return undefined
+  return hit
+}
+
+function cardFor(
+  p: CatalogProduct,
+  currency: string,
+  reply: string,
+  nearestMatch: boolean,
+): AgentProductCard {
+  const stock = totalStock(p)
+  const inStockVariants = p.variants.filter((v) => variantStock(v) > 0)
+  const colors: { name: string; hex: string | null }[] = []
+  for (const v of inStockVariants) {
+    if (v.color && !colors.some((c) => c.name === v.color)) {
+      colors.push({ name: v.color, hex: v.colorHex ?? null })
+    }
+  }
+  const sizes = [...new Set(inStockVariants.map((v) => v.size).filter(Boolean))] as string[]
+  const stockLevel: 'in' | 'low' | 'out' =
+    stock === 0 ? 'out' : stock <= LOW_STOCK_AT ? 'low' : 'in'
+
   return {
     id: p.id,
     name: p.name,
@@ -78,7 +110,15 @@ function cardFor(p: CatalogProduct, currency: string): AgentProductCard {
     priceCents: p.priceCents,
     currency,
     imageUrl: p.imageUrl,
-    inStock: totalStock(p) > 0,
+    inStock: stock > 0,
+    style: p.style,
+    material: p.material,
+    colors,
+    sizes,
+    stockLevel,
+    ...(stockLevel === 'low' ? { unitsLeft: stock } : {}),
+    reason: reasonFor(p.name, reply),
+    ...(nearestMatch ? { nearestMatch: true } : {}),
   }
 }
 
@@ -220,8 +260,9 @@ export async function runTurn(
           ...list.filter((p) => p.id !== recId),
         ]
       : list
+    const nearest = toolCtx.lastSearchWeak === true
     products = ordered.map((p) => ({
-      ...cardFor(p, config.currency),
+      ...cardFor(p, config.currency, finalText, nearest),
       recommended: p.id === recId,
     }))
     context.shownProductIds = ordered.map((p) => p.id)

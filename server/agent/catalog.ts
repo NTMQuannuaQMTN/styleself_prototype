@@ -22,6 +22,8 @@ export type CatalogVariant = {
   id: string
   size: string | null
   color: string | null
+  /** optional #RRGGBB for the storefront swatch; display-only */
+  colorHex: string | null
   priceCents: number | null
   /** locationId -> quantity */
   stockByLocation: Record<string, number>
@@ -230,6 +232,7 @@ export class DbCatalog implements Catalog {
         id: v.id,
         size: v.size,
         color: v.color,
+        colorHex: v.color_hex ?? null,
         priceCents: v.price_cents,
         stockByLocation: Object.fromEntries(
           (v.inventory ?? []).map((i) => [i.location_id, i.quantity]),
@@ -305,8 +308,9 @@ function v(
   size: string | null,
   color: string | null,
   stock: Record<string, number>,
+  colorHex: string | null = null,
 ): CatalogVariant {
-  return { id, size, color, priceCents: null, stockByLocation: stock }
+  return { id, size, color, colorHex, priceCents: null, stockByLocation: stock }
 }
 
 const DEMO_PRODUCTS: CatalogProduct[] = [
@@ -325,9 +329,9 @@ const DEMO_PRODUCTS: CatalogProduct[] = [
     currency: 'USD',
     imageUrl: null,
     variants: [
-      v('dlb-s-oat', 'S', 'Oatmeal', { orchard: 2, vivocity: 1, jurong: 0 }),
-      v('dlb-m-oat', 'M', 'Oatmeal', { orchard: 4, vivocity: 2, jurong: 0 }),
-      v('dlb-l-oat', 'L', 'Oatmeal', { orchard: 3, vivocity: 0, jurong: 1 }),
+      v('dlb-s-oat', 'S', 'Oatmeal', { orchard: 2, vivocity: 1, jurong: 0 }, '#E3D7BF'),
+      v('dlb-m-oat', 'M', 'Oatmeal', { orchard: 4, vivocity: 2, jurong: 0 }, '#E3D7BF'),
+      v('dlb-l-oat', 'L', 'Oatmeal', { orchard: 3, vivocity: 0, jurong: 1 }, '#E3D7BF'),
     ],
   },
   {
@@ -345,8 +349,8 @@ const DEMO_PRODUCTS: CatalogProduct[] = [
     currency: 'USD',
     imageUrl: null,
     variants: [
-      v('dtj-m-nvy', 'M', 'Navy', { orchard: 2, vivocity: 1, jurong: 0 }),
-      v('dtj-l-nvy', 'L', 'Navy', { orchard: 1, vivocity: 1, jurong: 0 }),
+      v('dtj-m-nvy', 'M', 'Navy', { orchard: 2, vivocity: 1, jurong: 0 }, '#26314A'),
+      v('dtj-l-nvy', 'L', 'Navy', { orchard: 1, vivocity: 1, jurong: 0 }, '#26314A'),
     ],
   },
   {
@@ -364,9 +368,9 @@ const DEMO_PRODUCTS: CatalogProduct[] = [
     currency: 'USD',
     imageUrl: null,
     variants: [
-      v('dos-s-tpe', 'S', 'Taupe', { orchard: 3, vivocity: 2, jurong: 4 }),
-      v('dos-m-tpe', 'M', 'Taupe', { orchard: 6, vivocity: 3, jurong: 5 }),
-      v('dos-l-tpe', 'L', 'Taupe', { orchard: 2, vivocity: 1, jurong: 3 }),
+      v('dos-s-tpe', 'S', 'Taupe', { orchard: 3, vivocity: 2, jurong: 4 }, '#B8A992'),
+      v('dos-m-tpe', 'M', 'Taupe', { orchard: 6, vivocity: 3, jurong: 5 }, '#B8A992'),
+      v('dos-l-tpe', 'L', 'Taupe', { orchard: 2, vivocity: 1, jurong: 3 }, '#B8A992'),
     ],
   },
   {
@@ -384,10 +388,10 @@ const DEMO_PRODUCTS: CatalogProduct[] = [
     currency: 'USD',
     imageUrl: null,
     variants: [
-      v('dox-s-wht', 'S', 'White', { orchard: 8, vivocity: 6, jurong: 7 }),
-      v('dox-m-wht', 'M', 'White', { orchard: 12, vivocity: 8, jurong: 10 }),
-      v('dox-l-wht', 'L', 'White', { orchard: 5, vivocity: 4, jurong: 6 }),
-      v('dox-m-blu', 'M', 'Blue', { orchard: 4, vivocity: 3, jurong: 2 }),
+      v('dox-s-wht', 'S', 'White', { orchard: 8, vivocity: 6, jurong: 7 }, '#F4F1EA'),
+      v('dox-m-wht', 'M', 'White', { orchard: 12, vivocity: 8, jurong: 10 }, '#F4F1EA'),
+      v('dox-l-wht', 'L', 'White', { orchard: 5, vivocity: 4, jurong: 6 }, '#F4F1EA'),
+      v('dox-m-blu', 'M', 'Sky Blue', { orchard: 4, vivocity: 3, jurong: 2 }, '#8FB3D9'),
     ],
   },
   {
@@ -405,9 +409,9 @@ const DEMO_PRODUCTS: CatalogProduct[] = [
     currency: 'USD',
     imageUrl: null,
     variants: [
-      v('dwt-30-chr', '30', 'Charcoal', { orchard: 3, vivocity: 2, jurong: 1 }),
-      v('dwt-32-chr', '32', 'Charcoal', { orchard: 5, vivocity: 4, jurong: 2 }),
-      v('dwt-34-chr', '34', 'Charcoal', { orchard: 4, vivocity: 3, jurong: 2 }),
+      v('dwt-30-chr', '30', 'Charcoal', { orchard: 3, vivocity: 2, jurong: 1 }, '#3B3A37'),
+      v('dwt-32-chr', '32', 'Charcoal', { orchard: 5, vivocity: 4, jurong: 2 }, '#3B3A37'),
+      v('dwt-34-chr', '34', 'Charcoal', { orchard: 4, vivocity: 3, jurong: 2 }, '#3B3A37'),
     ],
   },
 ]

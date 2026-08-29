@@ -6,19 +6,28 @@ import {
   type AgentContext,
   type ChatTurn,
   type AgentProductCard,
+  type AgentCart,
 } from '../../agent/types'
 import { ChatMessage, TypingDots, type Turn } from './ChatMessage'
-import type { AgentCart } from '../../agent/types'
+import type { CardSelection } from './ProductCards'
 
 const HISTORY_LIMIT = 8
 
+/** picks per assistant turn, keyed by turn index → product id → line */
+type SelectionByTurn = Record<number, Record<string, CardSelection>>
+
+function variantText(sel: CardSelection): string {
+  const bits = [sel.size, sel.color].filter(Boolean).join(' ')
+  return bits ? ` (${bits})` : ''
+}
+
+/** One row in the "Current cart" box — a mirror of the agent's server-side bag. */
 type CartItem = {
   productId: string
   name: string
   variantLabel: string | null
   quantity: number
   imageUrl: string | null
-  source: 'chat' | 'button'
 }
 
 function newConversationId() {
@@ -48,8 +57,12 @@ export function AgentChat({
   const [status, setStatus] = useState<'init' | 'ready' | 'thinking'>('init')
   const [fatal, setFatal] = useState<string | null>(null)
   const [input, setInput] = useState('')
-  // The "Current cart" box. `chat` items mirror the agent's server-side bag;
-  // `button` items were added with the product-card button.
+  // Per-turn product-card picks: the shopper sets qty/size/colour on the cards,
+  // then "Add N to bag" sends one combined message the agent turns into
+  // add_to_cart calls.
+  const [selections, setSelections] = useState<SelectionByTurn>({})
+  const [confirmedTurns, setConfirmedTurns] = useState<Set<number>>(new Set())
+  // The "Current cart" box — mirrors the agent's server-side bag after each turn.
   const [cart, setCart] = useState<CartItem[]>([])
   // Keep the cart visible from the first paint; it starts empty and updates in place.
   const [cartOpen, setCartOpen] = useState(true)
@@ -86,36 +99,14 @@ export function AgentChat({
 
   const agentName = branding?.agentName ?? 'StyleSelf'
 
-  function addToCart(product: AgentProductCard) {
-    setCart((items) => {
-      const existing = items.find((i) => i.productId === product.id)
-      if (existing) {
-        return items.map((i) =>
-          i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i,
-        )
-      }
-      return [
-        ...items,
-        {
-          productId: product.id,
-          name: product.name,
-          variantLabel: null,
-          quantity: 1,
-          imageUrl: product.imageUrl,
-          source: 'button',
-        },
-      ]
-    })
-  }
-
   /** Reconcile the box with the agent's server bag after a chat turn. */
   function syncCartFromReply(
     serverCart: AgentCart | undefined,
     knownProducts: AgentProductCard[],
   ) {
     const imgById = new Map(knownProducts.map((p) => [p.id, p.imageUrl]))
-    setCart((local) => {
-      const chatItems: CartItem[] = (serverCart?.items ?? []).map((it) => ({
+    setCart((local) =>
+      (serverCart?.items ?? []).map((it) => ({
         productId: it.productId,
         name: it.name,
         variantLabel: it.variantLabel,
@@ -124,14 +115,8 @@ export function AgentChat({
           imgById.get(it.productId) ??
           local.find((l) => l.productId === it.productId)?.imageUrl ??
           null,
-        source: 'chat',
-      }))
-      const chatIds = new Set(chatItems.map((i) => i.productId))
-      const keptButtons = local.filter(
-        (i) => i.source === 'button' && !chatIds.has(i.productId),
-      )
-      return [...chatItems, ...keptButtons]
-    })
+      })),
+    )
   }
 
   async function send(text: string) {
@@ -176,6 +161,30 @@ export function AgentChat({
       },
     ])
     setStatus('ready')
+  }
+
+  function selectCard(turnIdx: number, productId: string, next: CardSelection | null) {
+    setSelections((prev) => {
+      const forTurn = { ...(prev[turnIdx] ?? {}) }
+      if (next) forTurn[productId] = next
+      else delete forTurn[productId]
+      return { ...prev, [turnIdx]: forTurn }
+    })
+  }
+
+  function confirmCards(turnIdx: number) {
+    const turn = turns[turnIdx]
+    const picks = selections[turnIdx] ?? {}
+    if (!turn?.products) return
+    const parts = turn.products
+      .filter((p) => picks[p.id]?.quantity > 0)
+      .map((p) => {
+        const s = picks[p.id]
+        return `${s.quantity}x ${p.name}${variantText(s)}`
+      })
+    if (parts.length === 0) return
+    setConfirmedTurns((prev) => new Set(prev).add(turnIdx))
+    send(`Add ${parts.join(', ')} to my bag`)
   }
 
   if (fatal) {
@@ -319,22 +328,142 @@ export function AgentChat({
           }}
           className="flex gap-2"
         >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Describe what you're looking for…"
-            className="field-input !py-2 !text-sm"
-            disabled={status === 'init'}
-          />
-          <button
-            type="submit"
-            className="btn btn-primary shrink-0 !px-4 !py-2 text-sm"
-            disabled={status !== 'ready' || !input.trim()}
+          <div className="flex items-center justify-between gap-2">
+            <p className="eyebrow text-[0.55rem]">Current cart</p>
+            <span className="text-[0.65rem] text-muted">
+              {cartCount} item{cartCount === 1 ? '' : 's'}
+            </span>
+          </div>
+          {cart.length === 0 ? (
+            <p className="mt-3 text-xs text-muted">Your cart is empty.</p>
+          ) : (
+            <div className="mt-3 space-y-3">
+              {cart.map((item) => (
+                <div key={item.productId} className="flex gap-2">
+                  <div className="h-12 w-10 shrink-0 overflow-hidden rounded border border-line bg-accent-soft/50">
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
+                    ) : null}
+                  </div>
+                  <div className="min-w-0 text-xs">
+                    <p className="line-clamp-2 text-ink">{item.name}</p>
+                    {item.variantLabel ? (
+                      <p className="text-[0.65rem] text-muted">{item.variantLabel}</p>
+                    ) : null}
+                    <p className="mt-0.5 font-medium text-muted">× {item.quantity}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </aside>
+      )}
+      <div className="flex h-full flex-col overflow-hidden rounded-[18px] border border-line-strong bg-surface shadow-[0_30px_70px_-45px_rgba(23,21,15,0.3)]">
+        <div className="flex shrink-0 items-center gap-2 border-b border-line px-4 py-3">
+          <span className="h-1.5 w-1.5 rounded-full bg-success" />
+          <span className="font-display text-sm text-ink">{agentName}</span>
+          {branding && (
+            <span className="ml-auto text-[0.7rem] text-muted">
+              {branding.branchName
+                ? `${branding.storeName} · ${branding.branchName}`
+                : branding.storeName}
+              {branding.preview && ' · preview'}
+            </span>
+          )}
+          {cartPlacement === 'preview' ? (
+            <button
+              type="button"
+              onClick={() => setCartOpen((open) => !open)}
+              aria-expanded={cartOpen}
+              aria-controls="agent-cart"
+              className="ml-auto rounded-full border border-line-strong px-2.5 py-1 text-[0.65rem] text-muted transition-colors hover:border-ink hover:text-ink"
+            >
+              Cart {cartCount}
+            </button>
+          ) : (
+            <span className="rounded-full border border-line-strong px-2 py-0.5 text-[0.65rem] text-muted">
+              Cart {cartCount}
+            </span>
+          )}
+        </div>
+
+        <div
+          ref={scrollRef}
+          className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4"
+        >
+          {status === 'init' ? (
+            <TypingDots />
+          ) : (
+            turns.map((turn, i) => (
+              <ChatMessage
+                key={i}
+                turn={turn}
+                agentName={agentName}
+                agentId={agentId}
+                conversationId={conversationId}
+                authToken={authToken}
+                embedKey={embedKey}
+                busy={status !== 'ready'}
+                cardSelection={selections[i]}
+                cardConfirmed={confirmedTurns.has(i)}
+                onCardSelect={(pid, next) => selectCard(i, pid, next)}
+                onCardConfirm={() => confirmCards(i)}
+                onAskDetails={(name) => send(`Tell me more about the ${name}`)}
+                onPaid={(order) => {
+                  setContext((c) => ({ ...c, cart: [], selectedProductIds: [] }))
+                  setCart([])
+                  setTurns((t) => [
+                    ...t,
+                    {
+                      role: 'assistant',
+                      text: `Payment received — order ${order.orderId} is confirmed. Anything else I can help you find?`,
+                    },
+                  ])
+                }}
+              />
+            ))
+          )}
+          {status === 'thinking' && <TypingDots />}
+        </div>
+
+        <div className="shrink-0 border-t border-line p-3">
+          {turns.length <= 1 && status === 'ready' && (
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {suggestions.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => send(s)}
+                  className="rounded-full border border-line-strong px-2.5 py-1 text-[0.7rem] text-muted transition-colors hover:border-ink hover:text-ink"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              send(input)
+            }}
+            className="flex gap-2"
           >
-            Send
-          </button>
-        </form>
-      </div>
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Describe what you're looking for…"
+              className="field-input !py-2 !text-sm"
+              disabled={status === 'init'}
+            />
+            <button
+              type="submit"
+              className="btn btn-primary shrink-0 !px-4 !py-2 text-sm"
+              disabled={status !== 'ready' || !input.trim()}
+            >
+              Send
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   )

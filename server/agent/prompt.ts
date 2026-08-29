@@ -63,6 +63,7 @@ export function buildSystemPrompt(cfg: MerchantConfig): string {
     ``,
     `STYLE`,
     `- 2–4 short sentences. Plain sentences only — no markdown, bullet points, dashes or HTML.`,
+    `- When you show products, give each one its own sentence that names it and says why it suits the shopper (occasion, fit, fabric, colour or price). The card UI lifts that sentence, so keep one product per sentence.`,
   ].join('\n')
 
   return [identity, ``, merchant, ``, howToWork].join('\n')

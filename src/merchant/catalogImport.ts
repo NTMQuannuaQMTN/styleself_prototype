@@ -51,7 +51,19 @@ export const PRODUCT_HEADERS = [
   'status',
 ] as const
 /** Recognised variant-level columns. */
-export const VARIANT_HEADERS = ['size', 'color', 'variant_sku'] as const
+export const VARIANT_HEADERS = ['size', 'color', 'color_hex', 'variant_sku'] as const
+
+const HEX6 = /^#[0-9A-Fa-f]{6}$/
+/** "#e3d7bf" → "#E3D7BF"; "e3d7bf" → "#E3D7BF"; "#fff" → "#FFFFFF"; else null. */
+function normalizeHex(raw: string): string | null {
+  let s = raw.trim()
+  if (!s) return null
+  if (!s.startsWith('#')) s = `#${s}`
+  if (/^#[0-9A-Fa-f]{3}$/.test(s)) {
+    s = `#${s[1]}${s[1]}${s[2]}${s[2]}${s[3]}${s[3]}`
+  }
+  return HEX6.test(s) ? s.toUpperCase() : null
+}
 
 const STATUSES: ProductStatus[] = ['active', 'draft', 'archived']
 
@@ -61,6 +73,8 @@ const STATUSES: ProductStatus[] = ['active', 'draft', 'archived']
 export type PlannedVariant = {
   size: string | null
   color: string | null
+  /** normalized #RRGGBB, or null when the file had no (valid) hex */
+  colorHex: string | null
   variantSku: string | null
   /** locationId → quantity, only for locations named in the file */
   stockByLocation: Record<string, number>
@@ -233,6 +247,18 @@ export function planImport(
       const color = headerSet.has('color')
         ? (row.color ?? '').trim() || null
         : null
+      let colorHex: string | null = null
+      if (headerSet.has('color_hex')) {
+        const rawHex = (row.color_hex ?? '').trim()
+        if (rawHex) {
+          colorHex = normalizeHex(rawHex)
+          if (!colorHex) {
+            warnings.push(
+              `SKU ${sku} (row ${line}): colour code "${rawHex}" is not a 6-digit hex (e.g. #E3D7BF) — swatch will fall back to the colour name.`,
+            )
+          }
+        }
+      }
       const variantSku = headerSet.has('variant_sku')
         ? (row.variant_sku ?? '').trim() || null
         : null
@@ -270,6 +296,7 @@ export function planImport(
       plannedVariants.push({
         size,
         color,
+        colorHex,
         variantSku,
         stockByLocation,
         existing: !!match,
@@ -357,6 +384,7 @@ export async function applyImport(
       if (variantId) {
         const patch: Record<string, string> = {}
         if (v.variantSku) patch.sku = v.variantSku
+        if (v.colorHex) patch.color_hex = v.colorHex
         if (Object.keys(patch).length) await updateVariant(variantId, patch)
         result.updatedVariants++
       } else if (v.size !== null || v.color !== null) {
@@ -364,6 +392,7 @@ export async function applyImport(
           productId,
           size: v.size,
           color: v.color,
+          colorHex: v.colorHex ?? undefined,
           sku: v.variantSku ?? undefined,
         })
         variantId = created.id

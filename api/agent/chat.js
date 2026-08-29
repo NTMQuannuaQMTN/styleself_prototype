@@ -172,6 +172,7 @@ var DbCatalog = class {
         id: v2.id,
         size: v2.size,
         color: v2.color,
+        colorHex: v2.color_hex ?? null,
         priceCents: v2.price_cents,
         stockByLocation: Object.fromEntries(
           (v2.inventory ?? []).map((i) => [i.location_id, i.quantity])
@@ -226,8 +227,8 @@ var DemoCatalog = class {
     }
   }
 };
-function v(id, size, color, stock) {
-  return { id, size, color, priceCents: null, stockByLocation: stock };
+function v(id, size, color, stock, colorHex = null) {
+  return { id, size, color, colorHex, priceCents: null, stockByLocation: stock };
 }
 var DEMO_PRODUCTS = [
   {
@@ -244,9 +245,9 @@ var DEMO_PRODUCTS = [
     currency: "USD",
     imageUrl: null,
     variants: [
-      v("dlb-s-oat", "S", "Oatmeal", { orchard: 2, vivocity: 1, jurong: 0 }),
-      v("dlb-m-oat", "M", "Oatmeal", { orchard: 4, vivocity: 2, jurong: 0 }),
-      v("dlb-l-oat", "L", "Oatmeal", { orchard: 3, vivocity: 0, jurong: 1 })
+      v("dlb-s-oat", "S", "Oatmeal", { orchard: 2, vivocity: 1, jurong: 0 }, "#E3D7BF"),
+      v("dlb-m-oat", "M", "Oatmeal", { orchard: 4, vivocity: 2, jurong: 0 }, "#E3D7BF"),
+      v("dlb-l-oat", "L", "Oatmeal", { orchard: 3, vivocity: 0, jurong: 1 }, "#E3D7BF")
     ]
   },
   {
@@ -263,8 +264,8 @@ var DEMO_PRODUCTS = [
     currency: "USD",
     imageUrl: null,
     variants: [
-      v("dtj-m-nvy", "M", "Navy", { orchard: 2, vivocity: 1, jurong: 0 }),
-      v("dtj-l-nvy", "L", "Navy", { orchard: 1, vivocity: 1, jurong: 0 })
+      v("dtj-m-nvy", "M", "Navy", { orchard: 2, vivocity: 1, jurong: 0 }, "#26314A"),
+      v("dtj-l-nvy", "L", "Navy", { orchard: 1, vivocity: 1, jurong: 0 }, "#26314A")
     ]
   },
   {
@@ -281,9 +282,9 @@ var DEMO_PRODUCTS = [
     currency: "USD",
     imageUrl: null,
     variants: [
-      v("dos-s-tpe", "S", "Taupe", { orchard: 3, vivocity: 2, jurong: 4 }),
-      v("dos-m-tpe", "M", "Taupe", { orchard: 6, vivocity: 3, jurong: 5 }),
-      v("dos-l-tpe", "L", "Taupe", { orchard: 2, vivocity: 1, jurong: 3 })
+      v("dos-s-tpe", "S", "Taupe", { orchard: 3, vivocity: 2, jurong: 4 }, "#B8A992"),
+      v("dos-m-tpe", "M", "Taupe", { orchard: 6, vivocity: 3, jurong: 5 }, "#B8A992"),
+      v("dos-l-tpe", "L", "Taupe", { orchard: 2, vivocity: 1, jurong: 3 }, "#B8A992")
     ]
   },
   {
@@ -300,10 +301,10 @@ var DEMO_PRODUCTS = [
     currency: "USD",
     imageUrl: null,
     variants: [
-      v("dox-s-wht", "S", "White", { orchard: 8, vivocity: 6, jurong: 7 }),
-      v("dox-m-wht", "M", "White", { orchard: 12, vivocity: 8, jurong: 10 }),
-      v("dox-l-wht", "L", "White", { orchard: 5, vivocity: 4, jurong: 6 }),
-      v("dox-m-blu", "M", "Blue", { orchard: 4, vivocity: 3, jurong: 2 })
+      v("dox-s-wht", "S", "White", { orchard: 8, vivocity: 6, jurong: 7 }, "#F4F1EA"),
+      v("dox-m-wht", "M", "White", { orchard: 12, vivocity: 8, jurong: 10 }, "#F4F1EA"),
+      v("dox-l-wht", "L", "White", { orchard: 5, vivocity: 4, jurong: 6 }, "#F4F1EA"),
+      v("dox-m-blu", "M", "Sky Blue", { orchard: 4, vivocity: 3, jurong: 2 }, "#8FB3D9")
     ]
   },
   {
@@ -320,9 +321,9 @@ var DEMO_PRODUCTS = [
     currency: "USD",
     imageUrl: null,
     variants: [
-      v("dwt-30-chr", "30", "Charcoal", { orchard: 3, vivocity: 2, jurong: 1 }),
-      v("dwt-32-chr", "32", "Charcoal", { orchard: 5, vivocity: 4, jurong: 2 }),
-      v("dwt-34-chr", "34", "Charcoal", { orchard: 4, vivocity: 3, jurong: 2 })
+      v("dwt-30-chr", "30", "Charcoal", { orchard: 3, vivocity: 2, jurong: 1 }, "#3B3A37"),
+      v("dwt-32-chr", "32", "Charcoal", { orchard: 5, vivocity: 4, jurong: 2 }, "#3B3A37"),
+      v("dwt-34-chr", "34", "Charcoal", { orchard: 4, vivocity: 3, jurong: 2 }, "#3B3A37")
     ]
   }
 ];
@@ -484,6 +485,7 @@ async function executeTool(name, rawArgs, ctx) {
         8
       );
       ctx.lastSearch = ranked;
+      ctx.lastSearchWeak = weak;
       return {
         count: ranked.length,
         recommend_at_most: ctx.recommendationLimit,
@@ -776,7 +778,8 @@ function buildSystemPrompt(cfg) {
     `- Never say an order is placed, paid or confirmed. ${cfg.requireConfirmation ? "The shopper must explicitly confirm in the UI." : ""}`,
     ``,
     `STYLE`,
-    `- 2\u20134 short sentences. Plain sentences only \u2014 no markdown, bullet points, dashes or HTML.`
+    `- 2\u20134 short sentences. Plain sentences only \u2014 no markdown, bullet points, dashes or HTML.`,
+    `- When you show products, give each one its own sentence that names it and says why it suits the shopper (occasion, fit, fabric, colour or price). The card UI lifts that sentence, so keep one product per sentence.`
   ].join("\n");
   return [identity, ``, merchant, ``, howToWork].join("\n");
 }
@@ -833,7 +836,28 @@ function firstSentences(s, max) {
 function stripMarkdown(s) {
   return s.replace(/\*\*(.+?)\*\*/g, "$1").replace(/(^|\s)\*(\S.*?\S)\*(?=\s|$)/g, "$1$2").replace(/^#{1,6}\s+/gm, "").replace(/^\s*[-*]\s+/gm, "").replace(/^\s*\d+\.\s+/gm, "").replace(/`([^`]+)`/g, "$1").replace(/\n{3,}/g, "\n\n").trim();
 }
-function cardFor(p, currency) {
+var LOW_STOCK_AT = 5;
+function variantStock2(v2) {
+  return Object.values(v2.stockByLocation).reduce((a, b) => a + b, 0);
+}
+function reasonFor(name, reply) {
+  const sentences = reply.match(/[^.!?]+[.!?]?/g) ?? [];
+  const lower = name.toLowerCase();
+  const hit = sentences.find((s) => s.toLowerCase().includes(lower))?.trim();
+  if (!hit || hit.length < 12 || hit.length > 220) return void 0;
+  return hit;
+}
+function cardFor(p, currency, reply, nearestMatch) {
+  const stock = totalStock(p);
+  const inStockVariants = p.variants.filter((v2) => variantStock2(v2) > 0);
+  const colors = [];
+  for (const v2 of inStockVariants) {
+    if (v2.color && !colors.some((c) => c.name === v2.color)) {
+      colors.push({ name: v2.color, hex: v2.colorHex ?? null });
+    }
+  }
+  const sizes = [...new Set(inStockVariants.map((v2) => v2.size).filter(Boolean))];
+  const stockLevel = stock === 0 ? "out" : stock <= LOW_STOCK_AT ? "low" : "in";
   return {
     id: p.id,
     name: p.name,
@@ -842,7 +866,15 @@ function cardFor(p, currency) {
     priceCents: p.priceCents,
     currency,
     imageUrl: p.imageUrl,
-    inStock: totalStock(p) > 0
+    inStock: stock > 0,
+    style: p.style,
+    material: p.material,
+    colors,
+    sizes,
+    stockLevel,
+    ...stockLevel === "low" ? { unitsLeft: stock } : {},
+    reason: reasonFor(p.name, reply),
+    ...nearestMatch ? { nearestMatch: true } : {}
   };
 }
 async function runTurn(openai, model, input) {
@@ -951,8 +983,9 @@ async function runTurn(openai, model, input) {
       ...list.filter((p) => p.id === recId),
       ...list.filter((p) => p.id !== recId)
     ] : list;
+    const nearest = toolCtx.lastSearchWeak === true;
     products = ordered.map((p) => ({
-      ...cardFor(p, config.currency),
+      ...cardFor(p, config.currency, finalText, nearest),
       recommended: p.id === recId
     }));
     context.shownProductIds = ordered.map((p) => p.id);

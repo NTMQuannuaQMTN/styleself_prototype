@@ -68,6 +68,22 @@ export type AgentProductCard = {
   inStock: boolean
   /** highlighted as the agent's top pick */
   recommended?: boolean
+  /** short style descriptor, e.g. "Smart casual" */
+  style?: string | null
+  /** fabric, e.g. "100% linen" */
+  material?: string | null
+  /** distinct in-stock colours, in catalogue order. `hex` drives the swatch. */
+  colors?: { name: string; hex: string | null }[]
+  /** distinct sizes available, in catalogue order */
+  sizes?: string[]
+  /** 'in' = healthy, 'low' = few units left, 'out' = sold out */
+  stockLevel?: 'in' | 'low' | 'out'
+  /** units left when stockLevel === 'low' (drives "Only 3 left") */
+  unitsLeft?: number
+  /** one-line "why this fits you", lifted from the agent's reply */
+  reason?: string
+  /** true when this was surfaced as a near-match, not an exact one */
+  nearestMatch?: boolean
 }
 
 export type AgentComparison = {

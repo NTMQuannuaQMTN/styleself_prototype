@@ -74,12 +74,20 @@ export default function CatalogImportPage() {
     const text = await file.text()
     const parsed = parseCatalogCsv(text)
     setParseErrors(parsed.errors)
-    const built = planImport(
-      parsed.rows,
-      parsed.headers,
-      products.data ?? [],
-      locations,
-    )
+    // Always plan against a fresh catalog snapshot — a stale one makes existing
+    // SKUs look new, and the CREATE then trips the (store_id, merchant_sku) index.
+    let existing: Awaited<ReturnType<typeof listProducts>>
+    try {
+      existing = activeStore ? await listProducts(activeStore.id) : []
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `Could not load your current catalog to compare against: ${err.message}`
+          : 'Could not load your current catalog.',
+      )
+      return
+    }
+    const built = planImport(parsed.rows, parsed.headers, existing, locations)
     setPlan(built)
     setStage('preview')
   }
@@ -271,6 +279,11 @@ function UploadStage({
           <Row term="size, color, variant_sku">
             One row per size/colour. Rows sharing a <code>sku</code> become one
             product with several variants.
+          </Row>
+          <Row term="color_hex">
+            Optional. A 6-digit hex like <code>#E3D7BF</code> so the storefront
+            shows an accurate colour dot next to the colour name. Skip it and the
+            dot is guessed from the name.
           </Row>
           <Row term={stockColumns.join(', ')}>
             {locations.length > 1 ? (

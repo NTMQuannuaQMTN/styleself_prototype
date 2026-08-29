@@ -147,6 +147,8 @@ export type ProductVariant = {
   product_id: string
   size: string | null
   color: string | null
+  /** optional #RRGGBB for the storefront swatch; display-only, never matched on */
+  color_hex: string | null
   sku: string | null
   price_cents: number | null
   created_at: string
@@ -226,6 +228,7 @@ export type Database = {
           product_id: string
           size?: string | null
           color?: string | null
+          color_hex?: string | null
           sku?: string | null
           price_cents?: number | null
         }
