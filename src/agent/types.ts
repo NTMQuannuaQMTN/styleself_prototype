@@ -74,6 +74,10 @@ export type AgentProductCard = {
   style?: string | null
   /** fabric, e.g. "100% linen" */
   material?: string | null
+  /** care instructions, e.g. "Machine wash cold" */
+  care?: string | null
+  /** the merchant's product description — shown in the detail modal */
+  description?: string | null
   /** distinct in-stock colours, in catalogue order. `hex` drives the swatch. */
   colors?: { name: string; hex: string | null }[]
   /** distinct sizes available, in catalogue order */

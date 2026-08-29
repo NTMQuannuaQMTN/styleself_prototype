@@ -31,6 +31,8 @@ export default function AgentPage() {
                 key={option}
                 type="button"
                 aria-pressed={size === option}
+                aria-label={`Use ${option} chat window`}
+                title={`Use ${option} chat window`}
                 onClick={() => setSize(option)}
                 className={`rounded-full px-2.5 py-1 capitalize transition-colors ${size === option ? 'bg-ink text-paper' : 'text-muted hover:text-ink'}`}
               >

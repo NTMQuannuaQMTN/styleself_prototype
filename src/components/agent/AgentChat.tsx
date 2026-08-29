@@ -11,7 +11,7 @@ import {
 } from '../../agent/types'
 import { ChatMessage, TypingDots, type Turn } from './ChatMessage'
 import { OrderPreview, type BuyerDetails } from './OrderPreview'
-import type { CardSelection } from './ProductCards'
+import { ProductDetailModal, type CardSelection } from './ProductCards'
 
 const HISTORY_LIMIT = 8
 
@@ -81,6 +81,8 @@ export function AgentChat({
   // add_to_cart calls.
   const [selections, setSelections] = useState<SelectionByTurn>({})
   const [confirmedTurns, setConfirmedTurns] = useState<Set<number>>(new Set())
+  // The product whose big read-only detail modal is open.
+  const [detail, setDetail] = useState<AgentProductCard | null>(null)
   // The "Current cart" box — mirrors the agent's server-side bag after each turn.
   const [cart, setCart] = useState<CartItem[]>([])
   // Keep the cart visible from the first paint; it starts empty and updates in place.
@@ -142,6 +144,7 @@ export function AgentChat({
   }, [turns, status])
 
   // Hand the cart rows to a host that renders the box itself (cartPlacement="external").
+  // Let a host render the cart itself (merchant Preview side rail).
   useEffect(() => {
     onCartChange?.(cart)
   }, [cart, onCartChange])
@@ -265,8 +268,19 @@ export function AgentChat({
       })
     if (parts.length === 0) return
     setConfirmedTurns((prev) => new Set(prev).add(turnIdx))
+    setDetail(null)
     send(`Add ${parts.join(', ')} to my bag`)
   }
+
+  // Close the detail modal on Escape.
+  useEffect(() => {
+    if (!detail) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDetail(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [detail])
 
   if (fatal) {
     return (
@@ -436,6 +450,7 @@ export function AgentChat({
                 onCardSelect={(pid, next) => selectCard(i, pid, next)}
                 onCardConfirm={() => confirmCards(i)}
                 onAskDetails={(name) => send(`Tell me more about the ${name}`)}
+                onOpenDetail={(product) => setDetail(product)}
               />
             ))
           )}
@@ -481,6 +496,10 @@ export function AgentChat({
           </form>
         </div>
       </div>
+
+      {detail && (
+        <ProductDetailModal product={detail} onClose={() => setDetail(null)} />
+      )}
     </div>
   )
 }
