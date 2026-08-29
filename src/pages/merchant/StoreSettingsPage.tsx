@@ -14,7 +14,6 @@ export default function StoreSettingsPage() {
   const {
     activeStore,
     activeRole,
-    isManager,
     refreshStore,
     refreshMemberships,
     setActiveStore,
@@ -34,9 +33,9 @@ export default function StoreSettingsPage() {
         description="Your store's identity and public address."
       />
 
-      {!isManager && (
+      {!isOwner && (
         <InlineError>
-          Only owners and admins can change store settings.
+          Only the owner of this store can change store settings.
         </InlineError>
       )}
 
@@ -46,7 +45,7 @@ export default function StoreSettingsPage() {
           branchName={store.branch_name ?? ''}
           address={store.headquarters ?? ''}
           city={store.city ?? ''}
-          canEdit={isManager}
+          canEdit={isOwner}
           onSave={async (patch) => {
             await updateStore(store.id, patch)
             await Promise.all([refreshStore(), refreshMemberships()])
@@ -55,7 +54,7 @@ export default function StoreSettingsPage() {
 
         <SlugCard
           slug={store.slug}
-          canEdit={isManager}
+          canEdit={isOwner}
           onSave={async (slug) => {
             await updateStore(store.id, { slug })
             await Promise.all([refreshStore(), refreshMemberships()])

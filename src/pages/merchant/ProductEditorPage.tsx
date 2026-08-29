@@ -66,12 +66,17 @@ export default function ProductEditorPage() {
 
   if (!activeStore) return null
 
+  // Never expose inventory controls for a location outside the active store.
+  const storeLocations = locations.filter(
+    (location) => location.store_id === activeStore.id,
+  )
+
   if (!productId) {
     return (
       <CreateProduct
         storeId={activeStore.id}
         currency={agent?.currency ?? 'USD'}
-        locations={locations}
+        locations={storeLocations}
         disabled={!isManager && !memberLocationId}
         locationId={memberLocationId}
         onCreated={(id) => navigate(`/merchant/catalog/${id}`, { replace: true })}
@@ -95,7 +100,7 @@ export default function ProductEditorPage() {
     <EditProduct
       key={loaded.data.id}
       product={loaded.data}
-      locations={locations}
+      locations={storeLocations}
       currency={agent?.currency ?? 'USD'}
       canManage={isManager || loaded.data.location_id === memberLocationId}
       onReload={loaded.reload}
