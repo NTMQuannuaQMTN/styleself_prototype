@@ -166,6 +166,8 @@ export interface Catalog {
   locationIdByName(name: string | null): string | null
   /** Demo only — simulate the inventory decrement a real checkout RPC performs. */
   decrementStock?(variantId: string, locationId: string, qty: number): void
+  /** Demo only — decrement one variant across all branches. */
+  decrementStockAcrossLocations?(variantId: string, qty: number, preferredLocationId?: string | null): void
 }
 
 function matchLocationId(locations: Loc[], name: string | null): string | null {
@@ -298,6 +300,27 @@ export class DemoCatalog implements Catalog {
           v.stockByLocation[locationId] - qty,
         )
         return
+      }
+    }
+  }
+
+  decrementStockAcrossLocations(variantId: string, qty: number, preferredLocationId?: string | null) {
+    let remaining = qty
+    const locationIds = [
+      ...(preferredLocationId ? [preferredLocationId] : []),
+      ...this.locations.map((location) => location.id).filter((id) => id !== preferredLocationId),
+    ]
+    for (const locationId of locationIds) {
+      if (remaining <= 0) return
+      for (const p of this.products) {
+        const v = p.variants.find((x) => x.id === variantId)
+        const available = v?.stockByLocation[locationId]
+        if (v && available != null) {
+          const used = Math.min(available, remaining)
+          v.stockByLocation[locationId] = available - used
+          remaining -= used
+          break
+        }
       }
     }
   }

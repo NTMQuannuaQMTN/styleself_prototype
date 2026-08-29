@@ -129,6 +129,17 @@ export async function simulateCheckout(
   if (cached) return cached
 
   const locId = input.locationId ?? catalog.locations[0]?.id ?? null
+  const products = await catalog.byIds([...new Set(input.items.map((item) => item.productId))])
+  const byId = new Map(products.map((product) => [product.id, product]))
+  for (const item of input.items) {
+    const variant = byId.get(item.productId)?.variants.find((candidate) => candidate.id === item.variantId)
+    const stock = variant
+      ? Object.values(variant.stockByLocation).reduce((sum, quantity) => sum + quantity, 0)
+      : 0
+    if (!variant || stock < item.quantity) {
+      return { ok: false, error: 'stock', message: 'One of those items just sold out — ask the assistant for an alternative.' }
+    }
+  }
   const items = await lineRows(catalog, input.items)
   const subtotal = items.reduce((s, l) => s + l.lineTotalCents, 0)
   const fees = input.fulfillment === 'delivery' ? FEE_CENTS : 0
@@ -137,8 +148,12 @@ export async function simulateCheckout(
   const receipt = runVisaPipeline(input, total)
   if ('ok' in receipt) return receipt
 
-  if (locId && catalog.decrementStock) {
-    for (const it of input.items) catalog.decrementStock(it.variantId, locId, it.quantity)
+  for (const it of input.items) {
+    if (catalog.decrementStockAcrossLocations) {
+      catalog.decrementStockAcrossLocations(it.variantId, it.quantity, locId)
+    } else if (locId && catalog.decrementStock) {
+      catalog.decrementStock(it.variantId, locId, it.quantity)
+    }
   }
 
   const { authorizationCode, ...visa } = receipt

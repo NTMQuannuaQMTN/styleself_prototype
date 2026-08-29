@@ -29,7 +29,10 @@ type CartItem = {
   productId: string
   name: string
   variantLabel: string | null
+  size: string | null
+  color: string | null
   quantity: number
+  stockQuantity: number
   imageUrl: string | null
 }
 
@@ -87,11 +90,14 @@ export function AgentChat({
   const [detail, setDetail] = useState<AgentProductCard | null>(null)
   // The "Current cart" box — mirrors the agent's server-side bag after each turn.
   const [cart, setCart] = useState<CartItem[]>([])
+  const [pendingCartQuantities, setPendingCartQuantities] = useState<Record<string, number>>({})
   // Pins the top-bar cart popover open on click (it also opens on hover / focus).
   const [cartOpen, setCartOpen] = useState(false)
   // The Checkout panel (top-right) holds the payment flow; the in-chat copy is
   // summary-only so payment can't be started from two places.
   const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [checkoutCancelledKey, setCheckoutCancelledKey] = useState<string | null>(null)
+  const [checkoutRequested, setCheckoutRequested] = useState(false)
   // Card details live here so they survive the panel remounting when the order
   // changes (e.g. the shopper edits the cart after entering their card).
   const [buyer, setBuyer] = useState<BuyerDetails>({
@@ -104,13 +110,30 @@ export function AgentChat({
 
   // The order to pay = the most recent turn that carries one.
   const orderTurnIdx = turns.findLastIndex((t) => Boolean(t.orderPreview))
-  const activeOrder =
+  const candidateOrder =
     orderTurnIdx >= 0
       ? {
           preview: turns[orderTurnIdx].orderPreview!,
           token: turns[orderTurnIdx].orderDraftToken,
           key: String(orderTurnIdx),
         }
+      : null
+  const orderMatchesCart = candidateOrder
+    ? (() => {
+        const expected = candidateOrder.preview.lines
+          .map((line) => `${line.name}|${line.variant ?? ''}|${line.quantity}`)
+          .sort()
+        const actual = cart
+          .map((line) => `${line.name}|${line.variantLabel ?? ''}|${line.quantity}`)
+          .sort()
+        return expected.length === actual.length && expected.every((line, i) => line === actual[i])
+      })()
+    : false
+  const activeOrder =
+    candidateOrder &&
+    orderMatchesCart &&
+    checkoutCancelledKey !== candidateOrder.key
+      ? candidateOrder
       : null
 
   // open the conversation (no model call server-side)
@@ -151,21 +174,14 @@ export function AgentChat({
     onCartChange?.(cart)
   }, [cart, onCartChange])
 
-  // Whenever a new order preview appears, snap the panel shut then slide it back
-  // open on the next frames — so a fresh checkout visibly replaces the old one.
+  // Open a newly-created order preview only when the shopper explicitly requested
+  // checkout. Normal chat activity must not interrupt the shopping conversation.
   const orderKey = activeOrder?.key
   useEffect(() => {
-    if (!orderKey) return
-    let raf2 = 0
-    const raf1 = requestAnimationFrame(() => {
-      setCheckoutOpen(false)
-      raf2 = requestAnimationFrame(() => setCheckoutOpen(true))
-    })
-    return () => {
-      cancelAnimationFrame(raf1)
-      cancelAnimationFrame(raf2)
-    }
-  }, [orderKey])
+    if (!orderKey || !checkoutRequested) return
+    setCheckoutOpen(true)
+    setCheckoutRequested(false)
+  }, [orderKey, checkoutRequested])
 
   const agentName = branding?.agentName ?? 'StyleSelf'
 
@@ -180,7 +196,10 @@ export function AgentChat({
         productId: it.productId,
         name: it.name,
         variantLabel: it.variantLabel,
+        size: it.size,
+        color: it.color,
         quantity: it.quantity,
+        stockQuantity: it.stockQuantity,
         imageUrl:
           imgById.get(it.productId) ??
           local.find((l) => l.productId === it.productId)?.imageUrl ??
@@ -192,6 +211,11 @@ export function AgentChat({
   async function send(text: string) {
     const q = text.trim()
     if (!q || status === 'thinking' || status === 'init') return
+    if (activeOrder) {
+      setCheckoutCancelledKey(activeOrder.key)
+      setCheckoutOpen(false)
+    }
+    setCheckoutRequested(false)
     setInput('')
     const nextTurns: Turn[] = [...turns, { role: 'user', text: q }]
     setTurns(nextTurns)
@@ -318,6 +342,67 @@ export function AgentChat({
     'What do you have for a formal dinner?',
   ]
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0)
+  const stockByVariant = new Map(
+    turns.flatMap((turn) => turn.products ?? []).flatMap((product) =>
+      (product.variantStock ?? []).map((variant) => [
+        `${product.id}|${variant.size ?? ''}|${variant.color ?? ''}`,
+        variant.quantity,
+      ] as const),
+    ),
+  )
+
+  function cartItemKey(item: CartItem) {
+    return `${item.productId}|${item.size ?? ''}|${item.color ?? ''}`
+  }
+
+  function changeCartQuantity(item: CartItem, quantity: number) {
+    const max = item.stockQuantity ?? stockByVariant.get(cartItemKey(item)) ?? 0
+    if (!Number.isFinite(quantity)) return
+    const next = Math.max(0, Math.min(max, Math.round(quantity)))
+    setPendingCartQuantities((current) => ({ ...current, [cartItemKey(item)]: next }))
+  }
+
+  function confirmCartQuantity(item: CartItem) {
+    const key = cartItemKey(item)
+    const next = pendingCartQuantities[key]
+    if (next == null || next === item.quantity) return
+    setCart((current) =>
+      next === 0
+        ? current.filter((line) => cartItemKey(line) !== key)
+        : current.map((line) =>
+            cartItemKey(line) === key ? { ...line, quantity: next } : line,
+          ),
+    )
+    setPendingCartQuantities((current) => {
+      const updated = { ...current }
+      delete updated[key]
+      return updated
+    })
+    send(
+      `Set the quantity of ${item.name}${item.variantLabel ? ` (${item.variantLabel})` : ''} to ${next}`,
+    )
+  }
+
+  function clearCart() {
+    if (cart.length === 0 || status !== 'ready') return
+    setCart([])
+    setPendingCartQuantities({})
+    setCheckoutOpen(false)
+    setCheckoutRequested(false)
+    if (activeOrder) setCheckoutCancelledKey(activeOrder.key)
+    send('Remove every item from my cart')
+  }
+
+  function startCheckout() {
+    if (cartCount > 0) {
+      if (activeOrder) {
+        setCheckoutCancelledKey(activeOrder.key)
+        setCheckoutOpen(false)
+      }
+      send('I am ready to checkout and pay for my bag')
+      setCheckoutRequested(true)
+    }
+  }
 
   return (
     <div className={`relative ${className}`}>
@@ -386,9 +471,21 @@ export function AgentChat({
                 >
                   <div className="flex items-center justify-between px-1">
                     <p className="eyebrow text-[0.55rem]">Current cart</p>
-                    <span className="text-[0.62rem] text-muted">
-                      {cartCount} item{cartCount === 1 ? '' : 's'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[0.62rem] text-muted">
+                        {cartCount} item{cartCount === 1 ? '' : 's'}
+                      </span>
+                      {cart.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={clearCart}
+                          disabled={status !== 'ready'}
+                          className="rounded-md border border-line-strong px-1.5 py-0.5 text-[0.62rem] font-medium text-muted transition-colors hover:border-ink hover:bg-paper hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Clear cart
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {cart.length === 0 ? (
                     <p className="px-1 py-2 text-[0.72rem] text-muted">
@@ -396,20 +493,69 @@ export function AgentChat({
                     </p>
                   ) : (
                     <ul className="mt-1.5 max-h-56 divide-y divide-line overflow-y-auto">
-                      {cart.map((item) => (
+                      {cart.map((item) => {
+                        const key = cartItemKey(item)
+                        const draftQuantity = pendingCartQuantities[key] ?? item.quantity
+                        const maxQuantity = item.stockQuantity ?? stockByVariant.get(key) ?? 0
+                        const changed = draftQuantity !== item.quantity
+                        return (
                         <li
-                          key={item.productId}
-                          className="flex items-baseline justify-between gap-3 px-1 py-1.5 text-[0.72rem]"
+                          key={key}
+                          className="px-1 py-1.5 text-[0.72rem]"
                         >
-                          <span className="truncate text-ink">
-                            {item.name}
-                            {item.variantLabel ? (
-                              <span className="text-muted"> · {item.variantLabel}</span>
-                            ) : null}
-                          </span>
-                          <span className="shrink-0 text-muted">× {item.quantity}</span>
+                          <div className="flex items-baseline justify-between gap-3">
+                            <span className="truncate text-ink">
+                              {item.name}
+                              {item.variantLabel ? (
+                                <span className="text-muted"> · {item.variantLabel}</span>
+                              ) : null}
+                            </span>
+                            <span className="shrink-0 text-muted">× {item.quantity}</span>
+                          </div>
+                          <div className="mt-1 flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              aria-label={`Decrease ${item.name} quantity`}
+                              onClick={() => changeCartQuantity(item, draftQuantity - 1)}
+                              disabled={status !== 'ready' || draftQuantity <= 0}
+                              className="h-5 w-5 rounded border border-line-strong text-xs text-ink disabled:opacity-40"
+                            >
+                              −
+                            </button>
+                            <input
+                              type="number"
+                              min={0}
+                              max={maxQuantity}
+                              value={draftQuantity}
+                              onChange={(e) => changeCartQuantity(item, Number(e.target.value))}
+                              aria-label={`Quantity for ${item.name}`}
+                              disabled={status !== 'ready'}
+                              className="w-9 rounded border border-line-strong bg-surface px-1 py-0.5 text-center text-[0.65rem] text-ink"
+                            />
+                            <button
+                              type="button"
+                              aria-label={`Increase ${item.name} quantity`}
+                              onClick={() => changeCartQuantity(item, draftQuantity + 1)}
+                              disabled={status !== 'ready' || draftQuantity >= maxQuantity}
+                              className="h-5 w-5 rounded border border-line-strong text-xs text-ink disabled:opacity-40"
+                            >
+                              +
+                            </button>
+                            <span className="text-[0.62rem] text-muted">in bag</span>
+                          </div>
+                          {changed && (
+                            <button
+                              type="button"
+                              onClick={() => confirmCartQuantity(item)}
+                              disabled={status !== 'ready'}
+                              className="mt-1 rounded-full bg-ink px-2 py-1 text-[0.62rem] font-medium text-paper disabled:opacity-50"
+                            >
+                              Confirm change
+                            </button>
+                          )}
                         </li>
-                      ))}
+                        )
+                      })}
                     </ul>
                   )}
                 </div>
@@ -513,8 +659,8 @@ export function AgentChat({
           >
             <button
               type="button"
-              onClick={() => send('I’d like to check out now, please.')}
-              disabled={status !== 'ready'}
+              onClick={startCheckout}
+              disabled={status !== 'ready' || cartCount === 0}
               title="Ask the agent to check out"
               className="flex shrink-0 items-center gap-1.5 self-stretch rounded-full border border-line-strong px-3 text-[0.7rem] font-semibold text-ink transition-colors hover:border-ink hover:bg-black/[0.03] disabled:opacity-40"
             >

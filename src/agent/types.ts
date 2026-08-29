@@ -88,6 +88,8 @@ export type AgentProductCard = {
   unitsLeft?: number
   /** exact total stock used to cap cart quantity controls */
   stockQuantity?: number
+  /** stock for each selectable size/colour combination */
+  variantStock?: { size: string | null; color: string | null; quantity: number }[]
   /** one-line "why this fits you", lifted from the agent's reply */
   reason?: string
   /** true when this was surfaced as a near-match, not an exact one */
@@ -124,7 +126,10 @@ export type AgentCart = {
     productId: string
     name: string
     variantLabel: string | null
+    size: string | null
+    color: string | null
     quantity: number
+    stockQuantity: number
     unitPriceCents: number
   }[]
   subtotalCents: number
