@@ -877,6 +877,7 @@ function cardFor(p, currency, reply, nearestMatch) {
     colors,
     sizes,
     stockLevel,
+    stockQuantity: stock,
     ...stockLevel === "low" ? { unitsLeft: stock } : {},
     reason: reasonFor(p.name, reply),
     ...nearestMatch ? { nearestMatch: true } : {}
