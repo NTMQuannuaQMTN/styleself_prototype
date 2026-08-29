@@ -88,9 +88,12 @@ export async function handleCheckout(
     return fail(400, 'bad_request', 'The order is empty.')
   }
 
-  const resolved = await resolveAgent(agentId, authHeader, env)
+  const resolved = await resolveAgent(agentId, authHeader, str(req.embedKey), env)
   if (resolved === 'unconfigured') {
     return fail(500, 'server', 'The agent backend is not configured.')
+  }
+  if (resolved === 'forbidden') {
+    return fail(403, 'forbidden', 'This embed is not authorised for checkout.')
   }
   if (!resolved) return fail(404, 'not_found', 'No agent found at this address.')
 
@@ -176,8 +179,9 @@ export async function handleCheckout(
 async function resolveAgent(
   agentId: string,
   authHeader: string | undefined,
+  embedKey: string | undefined,
   env: ReturnType<typeof readAgentEnv>,
-): Promise<Resolved | null | 'unconfigured'> {
+): Promise<Resolved | null | 'unconfigured' | 'forbidden'> {
   if (agentId === 'demo') {
     return {
       kind: 'demo',
@@ -201,6 +205,11 @@ async function resolveAgent(
     .eq('slug', agentId)
     .maybeSingle()
   if (!store) return null
+
+  // Anonymous callers must present the store's embed key (authed preview exempt).
+  if (!authHeader && store.embed_key && (embedKey ?? '').trim() !== store.embed_key) {
+    return 'forbidden'
+  }
 
   const [{ data: agentRow }, { data: locRows }] = await Promise.all([
     supabase.from('store_agents').select('currency').eq('store_id', store.id).maybeSingle(),

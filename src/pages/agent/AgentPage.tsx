@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { AgentChat } from '../../components/agent/AgentChat'
 
 /**
@@ -12,11 +12,13 @@ import { AgentChat } from '../../components/agent/AgentChat'
  */
 export default function AgentPage() {
   const { agentId = 'demo' } = useParams()
+  const [params] = useSearchParams()
+  const embedKey = params.get('k') ?? undefined
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-paper">
       <div className="mx-auto flex w-full min-h-0 max-w-lg flex-1 flex-col p-3 sm:p-4">
-        <AgentChat agentId={agentId} className="min-h-0 flex-1" />
+        <AgentChat agentId={agentId} embedKey={embedKey} className="min-h-0 flex-1" />
         <p className="mt-2 shrink-0 text-center text-[0.68rem] text-muted">
           Shopping assistant by{' '}
           <span className="font-display italic text-ink">StyleSelf</span>

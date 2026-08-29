@@ -51,6 +51,8 @@ export function emptyContext(): AgentContext {
 export type AgentRequest = {
   agentId: string
   conversationId: string
+  /** Embed key from the iframe URL (?k=). Required for anonymous live embeds. */
+  embedKey?: string
   /** Recent turns (capped by the client). Empty array = open the conversation. */
   messages: ChatTurn[]
   context: AgentContext
@@ -144,7 +146,13 @@ export type AgentReply = {
 
 export type AgentError = {
   ok: false
-  error: 'not_found' | 'not_live' | 'not_configured' | 'bad_request' | 'server'
+  error:
+    | 'not_found'
+    | 'not_live'
+    | 'not_configured'
+    | 'bad_request'
+    | 'forbidden'
+    | 'server'
   message: string
 }
 
@@ -159,6 +167,7 @@ export type AgentAuthorizeRequest = {
   action: 'authorize'
   agentId: string
   conversationId: string
+  embedKey?: string
   orderDraftToken: string
   buyerName: string
   card: { last4: string; brand: string | null }
@@ -178,6 +187,7 @@ export type AgentPayRequest = {
   action: 'pay'
   agentId: string
   conversationId: string
+  embedKey?: string
   orderDraftToken: string
   authorizationToken: string
 }
@@ -206,7 +216,14 @@ export type AgentOrderConfirmation = {
 
 export type AgentCheckoutError = {
   ok: false
-  error: 'bad_request' | 'expired' | 'stock' | 'declined' | 'not_found' | 'server'
+  error:
+    | 'bad_request'
+    | 'expired'
+    | 'stock'
+    | 'declined'
+    | 'not_found'
+    | 'forbidden'
+    | 'server'
   message: string
 }
 

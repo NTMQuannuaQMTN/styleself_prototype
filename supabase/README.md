@@ -31,6 +31,11 @@ Run them **in order** in the SQL Editor (or `supabase db push`):
    `payout_account_last4` (settlement destination, last-4 only); the
    `set_store_live(store, bool)` **SECURITY DEFINER** RPC restricts going
    live/offline to the store **owner**.
+6. [`migrations/20260829220000_store_embed_key.sql`](migrations/20260829220000_store_embed_key.sql)
+   — `stores.embed_key` (unique, auto-generated). The iframe loads as
+   `/agent/<slug>?k=<embed_key>` and the backend rejects an anonymous call whose
+   key doesn't match; `rotate_embed_key(store)` (**SECURITY DEFINER**, owner-only)
+   issues a fresh one.
 
 The catalog migration file is fully idempotent — **re-run it** to pick up every
 column / policy added since your last run. The follow-up files use

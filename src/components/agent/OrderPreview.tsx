@@ -18,6 +18,7 @@ export function OrderPreview({
   orderDraftToken,
   preview,
   authToken,
+  embedKey,
   onPaid,
 }: {
   agentId: string
@@ -25,6 +26,7 @@ export function OrderPreview({
   orderDraftToken?: string
   preview: AgentOrderPreview
   authToken?: string
+  embedKey?: string
   /** Called once payment succeeds — lets the chat clear the paid bag. */
   onPaid?: (order: AgentOrderConfirmation) => void
 }) {
@@ -58,6 +60,7 @@ export function OrderPreview({
       {
         agentId,
         conversationId,
+        embedKey,
         orderDraftToken,
         buyerName: name.trim(),
         card: { last4: digits.slice(-4), brand },
@@ -78,7 +81,7 @@ export function OrderPreview({
     setStage('processing')
     setError(null)
     const res = await executePayment(
-      { agentId, conversationId, orderDraftToken, authorizationToken },
+      { agentId, conversationId, embedKey, orderDraftToken, authorizationToken },
       authToken,
     )
     if (res.ok && res.kind === 'order') {
