@@ -22,12 +22,14 @@ export type Turn = {
 export function ChatMessage({
   turn,
   agentName,
+  onAdd,
   agentId,
   conversationId,
   authToken,
 }: {
   turn: Turn
   agentName: string
+  onAdd?: (product: AgentProductCard) => void
   agentId: string
   conversationId: string
   authToken?: string
