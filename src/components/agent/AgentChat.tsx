@@ -334,6 +334,30 @@ export function AgentChat({
             </span>
           )}
           <div className="ml-auto flex items-center gap-1.5">
+            {activeOrder && (
+              <button
+                type="button"
+                onClick={() => setCheckoutOpen((open) => !open)}
+                aria-expanded={checkoutOpen}
+                aria-controls="agent-checkout"
+                className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[0.65rem] font-semibold text-paper shadow-sm transition-colors ${
+                  checkoutOpen ? 'bg-ink' : 'bg-accent hover:bg-ink'
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full bg-paper ${
+                    checkoutOpen ? '' : 'animate-pulse'
+                  }`}
+                />
+                {checkoutOpen ? 'Hide' : 'Checkout'}
+                <span className="font-display">
+                  {formatMoney(
+                    activeOrder.preview.totalCents,
+                    activeOrder.preview.currency,
+                  )}
+                </span>
+              </button>
+            )}
             {cartPlacement === 'external' ? (
               <span className="rounded-full border border-line-strong px-2.5 py-0.5 text-[0.65rem] text-muted">
                 Cart {cartCount}
@@ -416,10 +440,10 @@ export function AgentChat({
           <div
             id="agent-checkout"
             aria-hidden={!checkoutOpen}
-            className={`absolute bottom-2 left-2 z-40 max-h-[calc(100%-4rem)] w-[19rem] max-w-[calc(100%-1rem)] origin-bottom-left overflow-y-auto rounded-xl shadow-[0_24px_60px_-24px_rgba(23,21,15,0.45)] transition-[opacity,transform] duration-200 ease-out ${
+            className={`absolute right-2 top-[3.75rem] z-40 max-h-[calc(100%-4.75rem)] w-[19rem] max-w-[calc(100%-1rem)] origin-top-right overflow-y-auto rounded-xl shadow-[0_24px_60px_-24px_rgba(23,21,15,0.45)] transition-[opacity,transform] duration-200 ease-out ${
               checkoutOpen
                 ? 'translate-y-0 scale-100 opacity-100'
-                : 'pointer-events-none translate-y-2 scale-95 opacity-0'
+                : 'pointer-events-none -translate-y-2 scale-95 opacity-0'
             }`}
           >
             <OrderPreview
@@ -466,42 +490,6 @@ export function AgentChat({
         </div>
 
         <div className="shrink-0 border-t border-line p-3">
-          <div className="mb-2 flex">
-            <button
-              type="button"
-              onClick={() => setCheckoutOpen((open) => !open)}
-              disabled={!activeOrder}
-              aria-expanded={checkoutOpen}
-              aria-controls="agent-checkout"
-              title={
-                activeOrder ? undefined : 'Add something to your bag first'
-              }
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.7rem] font-semibold shadow-sm transition-colors ${
-                !activeOrder
-                  ? 'cursor-not-allowed border border-line-strong bg-transparent text-muted'
-                  : checkoutOpen
-                    ? 'bg-ink text-paper'
-                    : 'bg-accent text-paper hover:bg-ink'
-              }`}
-            >
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${
-                  !activeOrder
-                    ? 'bg-line-strong'
-                    : `bg-paper ${checkoutOpen ? '' : 'animate-pulse'}`
-                }`}
-              />
-              {checkoutOpen ? 'Hide checkout' : 'Checkout'}
-              {activeOrder && (
-                <span className="font-display">
-                  {formatMoney(
-                    activeOrder.preview.totalCents,
-                    activeOrder.preview.currency,
-                  )}
-                </span>
-              )}
-            </button>
-          </div>
           {turns.length <= 1 && status === 'ready' && (
             <div className="mb-2 flex flex-wrap gap-1.5">
               {suggestions.map((s) => (
@@ -521,8 +509,22 @@ export function AgentChat({
               e.preventDefault()
               send(input)
             }}
-            className="flex gap-2"
+            className="flex items-center gap-2"
           >
+            <button
+              type="button"
+              onClick={() => send('I’d like to check out now, please.')}
+              disabled={status !== 'ready'}
+              title="Ask the agent to check out"
+              className="flex shrink-0 items-center gap-1.5 self-stretch rounded-full border border-line-strong px-3 text-[0.7rem] font-semibold text-ink transition-colors hover:border-ink hover:bg-black/[0.03] disabled:opacity-40"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="20" cy="21" r="1" />
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+              </svg>
+              Checkout
+            </button>
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
