@@ -59,7 +59,6 @@ export default function PreviewPage() {
             agentId={activeStore.slug}
             authToken={session?.access_token}
             cartPlacement="external"
-            {/* onCartChange={setCart} */}
             className="max-h-[36rem] min-h-[32rem] w-full"
           />
         </div>
