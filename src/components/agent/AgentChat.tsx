@@ -7,8 +7,10 @@ import {
   type ChatTurn,
   type AgentProductCard,
   type AgentCart,
+  type AgentOrderConfirmation,
 } from '../../agent/types'
 import { ChatMessage, TypingDots, type Turn } from './ChatMessage'
+import { OrderPreview, type BuyerDetails } from './OrderPreview'
 import type { CardSelection } from './ProductCards'
 
 const HISTORY_LIMIT = 8
@@ -66,7 +68,29 @@ export function AgentChat({
   const [cart, setCart] = useState<CartItem[]>([])
   // Keep the cart visible from the first paint; it starts empty and updates in place.
   const [cartOpen, setCartOpen] = useState(true)
+  // The Checkout panel (top-right) holds the payment flow; the in-chat copy is
+  // summary-only so payment can't be started from two places.
+  const [checkoutOpen, setCheckoutOpen] = useState(false)
+  // Card details live here so they survive the panel remounting when the order
+  // changes (e.g. the shopper edits the cart after entering their card).
+  const [buyer, setBuyer] = useState<BuyerDetails>({
+    name: '',
+    card: '',
+    expiry: '',
+    cvc: '',
+  })
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  // The order to pay = the most recent turn that carries one.
+  const orderTurnIdx = turns.findLastIndex((t) => Boolean(t.orderPreview))
+  const activeOrder =
+    orderTurnIdx >= 0
+      ? {
+          preview: turns[orderTurnIdx].orderPreview!,
+          token: turns[orderTurnIdx].orderDraftToken,
+          key: String(orderTurnIdx),
+        }
+      : null
 
   // open the conversation (no model call server-side)
   useEffect(() => {
@@ -96,6 +120,22 @@ export function AgentChat({
       behavior: 'smooth',
     })
   }, [turns, status])
+
+  // Whenever a new order preview appears, snap the panel shut then slide it back
+  // open on the next frames — so a fresh checkout visibly replaces the old one.
+  const orderKey = activeOrder?.key
+  useEffect(() => {
+    if (!orderKey) return
+    let raf2 = 0
+    const raf1 = requestAnimationFrame(() => {
+      setCheckoutOpen(false)
+      raf2 = requestAnimationFrame(() => setCheckoutOpen(true))
+    })
+    return () => {
+      cancelAnimationFrame(raf1)
+      cancelAnimationFrame(raf2)
+    }
+  }, [orderKey])
 
   const agentName = branding?.agentName ?? 'StyleSelf'
 
@@ -161,6 +201,18 @@ export function AgentChat({
       },
     ])
     setStatus('ready')
+  }
+
+  function handlePaid(order: AgentOrderConfirmation) {
+    setContext((c) => ({ ...c, cart: [], selectedProductIds: [] }))
+    setCart([])
+    setTurns((t) => [
+      ...t,
+      {
+        role: 'assistant',
+        text: `Payment received — order ${order.orderId} is confirmed. Anything else I can help you find?`,
+      },
+    ])
   }
 
   function selectCard(turnIdx: number, productId: string, next: CardSelection | null) {
@@ -258,22 +310,66 @@ export function AgentChat({
               {branding.preview && ' · preview'}
             </span>
           )}
-          {cartPlacement === 'preview' ? (
-            <button
-              type="button"
-              onClick={() => setCartOpen((open) => !open)}
-              aria-expanded={cartOpen}
-              aria-controls="agent-cart"
-              className="ml-auto rounded-full border border-line-strong px-2.5 py-1 text-[0.65rem] text-muted transition-colors hover:border-ink hover:text-ink"
-            >
-              Cart {cartCount}
-            </button>
-          ) : (
-            <span className="rounded-full border border-line-strong px-2 py-0.5 text-[0.65rem] text-muted">
-              Cart {cartCount}
-            </span>
-          )}
+          <div className="ml-auto flex items-center gap-1.5">
+            {activeOrder && (
+              <button
+                type="button"
+                onClick={() => setCheckoutOpen((open) => !open)}
+                aria-expanded={checkoutOpen}
+                aria-controls="agent-checkout"
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[0.65rem] font-semibold text-paper shadow-sm transition-colors ${
+                  checkoutOpen ? 'bg-ink' : 'bg-accent hover:bg-ink'
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full bg-paper ${
+                    checkoutOpen ? '' : 'animate-pulse'
+                  }`}
+                />
+                Checkout
+              </button>
+            )}
+            {cartPlacement === 'preview' ? (
+              <button
+                type="button"
+                onClick={() => setCartOpen((open) => !open)}
+                aria-expanded={cartOpen}
+                aria-controls="agent-cart"
+                className="rounded-full border border-line-strong px-2.5 py-1 text-[0.65rem] text-muted transition-colors hover:border-ink hover:text-ink"
+              >
+                Cart {cartCount}
+              </button>
+            ) : (
+              <span className="rounded-full border border-line-strong px-2 py-0.5 text-[0.65rem] text-muted">
+                Cart {cartCount}
+              </span>
+            )}
+          </div>
         </div>
+
+        {activeOrder && (
+          <div
+            id="agent-checkout"
+            aria-hidden={!checkoutOpen}
+            className={`absolute right-2 top-[3.4rem] z-40 max-h-[calc(100%-4.5rem)] w-[19rem] max-w-[calc(100%-1rem)] origin-top-right overflow-y-auto rounded-xl shadow-[0_24px_60px_-24px_rgba(23,21,15,0.45)] transition-[opacity,transform] duration-200 ease-out ${
+              checkoutOpen
+                ? 'translate-y-0 scale-100 opacity-100'
+                : 'pointer-events-none -translate-y-2 scale-95 opacity-0'
+            }`}
+          >
+            <OrderPreview
+              key={activeOrder.key}
+              agentId={agentId}
+              conversationId={conversationId}
+              orderDraftToken={activeOrder.token}
+              preview={activeOrder.preview}
+              authToken={authToken}
+              buyer={buyer}
+              onBuyerChange={(patch) => setBuyer((b) => ({ ...b, ...patch }))}
+              onPaid={handlePaid}
+            />
+          </div>
+        )}
 
         <div
           ref={scrollRef}
@@ -296,17 +392,6 @@ export function AgentChat({
                 onCardSelect={(pid, next) => selectCard(i, pid, next)}
                 onCardConfirm={() => confirmCards(i)}
                 onAskDetails={(name) => send(`Tell me more about the ${name}`)}
-                onPaid={(order) => {
-                  setContext((c) => ({ ...c, cart: [], selectedProductIds: [] }))
-                  setCart([])
-                  setTurns((t) => [
-                    ...t,
-                    {
-                      role: 'assistant',
-                      text: `Payment received — order ${order.orderId} is confirmed. Anything else I can help you find?`,
-                    },
-                  ])
-                }}
               />
             ))
           )}

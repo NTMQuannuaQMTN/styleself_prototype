@@ -12,12 +12,18 @@ import { formatMoney } from '../../merchant/money'
  */
 type Stage = 'review' | 'identity' | 'authorized' | 'processing' | 'done' | 'error'
 
+export type BuyerDetails = { name: string; card: string; expiry: string; cvc: string }
+const EMPTY_BUYER: BuyerDetails = { name: '', card: '', expiry: '', cvc: '' }
+
 export function OrderPreview({
   agentId,
   conversationId,
   orderDraftToken,
   preview,
   authToken,
+  readOnly = false,
+  buyer: buyerProp,
+  onBuyerChange,
   onPaid,
 }: {
   agentId: string
@@ -25,14 +31,22 @@ export function OrderPreview({
   orderDraftToken?: string
   preview: AgentOrderPreview
   authToken?: string
+  /** In-chat copy: show the summary only, no payment controls. */
+  readOnly?: boolean
+  /** Lift card details to the parent so they survive the panel remounting. */
+  buyer?: BuyerDetails
+  onBuyerChange?: (patch: Partial<BuyerDetails>) => void
   /** Called once payment succeeds — lets the chat clear the paid bag. */
   onPaid?: (order: AgentOrderConfirmation) => void
 }) {
   const [stage, setStage] = useState<Stage>('review')
-  const [name, setName] = useState('')
-  const [card, setCard] = useState('')
-  const [expiry, setExpiry] = useState('')
-  const [cvc, setCvc] = useState('')
+  const [localBuyer, setLocalBuyer] = useState<BuyerDetails>(EMPTY_BUYER)
+  const buyer = buyerProp ?? localBuyer
+  const setBuyer = (patch: Partial<BuyerDetails>) =>
+    onBuyerChange
+      ? onBuyerChange(patch)
+      : setLocalBuyer((b) => ({ ...b, ...patch }))
+  const { name, card, expiry, cvc } = buyer
   const [authorizationToken, setAuthorizationToken] = useState<string | null>(null)
   const [order, setOrder] = useState<AgentOrderConfirmation | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -49,6 +63,59 @@ export function OrderPreview({
     /^\d{3,4}$/.test(cvc)
 
   const canPay = Boolean(orderDraftToken)
+
+  const summary = (
+    <>
+      <div className="mt-2 space-y-1.5 border-b border-line pb-2.5">
+        {preview.lines.map((line, i) => (
+          <div key={i} className="flex items-baseline justify-between gap-3 text-sm">
+            <span className="text-ink">
+              {line.name}
+              {line.variant ? <span className="text-muted"> · {line.variant}</span> : null}
+              {line.quantity > 1 ? (
+                <span className="text-muted"> × {line.quantity}</span>
+              ) : null}
+            </span>
+            <span className="shrink-0 text-ink">{money(line.lineTotalCents)}</span>
+          </div>
+        ))}
+      </div>
+      <dl className="mt-2.5 space-y-1 text-sm">
+        <div className="flex justify-between">
+          <dt className="text-muted">Subtotal</dt>
+          <dd className="text-ink">{money(preview.subtotalCents)}</dd>
+        </div>
+        <div className="flex justify-between">
+          <dt className="text-muted">
+            {preview.fulfillment === 'pickup'
+              ? `Pickup${preview.location ? ` · ${preview.location}` : ''}`
+              : 'Delivery'}
+          </dt>
+          <dd className="text-ink">{money(preview.deliveryCents)}</dd>
+        </div>
+        <div className="flex justify-between border-t border-line pt-1.5 font-medium">
+          <dt className="text-ink">Total</dt>
+          <dd className="font-display text-ink">{money(preview.totalCents)}</dd>
+        </div>
+      </dl>
+    </>
+  )
+
+  // In-chat copy — summary only, payment happens in the top-right Checkout panel.
+  if (readOnly) {
+    return (
+      <div className="rounded-xl border border-line-strong bg-surface p-3.5">
+        <div className="flex items-center justify-between">
+          <p className="eyebrow text-[0.58rem]">Order ready</p>
+          <VisaMark />
+        </div>
+        {summary}
+        <p className="mt-2 text-center text-[0.68rem] text-muted">
+          Review and pay in the Checkout panel — tap “Checkout” at the top.
+        </p>
+      </div>
+    )
+  }
 
   async function authorize() {
     if (!orderDraftToken) return
@@ -100,41 +167,7 @@ export function OrderPreview({
         <VisaMark />
       </div>
 
-      {/* line items — always visible */}
-      <div className="mt-2 space-y-1.5 border-b border-line pb-2.5">
-        {preview.lines.map((line, i) => (
-          <div key={i} className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="text-ink">
-              {line.name}
-              {line.variant ? <span className="text-muted"> · {line.variant}</span> : null}
-              {line.quantity > 1 ? (
-                <span className="text-muted"> × {line.quantity}</span>
-              ) : null}
-            </span>
-            <span className="shrink-0 text-ink">{money(line.lineTotalCents)}</span>
-          </div>
-        ))}
-      </div>
-      {stage !== 'done' && (
-        <dl className="mt-2.5 space-y-1 text-sm">
-          <div className="flex justify-between">
-            <dt className="text-muted">Subtotal</dt>
-            <dd className="text-ink">{money(preview.subtotalCents)}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-muted">
-              {preview.fulfillment === 'pickup'
-                ? `Pickup${preview.location ? ` · ${preview.location}` : ''}`
-                : 'Delivery'}
-            </dt>
-            <dd className="text-ink">{money(preview.deliveryCents)}</dd>
-          </div>
-          <div className="flex justify-between border-t border-line pt-1.5 font-medium">
-            <dt className="text-ink">Total</dt>
-            <dd className="font-display text-ink">{money(preview.totalCents)}</dd>
-          </div>
-        </dl>
-      )}
+      {stage !== 'done' && summary}
 
       {stage === 'review' && (
         <>
@@ -170,21 +203,23 @@ export function OrderPreview({
           <p className="text-[0.7rem] text-muted">
             Enter your card to authorize this Visa payment. Simulated — no real charge.
           </p>
-          <Field label="Cardholder name" value={name} onChange={setName} placeholder="Alex Tan"
+          <Field label="Cardholder name" value={name}
+            onChange={(v) => setBuyer({ name: v })} placeholder="Alex Tan"
             autoComplete="cc-name" />
           <Field
             label={`Card number${brand ? ` · ${brand}` : ''}`}
             value={card}
-            onChange={(v) => setCard(formatCard(v))}
+            onChange={(v) => setBuyer({ card: formatCard(v) })}
             placeholder="4111 1111 1111 1111"
             mono
             autoComplete="cc-number"
           />
           <div className="flex gap-2">
-            <Field label="Expiry" value={expiry} onChange={(v) => setExpiry(formatExpiry(v))}
+            <Field label="Expiry" value={expiry}
+              onChange={(v) => setBuyer({ expiry: formatExpiry(v) })}
               placeholder="MM/YY" mono autoComplete="cc-exp" />
             <Field label="CVC" value={cvc}
-              onChange={(v) => setCvc(v.replace(/\D/g, '').slice(0, 4))}
+              onChange={(v) => setBuyer({ cvc: v.replace(/\D/g, '').slice(0, 4) })}
               placeholder="123" mono autoComplete="cc-csc" />
           </div>
           {error && <p className="text-xs text-[#8f3a24]">{error}</p>}
@@ -208,11 +243,22 @@ export function OrderPreview({
       {stage === 'authorized' && (
         <div className="mt-3 space-y-2">
           <p className="flex items-center gap-2 rounded-lg bg-success/10 px-3 py-2 text-sm text-success">
-            <span aria-hidden>✓</span> Card authorized — payment linked to this session.
+            <span aria-hidden>✓</span> Card ending {card.replace(/\D/g, '').slice(-4)} authorized.
           </p>
           {error && <p className="text-xs text-[#8f3a24]">{error}</p>}
           <button type="button" onClick={pay} className="btn btn-primary w-full !py-2.5 text-sm">
             Pay {money(preview.totalCents)}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setAuthorizationToken(null)
+              setError(null)
+              setStage('identity')
+            }}
+            className="btn btn-secondary w-full !py-2 text-sm"
+          >
+            Change the details
           </button>
         </div>
       )}
