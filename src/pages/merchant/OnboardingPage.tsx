@@ -283,16 +283,21 @@ function JoinResult({
   onRequested: () => Promise<void>
 }) {
   const [open, setOpen] = useState(false)
+  const [location, setLocation] = useState('')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function send() {
+    if (!location.trim()) {
+      setError('Tell the owner which location you’re at.')
+      return
+    }
     setError(null)
     setBusy(true)
     try {
-      await requestToJoin({ storeId: store.id, userId, message })
+      await requestToJoin({ storeId: store.id, userId, location, message })
       setSent(true)
       await onRequested()
     } catch (err) {
@@ -309,7 +314,9 @@ function JoinResult({
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-ink">{store.name}</p>
-          <p className="text-xs text-muted">styleself.ai/{store.slug}</p>
+          <p className="text-xs text-muted">
+            {store.headquarters || 'No location set'} · /agent/{store.slug}
+          </p>
         </div>
         {sent ? (
           <span className="text-xs font-medium text-success">Request sent</span>
@@ -325,11 +332,17 @@ function JoinResult({
       </div>
       {open && !sent && (
         <div className="mt-3 space-y-2 border-t border-line pt-3">
+          <TextField
+            label="Your store location / address"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="VivoCity, Singapore"
+          />
           <TextArea
             label="Note to the owner (optional)"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Hi — I run the VivoCity location."
+            placeholder="Hi — I manage the VivoCity branch."
             rows={2}
           />
           {error ? <InlineError>{error}</InlineError> : null}

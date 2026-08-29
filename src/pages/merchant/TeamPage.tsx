@@ -78,6 +78,11 @@ export default function TeamPage() {
                   {req.requester_email && (
                     <p className="text-xs text-muted">{req.requester_email}</p>
                   )}
+                  {req.requester_location && (
+                    <p className="mt-1 text-xs text-ink-soft">
+                      Location: {req.requester_location}
+                    </p>
+                  )}
                   {req.message && (
                     <p className="mt-1 max-w-md text-xs italic text-muted">
                       “{req.message}”

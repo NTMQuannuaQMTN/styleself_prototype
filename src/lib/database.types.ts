@@ -68,6 +68,7 @@ export type StoreJoinRequest = {
   user_id: string
   status: JoinRequestStatus
   message: string | null
+  requester_location: string | null
   requester_name: string | null
   requester_email: string | null
   created_at: string
@@ -140,7 +141,12 @@ export type Database = {
       >
       store_join_requests: Table<
         StoreJoinRequest,
-        { store_id: string; user_id: string; message?: string | null }
+        {
+          store_id: string
+          user_id: string
+          message?: string | null
+          requester_location?: string | null
+        }
       >
       products: Table<
         Product,

@@ -199,17 +199,22 @@ create trigger on_store_created after insert on public.stores
 -- store_join_requests
 -- ===========================================================================
 create table if not exists public.store_join_requests (
-  id              uuid primary key default gen_random_uuid(),
-  store_id        uuid not null references public.stores (id) on delete cascade,
-  user_id         uuid not null references public.profiles (id) on delete cascade,
-  status          public.join_request_status not null default 'pending',
-  message         text,
-  requester_name  text,
-  requester_email text,
-  created_at      timestamptz not null default now(),
-  decided_at      timestamptz,
-  decided_by      uuid references auth.users (id) on delete set null
+  id                 uuid primary key default gen_random_uuid(),
+  store_id           uuid not null references public.stores (id) on delete cascade,
+  user_id            uuid not null references public.profiles (id) on delete cascade,
+  status             public.join_request_status not null default 'pending',
+  message            text,
+  -- Which branch / address the requester works at (multi-location retailers).
+  requester_location text,
+  requester_name     text,
+  requester_email    text,
+  created_at         timestamptz not null default now(),
+  decided_at         timestamptz,
+  decided_by         uuid references auth.users (id) on delete set null
 );
+
+alter table public.store_join_requests
+  add column if not exists requester_location text;
 
 alter table public.store_join_requests
   drop constraint if exists store_join_requests_user_id_fkey;
@@ -324,13 +329,34 @@ create table if not exists public.product_variants (
 
 alter table public.product_variants add column if not exists size text;
 alter table public.product_variants add column if not exists color text;
+
+-- If an earlier revision used a single `label` column, fold it into `size`
+-- before dropping it so existing rows keep their identity.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'product_variants'
+      and column_name = 'label'
+  ) then
+    update public.product_variants
+       set size = label
+     where coalesce(size, '') = ''
+       and coalesce(color, '') = ''
+       and coalesce(label, '') <> '';
+  end if;
+end
+$$;
+
 alter table public.product_variants drop column if exists label;
 
+-- NOT VALID: enforced on new/updated rows without failing on any legacy row.
 do $$
 begin
   alter table public.product_variants
     add constraint product_variants_has_dimension
-    check (coalesce(size, '') <> '' or coalesce(color, '') <> '');
+    check (coalesce(size, '') <> '' or coalesce(color, '') <> '') not valid;
 exception
   when duplicate_object then null;
 end

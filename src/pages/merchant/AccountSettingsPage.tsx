@@ -11,7 +11,7 @@ import {
 import { useAuth } from '../../auth/useAuth'
 import { authErrorMessage } from '../../auth/errors'
 
-export default function SettingsPage() {
+export default function AccountSettingsPage() {
   const { user, profile, updateProfile, updateEmail, sendPasswordReset } =
     useAuth()
 
@@ -21,7 +21,7 @@ export default function SettingsPage() {
       <main className="mx-auto w-full max-w-2xl px-5 py-10 sm:px-8">
         <PageHeader
           eyebrow="Account"
-          title="Settings"
+          title="Your account"
           description={
             <Link to="/merchant" className="text-accent">
               ← Back to dashboard
