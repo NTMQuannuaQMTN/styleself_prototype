@@ -8,9 +8,16 @@ import { formatMoney } from '../../merchant/money'
  * through /api/agent/checkout (deterministic, no AI). Card details never leave
  * the browser except as a last-4 + brand for the simulated authorization.
  *
- *   review → identity (card details) → authorized → processing → done
+ *   review → identity (card details) → challenge (3-D Secure) → authorized → processing → done
  */
-type Stage = 'review' | 'identity' | 'authorized' | 'processing' | 'done' | 'error'
+type Stage =
+  | 'review'
+  | 'identity'
+  | 'challenge'
+  | 'authorized'
+  | 'processing'
+  | 'done'
+  | 'error'
 
 export type BuyerDetails = { name: string; card: string; expiry: string; cvc: string }
 const EMPTY_BUYER: BuyerDetails = { name: '', card: '', expiry: '', cvc: '' }
@@ -53,6 +60,7 @@ export function OrderPreview({
   const [order, setOrder] = useState<AgentOrderConfirmation | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [challengeCode, setChallengeCode] = useState('')
 
   const money = (c: number) => formatMoney(c, preview.currency)
   const digits = card.replace(/\D/g, '')
@@ -63,6 +71,7 @@ export function OrderPreview({
     cardOk &&
     /^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry) &&
     /^\d{3,4}$/.test(cvc)
+  const challengeOk = /^\d{6}$/.test(challengeCode)
 
   const canPay = Boolean(orderDraftToken)
 
@@ -205,11 +214,16 @@ export function OrderPreview({
           className="mt-3 space-y-2"
           onSubmit={(e) => {
             e.preventDefault()
-            if (identityOk && !busy) authorize()
+            if (identityOk && !busy) {
+              setError(null)
+              setChallengeCode('')
+              setStage('challenge')
+            }
           }}
         >
           <p className="text-[0.7rem] text-muted">
-            Enter your card to authorize this Visa payment. Simulated — no real charge.
+            Enter your card for this Visa payment. Your bank will ask you to confirm it next.
+            Simulated — no real charge.
           </p>
           <Field label="Cardholder name" value={name}
             onChange={(v) => setBuyer({ name: v })} placeholder="Alex Tan"
@@ -236,7 +250,7 @@ export function OrderPreview({
             disabled={!identityOk || busy}
             className="btn btn-primary mt-1 w-full !py-2.5 text-sm"
           >
-            {busy ? 'Verifying…' : 'Verify & authorize'}
+            Continue
           </button>
           <button
             type="button"
@@ -244,6 +258,55 @@ export function OrderPreview({
             className="w-full text-center text-[0.68rem] text-muted underline"
           >
             Cancel
+          </button>
+        </form>
+      )}
+
+      {stage === 'challenge' && (
+        <form
+          className="mt-3 space-y-2"
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (challengeOk && !busy) authorize()
+          }}
+        >
+          <div className="rounded-lg bg-paper px-3 py-2.5">
+            <p className="flex items-center justify-between text-[0.7rem] text-ink-soft">
+              <span>3-D Secure 2.2.0</span>
+              <span className="text-muted">
+                {brand ?? 'Visa'} ending {digits.slice(-4)}
+              </span>
+            </p>
+            <p className="mt-1 text-[0.7rem] text-muted">
+              Your bank sent a one-time code to confirm this {money(preview.totalCents)}{' '}
+              purchase. Simulated — enter any 6 digits.
+            </p>
+          </div>
+          <Field
+            label="One-time code"
+            value={challengeCode}
+            onChange={(v) => setChallengeCode(v.replace(/\D/g, '').slice(0, 6))}
+            placeholder="123456"
+            mono
+            autoComplete="one-time-code"
+          />
+          {error && <p className="text-xs text-[#8f3a24]">{error}</p>}
+          <button
+            type="submit"
+            disabled={!challengeOk || busy}
+            className="btn btn-primary mt-1 w-full !py-2.5 text-sm"
+          >
+            {busy ? 'Verifying…' : 'Verify & authorize'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setError(null)
+              setStage('identity')
+            }}
+            className="w-full text-center text-[0.68rem] text-muted underline"
+          >
+            Back
           </button>
         </form>
       )}
@@ -262,6 +325,7 @@ export function OrderPreview({
             onClick={() => {
               setAuthorizationToken(null)
               setError(null)
+              setChallengeCode('')
               setStage('identity')
             }}
             className="btn btn-secondary w-full !py-2 text-sm"
@@ -328,7 +392,7 @@ export function OrderPreview({
               <div className="flex justify-between">
                 <dt>3-D Secure</dt>
                 <dd className="text-ink-soft">
-                  ECI {order.visa.threeDSEci} · authenticated
+                  ECI {order.visa.threeDSEci} · challenge passed
                 </dd>
               </div>
             ) : null}
@@ -367,9 +431,9 @@ export function OrderPreview({
           </dl>
           <p className="text-[0.68rem] text-muted">
             Simulated Visa Payments Stack — nothing was charged. Your authorization capped the
-            agent at this amount, then the payment moved through tokenization (VTS), a 3-D
-            Secure authorization checked against that mandate, capture, and Visa Direct
-            settlement to the merchant.
+            agent at this amount, you cleared a 3-D Secure challenge, then the payment moved
+            through tokenization (VTS), an authorization checked against that mandate, capture,
+            and Visa Direct settlement to the merchant.
           </p>
         </div>
       )}

@@ -47,7 +47,7 @@ Open `/agent/demo` and follow the five steps the brief asks for. Try this script
 | **1. Discover** | *"I need something for a summer wedding, budget around $150"* | The agent calls `search_products`, returns ranked cards, leads with one top pick and says why it fits. |
 | **2. Decide** | *"Compare the first two"* | A side-by-side comparison table (price, material, colours, sizes, stock) renders automatically. |
 | **3. Build cart** | Pick a size + colour on a card → **"Add 1 to bag"** | The agent runs `add_to_cart`; the "Current cart" panel updates. Add a second item if you like. |
-| **4. Authenticate** | *"I'm ready to check out"* → **Confirm & Pay** → enter card | Order preview shows the total. You explicitly **authorize the agent to spend up to that amount**. Card number is Luhn-checked in the browser; only the last-4 + brand are sent. A signed authorization token is returned. |
+| **4. Authenticate** | *"I'm ready to check out"* → **Confirm & Pay** → enter card → enter any 6-digit code | Order preview shows the total. You explicitly **authorize the agent to spend up to that amount**. Card number is Luhn-checked in the browser; only the last-4 + brand are sent. A simulated **3-D Secure challenge** (any 6 digits) stands in for the issuer step-up, then a signed authorization token is returned. |
 | **5. Pay** | **Pay $…** | The amount runs through the simulated **Visa Payments Stack**: tokenize (VTS) → 3-D Secure authorize *checked against your spend mandate* → capture → Visa Direct settlement. You get an order ID, auth code, and settlement line — all inside the chat, no redirect. |
 
 **Test cards** (any Luhn-valid number works; these trigger specific paths):
@@ -63,8 +63,9 @@ Nothing is ever charged — the Visa step is a clearly isolated simulation
 ### Trust & consent, on screen
 
 - **Transaction preview** before any card entry — line items, delivery, total.
-- **Identity step** — cardholder name + card details gate a signed authorization
-  token; payment can't proceed without it.
+- **Identity step** — cardholder name + card details, then a simulated 3-D Secure
+  challenge (any 6-digit code), gate a signed authorization token; payment can't
+  proceed without it.
 - **Spend mandate** — "you authorize the agent to charge up to $X"; the Visa
   authorizer *rejects* a charge above that ceiling.
 - **The agent never learns the payment result** and never claims an order is
