@@ -34,12 +34,15 @@ export default function PreviewPage() {
         }
       />
 
-      <AgentChat
-        key={activeStore.id}
-        agentId={activeStore.slug}
-        authToken={session?.access_token}
-        className="mx-auto max-h-[34rem] min-h-[30rem] w-full max-w-lg"
-      />
+      <div className="mx-auto w-full max-w-2xl">
+        <AgentChat
+          key={activeStore.id}
+          agentId={activeStore.slug}
+          authToken={session?.access_token}
+          cartPlacement="preview"
+          className="max-h-[34rem] min-h-[30rem] w-full"
+        />
+      </div>
     </div>
   )
 }

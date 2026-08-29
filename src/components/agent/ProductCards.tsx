@@ -1,18 +1,30 @@
 import type { AgentProductCard } from '../../agent/types'
 import { formatMoney } from '../../merchant/money'
 
-export function ProductCards({ products }: { products: AgentProductCard[] }) {
+export function ProductCards({
+  products,
+  onAdd,
+}: {
+  products: AgentProductCard[]
+  onAdd?: (product: AgentProductCard) => void
+}) {
   if (products.length === 0) return null
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
       {products.map((p) => (
-        <ProductCard key={p.id} product={p} />
+        <ProductCard key={p.id} product={p} onAdd={onAdd} />
       ))}
     </div>
   )
 }
 
-function ProductCard({ product }: { product: AgentProductCard }) {
+function ProductCard({
+  product,
+  onAdd,
+}: {
+  product: AgentProductCard
+  onAdd?: (product: AgentProductCard) => void
+}) {
   return (
     <div
       className={`flex flex-col overflow-hidden rounded-xl border bg-surface ${
@@ -53,6 +65,16 @@ function ProductCard({ product }: { product: AgentProductCard }) {
             <span className="ml-1 text-[#8f3a24]">· out of stock</span>
           )}
         </p>
+        {onAdd && (
+          <button
+            type="button"
+            onClick={() => onAdd(product)}
+            disabled={!product.inStock}
+            className="btn btn-secondary mt-2 !px-2 !py-1 text-[0.68rem]"
+          >
+            Add to cart
+          </button>
+        )}
       </div>
     </div>
   )

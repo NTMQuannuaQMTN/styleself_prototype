@@ -17,9 +17,20 @@ import {
   PageHeader,
 } from '../../components/merchant/ui'
 
-function stockOf(p: ProductWithVariants) {
+function stockOf(p: ProductWithVariants, locationId?: string | null) {
   return p.variants.reduce(
-    (sum, v) => sum + v.inventory.reduce((s, i) => s + i.quantity, 0),
+    (sum, v) =>
+      sum +
+      v.inventory.reduce(
+        (s, i) =>
+          s +
+          (locationId && i.location_id !== locationId
+            ? 0
+            : Number.isFinite(Number(i.quantity))
+              ? Number(i.quantity)
+              : 0),
+        0,
+      ),
     0,
   )
 }

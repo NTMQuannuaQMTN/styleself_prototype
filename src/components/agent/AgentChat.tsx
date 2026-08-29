@@ -5,6 +5,7 @@ import {
   type AgentBranding,
   type AgentContext,
   type ChatTurn,
+  type AgentProductCard,
 } from '../../agent/types'
 import { ChatMessage, TypingDots, type Turn } from './ChatMessage'
 
@@ -22,11 +23,13 @@ export function AgentChat({
   agentId,
   authToken,
   className = '',
+  cartPlacement = 'left',
 }: {
   agentId: string
   /** Only for the merchant's own preview of a not-yet-published agent. */
   authToken?: string
   className?: string
+  cartPlacement?: 'left' | 'preview'
 }) {
   const conversationId = useMemo(() => newConversationId(), [])
   const [branding, setBranding] = useState<AgentBranding | null>(null)
@@ -35,6 +38,7 @@ export function AgentChat({
   const [status, setStatus] = useState<'init' | 'ready' | 'thinking'>('init')
   const [fatal, setFatal] = useState<string | null>(null)
   const [input, setInput] = useState('')
+  const [cart, setCart] = useState<{ product: AgentProductCard; quantity: number }[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // open the conversation (no model call server-side)
@@ -67,6 +71,20 @@ export function AgentChat({
   }, [turns, status])
 
   const agentName = branding?.agentName ?? 'StyleSelf'
+
+  function addToCart(product: AgentProductCard) {
+    setCart((items) => {
+      const existing = items.find((item) => item.product.id === product.id)
+      if (existing) {
+        return items.map((item) =>
+          item.product.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item,
+        )
+      }
+      return [...items, { product, quantity: 1 }]
+    })
+  }
 
   async function send(text: string) {
     const q = text.trim()
@@ -122,11 +140,45 @@ export function AgentChat({
     'Something smart casual under $150',
     'What do you have for a formal dinner?',
   ]
+  const cartCount = cart.reduce((total, item) => total + item.quantity, 0)
 
   return (
-    <div
-      className={`flex flex-col overflow-hidden rounded-[18px] border border-line-strong bg-surface shadow-[0_30px_70px_-45px_rgba(23,21,15,0.3)] ${className}`}
-    >
+    <div className={`relative ${className}`}>
+      <aside
+        aria-label="Current shopping cart"
+        className={`mb-3 w-full rounded-[18px] border border-line-strong bg-surface p-3 shadow-[0_20px_50px_-30px_rgba(23,21,15,0.35)] md:mb-0 md:w-44 ${
+          cartPlacement === 'preview'
+            ? 'md:fixed md:left-[18rem] md:top-32 md:z-30'
+            : 'md:absolute md:right-full md:top-12 md:mr-4'
+        }`}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <p className="eyebrow text-[0.55rem]">Current cart</p>
+          <span className="text-[0.65rem] text-muted">
+            {cartCount} item{cartCount === 1 ? '' : 's'}
+          </span>
+        </div>
+        {cart.length === 0 ? (
+          <p className="mt-3 text-xs text-muted">Your cart is empty.</p>
+        ) : (
+          <div className="mt-3 space-y-3">
+            {cart.map(({ product, quantity }) => (
+              <div key={product.id} className="flex gap-2">
+                <div className="h-12 w-10 shrink-0 overflow-hidden rounded border border-line bg-accent-soft/50">
+                  {product.imageUrl ? (
+                    <img src={product.imageUrl} alt="" className="h-full w-full object-cover" />
+                  ) : null}
+                </div>
+                <div className="min-w-0 text-xs">
+                  <p className="line-clamp-2 text-ink">{product.name}</p>
+                  <p className="mt-0.5 font-medium text-muted">× {quantity}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </aside>
+      <div className="flex h-full flex-col overflow-hidden rounded-[18px] border border-line-strong bg-surface shadow-[0_30px_70px_-45px_rgba(23,21,15,0.3)]">
       <div className="flex shrink-0 items-center gap-2 border-b border-line px-4 py-3">
         <span className="h-1.5 w-1.5 rounded-full bg-success" />
         <span className="font-display text-sm text-ink">{agentName}</span>
@@ -138,6 +190,9 @@ export function AgentChat({
             {branding.preview && ' · preview'}
           </span>
         )}
+        <span className="rounded-full border border-line-strong px-2 py-0.5 text-[0.65rem] text-muted">
+          Cart {cartCount}
+        </span>
       </div>
 
       <div
@@ -208,6 +263,7 @@ export function AgentChat({
             Send
           </button>
         </form>
+      </div>
       </div>
     </div>
   )

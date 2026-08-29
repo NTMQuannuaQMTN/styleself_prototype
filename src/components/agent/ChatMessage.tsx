@@ -54,7 +54,7 @@ export function ChatMessage({
         </p>
       )}
       {turn.products && turn.products.length > 0 && (
-        <ProductCards products={turn.products} />
+        <ProductCards products={turn.products} onAdd={onAdd} />
       )}
       {turn.comparison && <ComparisonCard comparison={turn.comparison} />}
       {turn.cart && !turn.orderPreview && <CartCard cart={turn.cart} />}
