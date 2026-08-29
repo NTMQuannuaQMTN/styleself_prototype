@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import type {
   AgentAction,
+  AgentCart,
   AgentComparison,
   AgentContext,
   AgentProductCard,
@@ -10,24 +11,56 @@ import type {
 import type { Catalog, CatalogProduct } from './catalog'
 import { totalStock } from './catalog'
 import { buildSystemPrompt, contextBlock, type MerchantConfig } from './prompt'
-import { executeTool, fmtMoney, TOOL_SCHEMAS, type ToolContext } from './tools'
+import {
+  buildCartSummary,
+  executeTool,
+  fmtMoney,
+  sanitizeCart,
+  TOOL_SCHEMAS,
+  type ToolContext,
+} from './tools'
+import { sha256Hex, sign } from './signing'
 
 const MAX_TOOL_ROUNDS = 3
 const MAX_HISTORY = 8
+const DRAFT_TTL_MS = 15 * 60 * 1000
 
 export type TurnInput = {
   messages: ChatTurn[]
   context: AgentContext
   catalog: Catalog
   config: MerchantConfig
+  agentId: string
+  conversationId: string
+  signingSecret: string
 }
 
 export type TurnOutput = Pick<
   AgentReply,
-  'message' | 'products' | 'comparison' | 'orderPreview' | 'action' | 'context'
+  | 'message'
+  | 'products'
+  | 'comparison'
+  | 'cart'
+  | 'orderPreview'
+  | 'orderDraftToken'
+  | 'action'
+  | 'context'
 >
 
 type ChatMsg = OpenAI.Chat.Completions.ChatCompletionMessageParam
+
+/** The model occasionally reaches for markdown despite the prompt. Flatten it. */
+function stripMarkdown(s: string): string {
+  return s
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/(^|\s)\*(\S.*?\S)\*(?=\s|$)/g, '$1$2')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^\s*[-*]\s+/gm, '')
+    .replace(/^\s*\d+\.\s+/gm, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
 
 function cardFor(p: CatalogProduct, currency: string): AgentProductCard {
   return {
@@ -51,9 +84,16 @@ export async function runTurn(
   const { catalog, config } = input
   const context: AgentContext = {
     shownProductIds: [...input.context.shownProductIds],
+    recommendedProductIds: [...(input.context.recommendedProductIds ?? [])],
+    viewedProductIds: [...(input.context.viewedProductIds ?? [])],
     selectedProductIds: [...input.context.selectedProductIds],
+    cart: [],
     preferences: { ...input.context.preferences },
   }
+
+  // re-validate the client-echoed bag against live stock before the model sees it
+  const cart = await sanitizeCart(input.context.cart ?? [], catalog)
+  context.cart = cart
 
   const shown =
     context.shownProductIds.length > 0
@@ -64,7 +104,8 @@ export async function runTurn(
     .map((id) => shown.find((p) => p.id === id))
     .filter((p): p is CatalogProduct => !!p)
 
-  const ctxBlock = contextBlock(context, shownOrdered, config.currency)
+  const cartForPrompt = (await buildCartSummary(cart, catalog, config.currency))?.items ?? []
+  const ctxBlock = contextBlock(context, shownOrdered, config.currency, cartForPrompt)
 
   const messages: ChatMsg[] = [
     { role: 'system', content: buildSystemPrompt(config) },
@@ -78,6 +119,8 @@ export async function runTurn(
     catalog,
     currency: config.currency,
     recommendationLimit: config.recommendationLimit,
+    cart,
+    cartChanged: false,
   }
 
   let finalText = ''
@@ -126,6 +169,7 @@ export async function runTurn(
     break
   }
 
+  finalText = stripMarkdown(finalText)
   if (!finalText) {
     finalText =
       "I'm having trouble putting that together right now — could you rephrase?"
@@ -134,8 +178,21 @@ export async function runTurn(
   // -------- assemble the structured response from what the tools produced --------
   let products: AgentProductCard[] | undefined
   let comparison: AgentComparison | undefined
-  let orderPreview = toolCtx.lastOrderPreview
+  let orderDraftToken: string | undefined
+  const orderPreview = toolCtx.lastOrderPreview
   let action: AgentAction = { type: 'none' }
+
+  // the bag may have changed (add_to_cart) — always reflect the current state
+  context.cart = toolCtx.cart
+  const cartSummary: AgentCart | undefined =
+    (await buildCartSummary(toolCtx.cart, catalog, config.currency)) ?? undefined
+  if (toolCtx.cartChanged) action = { type: 'cart_updated' }
+
+  if (toolCtx.lastDetails?.length) {
+    for (const p of toolCtx.lastDetails) {
+      if (!context.viewedProductIds.includes(p.id)) context.viewedProductIds.push(p.id)
+    }
+  }
 
   if (toolCtx.lastSearch && toolCtx.lastSearch.length > 0) {
     const list = toolCtx.lastSearch.slice(0, config.recommendationLimit)
@@ -161,6 +218,9 @@ export async function runTurn(
       recommended: p.id === recId,
     }))
     context.shownProductIds = ordered.map((p) => p.id)
+    if (recId && !context.recommendedProductIds.includes(recId)) {
+      context.recommendedProductIds.push(recId)
+    }
     action = { type: 'show_products' }
   }
 
@@ -184,7 +244,35 @@ export async function runTurn(
     action = { type: 'show_comparison' }
   }
 
-  if (orderPreview) {
+  if (orderPreview && toolCtx.lastOrderDraft && toolCtx.lastOrderDraft.items.length > 0) {
+    const d = toolCtx.lastOrderDraft
+    const now = Date.now()
+    const canonical = JSON.stringify(
+      d.items.map((i) => [i.variantId, i.quantity, i.unitPriceCents]),
+    )
+    const draftHash = sha256Hex(`${canonical}|${d.totalCents}|${d.fulfillment}`)
+    orderDraftToken = sign(
+      {
+        kind: 'draft',
+        agentId: input.agentId,
+        conversationId: input.conversationId,
+        draftHash,
+        items: d.items.map((i) => ({
+          productId: i.productId,
+          variantId: i.variantId,
+          quantity: i.quantity,
+        })),
+        fulfillment: d.fulfillment,
+        locationId: d.locationId,
+        subtotalCents: d.subtotalCents,
+        feesCents: d.feesCents,
+        totalCents: d.totalCents,
+        currency: d.currency,
+        iat: now,
+        exp: now + DRAFT_TTL_MS,
+      },
+      input.signingSecret,
+    )
     action = { type: 'show_order_preview' }
     if (toolCtx.lastOrderProductIds?.length) {
       context.selectedProductIds = toolCtx.lastOrderProductIds
@@ -195,7 +283,9 @@ export async function runTurn(
     message: finalText,
     products,
     comparison,
+    cart: cartSummary,
     orderPreview,
+    orderDraftToken,
     action,
     context,
   }

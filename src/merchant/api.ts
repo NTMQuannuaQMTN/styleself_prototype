@@ -184,6 +184,9 @@ const DEFAULT_AGENT = (storeId: string): StoreAgent => ({
   currency: 'USD',
   rules: null,
   recommendation_limit: 5,
+  brand_description: null,
+  category_focus: null,
+  require_confirmation: true,
   enabled: false,
   updated_at: new Date().toISOString(),
 })
@@ -198,16 +201,13 @@ export async function getAgent(storeId: string): Promise<StoreAgent> {
   )
   if (existing) return existing
   // Self-heal if the row wasn't seeded (e.g. store made outside the app).
-  const inserted = unwrap(
-    await supabase
-      .from('store_agents')
-      .insert({ store_id: storeId })
-      .select('*')
-      .maybeSingle(),
-  )
-  if (inserted) return inserted
-  // A non-manager viewer can't insert — fall back to sane defaults.
-  return DEFAULT_AGENT(storeId)
+  // Only the owner can insert (RLS) — any error here just falls back to defaults.
+  const { data: inserted } = await supabase
+    .from('store_agents')
+    .insert({ store_id: storeId })
+    .select('*')
+    .maybeSingle()
+  return inserted ?? DEFAULT_AGENT(storeId)
 }
 
 export async function updateAgent(

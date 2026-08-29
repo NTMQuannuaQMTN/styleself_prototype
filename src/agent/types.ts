@@ -7,12 +7,27 @@ export type ChatRole = 'user' | 'assistant'
 
 export type ChatTurn = { role: ChatRole; content: string }
 
+/** One item in the shopper's bag. Echoed by the client, re-validated server-side. */
+export type CartLine = {
+  productId: string
+  variantId: string | null
+  size: string | null
+  color: string | null
+  quantity: number
+}
+
 /** Lightweight conversation state the client keeps and echoes back each turn. */
 export type AgentContext = {
   /** Product ids currently on screen, in display order — resolves "the first two". */
   shownProductIds: string[]
+  /** Products the agent has surfaced as recommendations across the conversation. */
+  recommendedProductIds: string[]
+  /** Products the shopper has asked to see details of. */
+  viewedProductIds: string[]
   /** Product ids the shopper has committed to (order preview). */
   selectedProductIds: string[]
+  /** The shopper's bag. */
+  cart: CartLine[]
   preferences: {
     budgetCents?: number
     colors?: string[]
@@ -23,7 +38,14 @@ export type AgentContext = {
 }
 
 export function emptyContext(): AgentContext {
-  return { shownProductIds: [], selectedProductIds: [], preferences: {} }
+  return {
+    shownProductIds: [],
+    recommendedProductIds: [],
+    viewedProductIds: [],
+    selectedProductIds: [],
+    cart: [],
+    preferences: {},
+  }
 }
 
 export type AgentRequest = {
@@ -72,10 +94,24 @@ export type AgentOrderPreview = {
   allInStock: boolean
 }
 
+/** Bag summary rendered under a turn. */
+export type AgentCart = {
+  items: {
+    productId: string
+    name: string
+    variantLabel: string | null
+    quantity: number
+    unitPriceCents: number
+  }[]
+  subtotalCents: number
+  currency: string
+}
+
 export type AgentAction =
   | { type: 'none' }
   | { type: 'show_products' }
   | { type: 'show_comparison' }
+  | { type: 'cart_updated' }
   | { type: 'show_order_preview' }
   | { type: 'request_confirmation' }
 
@@ -98,7 +134,10 @@ export type AgentReply = {
   message: string
   products?: AgentProductCard[]
   comparison?: AgentComparison
+  cart?: AgentCart
   orderPreview?: AgentOrderPreview
+  /** Signed draft that ties the preview to the /checkout endpoint. */
+  orderDraftToken?: string
   action: AgentAction
   context: AgentContext
 }
@@ -110,3 +149,66 @@ export type AgentError = {
 }
 
 export type AgentResponse = AgentReply | AgentError
+
+// ---------------------------------------------------------------------------
+// Checkout — deterministic, no AI. POST /api/agent/checkout
+// ---------------------------------------------------------------------------
+
+/** Step 1: card capture → session payment authorization. */
+export type AgentAuthorizeRequest = {
+  action: 'authorize'
+  agentId: string
+  conversationId: string
+  orderDraftToken: string
+  buyerName: string
+  card: { last4: string; brand: string | null }
+}
+
+export type AgentAuthorization = {
+  ok: true
+  kind: 'authorization'
+  /** Signed token required by the pay step. */
+  token: string
+  verified: true
+  message: string
+}
+
+/** Step 2: execute payment. Requires both tokens. */
+export type AgentPayRequest = {
+  action: 'pay'
+  agentId: string
+  conversationId: string
+  orderDraftToken: string
+  authorizationToken: string
+}
+
+export type AgentOrderConfirmation = {
+  ok: true
+  kind: 'order'
+  orderId: string
+  status: 'paid'
+  merchantName: string
+  currency: string
+  items: {
+    name: string
+    variantLabel: string | null
+    quantity: number
+    lineTotalCents: number
+  }[]
+  subtotalCents: number
+  feesCents: number
+  totalCents: number
+  visaAuthCode: string
+  message: string
+}
+
+export type AgentCheckoutError = {
+  ok: false
+  error: 'bad_request' | 'expired' | 'stock' | 'declined' | 'not_found' | 'server'
+  message: string
+}
+
+export type AgentCheckoutResponse =
+  | AgentAuthorization
+  | AgentOrderConfirmation
+  | AgentCheckoutError

@@ -51,9 +51,13 @@ export async function handleAgentChat(
     config = {
       storeName: 'Urban Thread',
       branchName: 'Orchard',
+      brandDescription:
+        'Modern casual and smart-casual menswear — clean lines, natural fabrics, quiet colours.',
+      categoryFocus: 'Everyday tailoring, shirting and trousers',
       tone: 'Premium but approachable',
       currency: 'USD',
       recommendationLimit: 4,
+      requireConfirmation: true,
       rules:
         'Only recommend in-stock products. Free pickup, $5 delivery. Prefer the shopper’s chosen location.',
       locationNames: catalog.locations.map((l) => l.name),
@@ -136,9 +140,12 @@ export async function handleAgentChat(
     config = {
       storeName: store.name,
       branchName: store.branch_name,
+      brandDescription: agentRow?.brand_description ?? null,
+      categoryFocus: agentRow?.category_focus ?? null,
       tone: agentRow?.tone ?? 'Warm, concise, style-aware',
       currency,
       recommendationLimit: clampLimit(agentRow?.recommendation_limit),
+      requireConfirmation: agentRow?.require_confirmation ?? true,
       rules: agentRow?.rules ?? null,
       locationNames: locations.map((l) => l.name),
       multiLocation: locations.length > 1,
@@ -192,6 +199,9 @@ export async function handleAgentChat(
       context,
       catalog,
       config,
+      agentId,
+      conversationId,
+      signingSecret: env.signingSecret,
     })
     return { status: 200, body: { ok: true, agent: branding, ...out } }
   } catch (err) {

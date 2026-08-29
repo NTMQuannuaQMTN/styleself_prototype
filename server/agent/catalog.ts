@@ -113,16 +113,35 @@ export function rankProducts(
 
 // ---------------------------------------------------------------------------
 export interface Catalog {
+  kind: 'db' | 'demo'
   currency: string
   locations: Loc[]
   /** true when the merchant has more than one location */
   multiLocation: boolean
   all(): Promise<CatalogProduct[]>
   byIds(ids: string[]): Promise<CatalogProduct[]>
+  /** Resolve a location name to its id; falls back to the primary location. */
+  locationIdByName(name: string | null): string | null
+  /** Demo only — simulate the inventory decrement a real checkout RPC performs. */
+  decrementStock?(variantId: string, locationId: string, qty: number): void
+}
+
+function matchLocationId(locations: Loc[], name: string | null): string | null {
+  if (name) {
+    const n = name.trim().toLowerCase()
+    const hit = locations.find((l) => l.name.toLowerCase() === n)
+    if (hit) return hit.id
+    const partial = locations.find(
+      (l) => l.name.toLowerCase().includes(n) || n.includes(l.name.toLowerCase()),
+    )
+    if (partial) return partial.id
+  }
+  return locations[0]?.id ?? null
 }
 
 /** Loads a real merchant's catalog. RLS on the passed client scopes visibility. */
 export class DbCatalog implements Catalog {
+  kind = 'db' as const
   private db: SupabaseClient<Database>
   private storeId: string
   currency: string
@@ -142,6 +161,10 @@ export class DbCatalog implements Catalog {
 
   get multiLocation() {
     return this.locations.length > 1
+  }
+
+  locationIdByName(name: string | null): string | null {
+    return matchLocationId(this.locations, name)
   }
 
   private map(rows: unknown[]): CatalogProduct[] {
@@ -199,6 +222,7 @@ export class DbCatalog implements Catalog {
 
 /** In-memory demo catalog for /agent/demo — real AI, no database. */
 export class DemoCatalog implements Catalog {
+  kind = 'demo' as const
   currency = 'USD'
   locations: Loc[] = [
     { id: 'orchard', name: 'Orchard' },
@@ -208,6 +232,7 @@ export class DemoCatalog implements Catalog {
   get multiLocation() {
     return true
   }
+  // module-level array — a "sale" within a warm instance is visible on reload
   private products: CatalogProduct[] = DEMO_PRODUCTS
 
   async all() {
@@ -215,6 +240,23 @@ export class DemoCatalog implements Catalog {
   }
   async byIds(ids: string[]) {
     return this.products.filter((p) => ids.includes(p.id))
+  }
+
+  locationIdByName(name: string | null): string | null {
+    return matchLocationId(this.locations, name)
+  }
+
+  decrementStock(variantId: string, locationId: string, qty: number) {
+    for (const p of this.products) {
+      const v = p.variants.find((x) => x.id === variantId)
+      if (v && v.stockByLocation[locationId] != null) {
+        v.stockByLocation[locationId] = Math.max(
+          0,
+          v.stockByLocation[locationId] - qty,
+        )
+        return
+      }
+    }
   }
 }
 

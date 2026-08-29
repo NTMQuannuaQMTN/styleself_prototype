@@ -99,7 +99,9 @@ export function AgentChat({
         text: res.message,
         products: res.products,
         comparison: res.comparison,
+        cart: res.cart,
         orderPreview: res.orderPreview,
+        orderDraftToken: res.orderDraftToken,
       },
     ])
     setStatus('ready')
@@ -146,7 +148,14 @@ export function AgentChat({
           <TypingDots />
         ) : (
           turns.map((turn, i) => (
-            <ChatMessage key={i} turn={turn} agentName={agentName} />
+            <ChatMessage
+              key={i}
+              turn={turn}
+              agentName={agentName}
+              agentId={agentId}
+              conversationId={conversationId}
+              authToken={authToken}
+            />
           ))
         )}
         {status === 'thinking' && <TypingDots />}

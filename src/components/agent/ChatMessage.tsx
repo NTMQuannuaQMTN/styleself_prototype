@@ -1,8 +1,10 @@
 import type {
+  AgentCart,
   AgentComparison,
   AgentOrderPreview,
   AgentProductCard,
 } from '../../agent/types'
+import { CartCard } from './CartCard'
 import { ComparisonCard } from './ComparisonCard'
 import { OrderPreview } from './OrderPreview'
 import { ProductCards } from './ProductCards'
@@ -12,15 +14,23 @@ export type Turn = {
   text: string
   products?: AgentProductCard[]
   comparison?: AgentComparison
+  cart?: AgentCart
   orderPreview?: AgentOrderPreview
+  orderDraftToken?: string
 }
 
 export function ChatMessage({
   turn,
   agentName,
+  agentId,
+  conversationId,
+  authToken,
 }: {
   turn: Turn
   agentName: string
+  agentId: string
+  conversationId: string
+  authToken?: string
 }) {
   if (turn.role === 'user') {
     return (
@@ -34,9 +44,7 @@ export function ChatMessage({
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="eyebrow text-[0.55rem] tracking-[0.18em]">
-        {agentName}
-      </span>
+      <span className="eyebrow text-[0.55rem] tracking-[0.18em]">{agentName}</span>
       {turn.text && (
         <p className="max-w-[92%] rounded-2xl rounded-tl-md border border-line bg-paper px-3.5 py-2 text-sm leading-relaxed text-ink-soft">
           {turn.text}
@@ -46,7 +54,16 @@ export function ChatMessage({
         <ProductCards products={turn.products} />
       )}
       {turn.comparison && <ComparisonCard comparison={turn.comparison} />}
-      {turn.orderPreview && <OrderPreview preview={turn.orderPreview} />}
+      {turn.cart && !turn.orderPreview && <CartCard cart={turn.cart} />}
+      {turn.orderPreview && (
+        <OrderPreview
+          agentId={agentId}
+          conversationId={conversationId}
+          orderDraftToken={turn.orderDraftToken}
+          preview={turn.orderPreview}
+          authToken={authToken}
+        />
+      )}
     </div>
   )
 }

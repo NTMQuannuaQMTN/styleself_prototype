@@ -53,8 +53,41 @@ export type StoreAgent = {
   currency: string
   rules: string | null
   recommendation_limit: number
+  brand_description: string | null
+  category_focus: string | null
+  require_confirmation: boolean
   enabled: boolean
   updated_at: string
+}
+
+export type AgentOrder = {
+  id: string
+  store_id: string
+  conversation_id: string
+  draft_hash: string
+  buyer_name: string | null
+  buyer_email: string | null
+  currency: string
+  subtotal_cents: number
+  fees_cents: number
+  total_cents: number
+  fulfillment: string
+  location_id: string | null
+  status: string
+  visa_auth_code: string | null
+  created_at: string
+}
+
+export type AgentOrderItem = {
+  id: string
+  order_id: string
+  product_id: string | null
+  variant_id: string | null
+  name: string
+  variant_label: string | null
+  quantity: number
+  unit_price_cents: number
+  line_total_cents: number
 }
 
 export type StoreLocation = {
@@ -191,11 +224,27 @@ export type Database = {
         InventoryRow,
         { variant_id: string; location_id: string; quantity?: number }
       >
+      agent_orders: Table<AgentOrder>
+      agent_order_items: Table<AgentOrderItem>
     }
     Views: Record<string, never>
     Functions: {
       approve_join_request: { Args: { p_request: string }; Returns: undefined }
       reject_join_request: { Args: { p_request: string }; Returns: undefined }
+      agent_checkout: {
+        Args: {
+          p_store: string
+          p_conversation: string
+          p_draft_hash: string
+          p_buyer_name: string | null
+          p_buyer_email: string | null
+          p_fulfillment: string
+          p_location: string | null
+          p_currency: string
+          p_items: unknown
+        }
+        Returns: AgentOrder
+      }
     }
     Enums: {
       store_member_role: StoreMemberRole
