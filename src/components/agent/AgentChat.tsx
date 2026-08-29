@@ -30,6 +30,9 @@ type CartItem = {
   imageUrl: string | null
 }
 
+/** Same shape, exported for hosts that render the cart themselves (see onCartChange). */
+export type CartLineView = CartItem
+
 function newConversationId() {
   try {
     return crypto.randomUUID()
@@ -43,12 +46,19 @@ export function AgentChat({
   authToken,
   className = '',
   cartPlacement = 'left',
+  onCartChange,
 }: {
   agentId: string
   /** Only for the merchant's own preview of a not-yet-published agent. */
   authToken?: string
   className?: string
-  cartPlacement?: 'left' | 'preview'
+  /**
+   * 'left' — the widget renders its own floating "Current cart" box beside the chat.
+   * 'external' — it renders no cart box; the host gets the rows via onCartChange
+   * and shows them itself (the merchant Preview page's side rail).
+   */
+  cartPlacement?: 'left' | 'external'
+  onCartChange?: (items: CartLineView[]) => void
 }) {
   const conversationId = useMemo(() => newConversationId(), [])
   const [branding, setBranding] = useState<AgentBranding | null>(null)
@@ -64,8 +74,6 @@ export function AgentChat({
   const [confirmedTurns, setConfirmedTurns] = useState<Set<number>>(new Set())
   // The "Current cart" box — mirrors the agent's server-side bag after each turn.
   const [cart, setCart] = useState<CartItem[]>([])
-  // Keep the cart visible from the first paint; it starts empty and updates in place.
-  const [cartOpen, setCartOpen] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // open the conversation (no model call server-side)
@@ -96,6 +104,11 @@ export function AgentChat({
       behavior: 'smooth',
     })
   }, [turns, status])
+
+  // Let a host render the cart itself (merchant Preview side rail).
+  useEffect(() => {
+    onCartChange?.(cart)
+  }, [cart, onCartChange])
 
   const agentName = branding?.agentName ?? 'StyleSelf'
 
@@ -206,15 +219,11 @@ export function AgentChat({
 
   return (
     <div className={`relative ${className}`}>
-      {cartOpen && (
+      {cartPlacement !== 'external' && (
         <aside
           id="agent-cart"
           aria-label="Current shopping cart"
-          className={`mb-3 w-full rounded-[18px] border border-line-strong bg-surface p-3 shadow-[0_20px_50px_-30px_rgba(23,21,15,0.35)] md:mb-0 md:w-44 ${
-            cartPlacement === 'preview'
-              ? 'md:absolute md:right-0 md:top-12 md:z-30'
-              : 'md:absolute md:right-full md:top-12 md:mr-4'
-          }`}
+          className="mb-3 w-full rounded-[18px] border border-line-strong bg-surface p-3 shadow-[0_20px_50px_-30px_rgba(23,21,15,0.35)] md:absolute md:right-full md:top-12 md:mb-0 md:mr-4 md:w-44"
         >
           <div className="flex items-center justify-between gap-2">
             <p className="eyebrow text-[0.55rem]">Current cart</p>
@@ -258,21 +267,13 @@ export function AgentChat({
               {branding.preview && ' · preview'}
             </span>
           )}
-          {cartPlacement === 'preview' ? (
-            <button
-              type="button"
-              onClick={() => setCartOpen((open) => !open)}
-              aria-expanded={cartOpen}
-              aria-controls="agent-cart"
-              className="ml-auto rounded-full border border-line-strong px-2.5 py-1 text-[0.65rem] text-muted transition-colors hover:border-ink hover:text-ink"
-            >
-              Cart {cartCount}
-            </button>
-          ) : (
-            <span className="rounded-full border border-line-strong px-2 py-0.5 text-[0.65rem] text-muted">
-              Cart {cartCount}
-            </span>
-          )}
+          <span
+            className={`rounded-full border border-line-strong px-2 py-0.5 text-[0.65rem] text-muted ${
+              branding ? '' : 'ml-auto'
+            }`}
+          >
+            Cart {cartCount}
+          </span>
         </div>
 
         <div

@@ -1,17 +1,22 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import { useStore } from '../../merchant/useStore'
-import { AgentChat } from '../../components/agent/AgentChat'
+import {
+  AgentChat,
+  type CartLineView,
+} from '../../components/agent/AgentChat'
 import { PageHeader } from '../../components/merchant/ui'
 
 export default function PreviewPage() {
   const { session } = useAuth()
   const { activeStore, agent } = useStore()
+  const [cart, setCart] = useState<CartLineView[]>([])
 
   if (!activeStore) return null
 
   const live = activeStore.agent_live
+  const cartCount = cart.reduce((n, it) => n + it.quantity, 0)
 
   return (
     <div className="space-y-8">
@@ -37,20 +42,62 @@ export default function PreviewPage() {
         }
       />
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_18rem] lg:items-start">
+      <div className="grid gap-8 lg:grid-cols-[1fr_19rem] lg:items-start">
         {/* Chat -------------------------------------------------------------- */}
         <div className="mx-auto w-full max-w-2xl lg:mx-0">
           <AgentChat
             key={activeStore.id}
             agentId={activeStore.slug}
             authToken={session?.access_token}
-            cartPlacement="preview"
+            cartPlacement="external"
+            onCartChange={setCart}
             className="max-h-[36rem] min-h-[32rem] w-full"
           />
         </div>
 
         {/* Side rail ------------------------------------------------------- */}
         <aside className="space-y-4">
+          <div className="rounded-[14px] border border-line bg-surface p-5">
+            <div className="flex items-center justify-between">
+              <p className="eyebrow text-[0.6rem]">Current cart</p>
+              <span className="text-[0.68rem] text-muted">
+                {cartCount} item{cartCount === 1 ? '' : 's'}
+              </span>
+            </div>
+            {cart.length === 0 ? (
+              <p className="mt-3 text-xs text-muted">
+                Nothing yet. Add pieces from the chat and they show up here.
+              </p>
+            ) : (
+              <ul className="mt-3 space-y-3">
+                {cart.map((item) => (
+                  <li key={item.productId} className="flex gap-2.5">
+                    <div className="h-12 w-10 shrink-0 overflow-hidden rounded border border-line bg-accent-soft/40">
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : null}
+                    </div>
+                    <div className="min-w-0 text-xs">
+                      <p className="line-clamp-2 text-ink">{item.name}</p>
+                      {item.variantLabel ? (
+                        <p className="text-[0.65rem] text-muted">
+                          {item.variantLabel}
+                        </p>
+                      ) : null}
+                      <p className="mt-0.5 font-medium text-muted">
+                        × {item.quantity}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           <div className="rounded-[14px] border border-line bg-surface p-5">
             <p className="eyebrow text-[0.6rem]">This preview</p>
             <dl className="mt-3 space-y-2.5 text-sm">

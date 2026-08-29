@@ -272,6 +272,25 @@ export async function runTurn(
     action = { type: 'show_products' }
   }
 
+  // No fresh search this turn, but the shopper asked about ONE specific product
+  // ("do you have X", "tell me more about X") — render its full card too, so a
+  // later turn looks the same as the first one instead of a wall of text.
+  const singleFocus =
+    !products &&
+    !(toolCtx.lastCompare && toolCtx.lastCompare.length >= 2)
+      ? (toolCtx.lastDetails?.length === 1 ? toolCtx.lastDetails[0] : undefined) ??
+        toolCtx.lastInventory
+      : undefined
+  if (singleFocus) {
+    products = [
+      { ...cardFor(singleFocus, config.currency, finalText, false), recommended: true },
+    ]
+    if (!context.shownProductIds.includes(singleFocus.id)) {
+      context.shownProductIds = [singleFocus.id, ...context.shownProductIds]
+    }
+    if (action.type === 'none') action = { type: 'show_products' }
+  }
+
   if (toolCtx.lastCompare && toolCtx.lastCompare.length >= 2) {
     const ps = toolCtx.lastCompare
     const uniq = (xs: (string | null)[]) => [...new Set(xs.filter(Boolean))] as string[]
