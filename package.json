@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "VITE_CONFIG_NATIVE_IGNORE_WARNING=true vite",
     "build": "tsc -b && VITE_CONFIG_NATIVE_IGNORE_WARNING=true vite build",

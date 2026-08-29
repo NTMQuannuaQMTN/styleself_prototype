@@ -1,5 +1,3 @@
-import { handleAgentChat } from '../../server/agent/handler'
-
 /**
  * Production agent endpoint (Vercel serverless / any Node function host).
  * Set OPENAI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY in the host's env.
@@ -25,9 +23,12 @@ export default async function handler(
   }
 
   try {
+    // Imported lazily so a module-load failure (missing dep, bad resolution) is
+    // caught here and returned as JSON instead of crashing the invocation.
+    const { handleAgentChat } = await import('../../server/agent/handler')
+
     const auth = req.headers['authorization']
     const authHeader = Array.isArray(auth) ? auth[0] : auth
-
     const body =
       typeof req.body === 'string' ? safeParse(req.body) : (req.body ?? {})
 
@@ -38,12 +39,12 @@ export default async function handler(
     )
     res.status(result.status).json(result.body)
   } catch (err) {
-    console.error('[agent] handler crashed', err)
-    // Always answer with JSON so the client never sees a gateway HTML page.
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[agent] invocation failed:', err)
     res.status(200).json({
       ok: false,
       error: 'server',
-      message: 'The assistant hit an error. Try again in a moment.',
+      message: `The assistant hit an error: ${message}`,
     })
   }
 }
