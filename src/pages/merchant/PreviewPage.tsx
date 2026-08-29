@@ -12,6 +12,7 @@ export default function PreviewPage() {
   const { session } = useAuth()
   const { activeStore, agent } = useStore()
   const [cart, setCart] = useState<CartLineView[]>([])
+  const [chatSize, setChatSize] = useState<'small' | 'large'>('large')
 
   if (!activeStore) return null
 
@@ -44,7 +45,11 @@ export default function PreviewPage() {
 
       <div className="grid gap-8 lg:grid-cols-[1fr_19rem] lg:items-start">
         {/* Chat -------------------------------------------------------------- */}
-        <div className="mx-auto w-full lg:mx-0">
+        <div
+          className={`mx-auto w-full lg:mx-0 ${
+            chatSize === 'small' ? 'max-w-[38rem]' : 'max-w-none'
+          }`}
+        >
           <div className="mb-3 flex items-center justify-between">
             <p className="eyebrow text-[0.6rem]">Chat window</p>
             <SizeToggle size={chatSize} onChange={setChatSize} />
