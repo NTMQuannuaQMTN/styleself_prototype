@@ -17,14 +17,17 @@ leaving the conversation.
 ```bash
 npm install
 cp .env.example .env.local   # VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY (browser)
-# put OPENAI_API_KEY (+ SUPABASE_URL / SUPABASE_ANON_KEY) in .env  (server-only, gitignored)
+# put OPENAI_API_KEY, AGENT_SIGNING_SECRET (+ SUPABASE_URL / SUPABASE_ANON_KEY) in .env  (server-only, gitignored)
 npm run dev
 ```
 
-`npm run dev` also serves `POST /api/agent/chat` from the Vite dev server (see
+`npm run dev` also serves `POST /api/agent/chat` and `POST /api/agent/checkout`
+from the Vite dev server (see
 [server/vite-agent-plugin.ts](server/vite-agent-plugin.ts)) so the agent runs in
-Node — the OpenAI key never reaches the browser. In production the same
-`handleAgentChat` runs as a serverless function ([api/agent/chat.ts](api/agent/chat.ts)).
+Node — the OpenAI key and signing secret never reach the browser. In production
+the same handlers run as serverless functions: `server/agent/*-entry.ts` is
+bundled by `npm run build:fn` (esbuild) to `api/agent/chat.js` /
+`api/agent/checkout.js` (committed, regenerated each build).
 
 Apply the database schema and configure auth — see
 [supabase/README.md](supabase/README.md). Without credentials the landing page
@@ -49,19 +52,21 @@ src/
   main.tsx / routes.tsx     # <AuthProvider> + code-split routes
   lib/                      # supabase client, hand-written DB types
   auth/                     # AuthProvider, guards, errors
-  agent/                    # types.ts + client.ts  (browser-safe wire layer)
+  agent/                    # types.ts + client.ts + checkoutClient.ts  (browser-safe wire layer)
   components/
     landing/  auth/  merchant/  app/
-    agent/                  # AgentChat, ChatMessage, ProductCards, ComparisonCard, OrderPreview
+    agent/                  # AgentChat, ChatMessage, ProductCards, ComparisonCard, CartCard, OrderPreview
   merchant/                 # store data layer: api, StoreProvider, useAsync, money
   pages/
     LandingPage.tsx  auth/  merchant/
     agent/AgentPage.tsx     # public deployed agent (/agent/:agentId)
 
 server/
-  vite-agent-plugin.ts      # dev: mounts /api/agent/chat on the Vite server
-  agent/                    # handler, runtime (OpenAI loop), tools, catalog, prompt, env
-api/agent/chat.ts           # prod: serverless entry → server/agent/handler
+  vite-agent-plugin.ts      # dev: mounts /api/agent/{chat,checkout} on the Vite server
+  agent/                    # handler, runtime (OpenAI loop), tools, catalog, prompt, env,
+                            #   checkout, orders, signing, *-entry.ts (fn entrypoints)
+api/agent/chat.js           # prod: bundled by `npm run build:fn` (esbuild), committed
+api/agent/checkout.js       #   "
 ```
 
 ## Routes
@@ -72,9 +77,10 @@ api/agent/chat.ts           # prod: serverless entry → server/agent/handler
 | `/login`, `/signup` | Merchant auth (email+password / Google). Authed users → `/merchant`. `/create-account` redirects to `/signup`. |
 | `/forgot-password`, `/reset-password` | Password recovery |
 | `/auth/callback` | OAuth + email-confirmation redirect target |
-| `/merchant` | `RequireAuth` → onboarding or Agent Studio (`agent`, `catalog`, `locations`, `team`, `deploy`, `preview`, `settings`); `/merchant/account` for profile |
+| `/merchant` | `RequireAuth` → onboarding or Agent Studio (`agent`, `catalog`, `locations`, `team`, `deploy`, `orders`, `preview`, `settings`); `/merchant/account` for profile |
 | `/agent/:agentId` | **Public, no auth** — the deployed Fashion Commerce Agent, embeddable via `<iframe>`. `agentId` = the store's slug; `/agent/demo` runs on a built-in sample catalog. |
 | `POST /api/agent/chat` | Agent runtime (not a page). Node/serverless. |
+| `POST /api/agent/checkout` | Deterministic payment flow — `authorize` + `pay`. No AI. |
 
 ## Merchant workspace (`/merchant`)
 
@@ -82,8 +88,20 @@ After signing in as a merchant you either onboard (create a store, or search for
 one and request to join — an owner approves) or land in the Agent Studio:
 
 - **Overview** — live store metrics
-- **Agent Studio** — name, greeting, tone, currency, commerce rules (persisted)
-- **Catalog** — products with variants and per-location inventory
+- **Agent Studio** — name, greeting, brand description, fashion focus, tone,
+  currency, recommendation limit, confirmation rule, commerce rules
+  (persisted; **owner-only** to edit, others see it read-only)
+- **Orders** — every sale completed through the agent (buyer, items, total, Visa
+  auth code), visible to all store members
+- **Deploy** — embed snippet + go-live toggle (**owner-only** to publish)
+- **Store settings → Payout account** — settlement destination (last-4 only),
+  owner-only; echoed on the shopper's order confirmation
+- **Catalog** — products with variants and per-location inventory. Add them one at
+  a time, or **bulk-import from a CSV** (`Catalog → Import CSV`): download the
+  template, fill in your products, upload it back. The import matches rows to
+  existing products by product code (`sku`), updates stock and details in place,
+  creates any new products, tolerates missing columns, and never deletes anything
+  — you review every change before it's applied.
 - **Locations** — single store or many
 - **Team** — members + join-request approvals
 - **Deploy** — per-store `<iframe>` embed snippet + go-live checklist/toggle
@@ -95,24 +113,36 @@ All of it is backed by Supabase with row-level security. See
 ## Agent architecture
 
 ```
-iframe /agent/:slug  ──POST /api/agent/chat──▶  handleAgentChat  (server/agent/)
-                                                    │  resolve store + config (Supabase, RLS-scoped)
-                                                    │  runTurn: OpenAI (gpt-4o-mini) + tool loop
-                                                    ▼
-                    search_products · check_inventory · compare_products · create_order_preview
-                                     (deterministic, backed by the merchant's data)
-                                                    ▼
-              structured AgentReply { message, products?, comparison?, orderPreview?, action, context }
+iframe /agent/:slug
+   │
+   ├─ POST /api/agent/chat ─▶ handleAgentChat (server/agent/) ── AI + tools
+   │       runTurn: OpenAI (gpt-4o-mini) + tool loop, ≤3 rounds
+   │       tools: search_products · get_product_details · check_inventory
+   │              · add_to_cart · create_order_preview   (deterministic, merchant data)
+   │       ▼ AgentReply { message, products?, comparison?, cart?, orderPreview?, orderDraftToken?, action, context }
+   │
+   └─ POST /api/agent/checkout ─▶ handleCheckout  ── NO AI, deterministic only
+           action 'authorize'  cardholder + card → signed authorization token
+           action 'pay'        verifies both tokens → agent_checkout() RPC
+                               (re-checks price + stock, writes order, decrements inventory)
+           ▼ AgentOrderConfirmation { orderId, visaAuthCode, totals, ... }
 ```
 
-- The model handles conversation + tool choice; **prices, stock, and totals are
-  always computed by the tools**, never the model.
+- The model handles conversation + tool choice; **prices, stock and totals are
+  always computed by the backend**, never the model. Payment is an endpoint, not
+  a tool — AI text can never trigger a charge.
+- Payment state is carried in **HMAC-signed tokens** (`AGENT_SIGNING_SECRET`),
+  not a server session: `draft → authorized → paid`. The `agent_checkout` RPC is
+  the only writer and is idempotent on `(conversation_id, draft_hash)`.
 - The catalog is never sent whole — `search_products` returns ≤8 ranked
-  candidates; the merchant's `recommendation_limit` caps what's shown.
-- Conversation state (recent turns + shown-product ids + preferences) is kept
-  client-side and echoed each turn, so "the first two" resolves without a call.
+  candidates; `recommendation_limit` caps what's shown.
+- Conversation state (recent turns + shown / recommended / viewed ids + bag +
+  preferences) is kept client-side and echoed each turn; the bag is re-validated
+  against live stock server-side every turn.
+- `/agent/demo` runs the full flow (real AI, simulated payment) with no database.
 - Types shared client/server: [src/agent/types.ts](src/agent/types.ts). Server
-  code: [server/agent/](server/agent/). Public UI: [src/components/agent/](src/components/agent/).
+  code: [server/agent/](server/agent/) → bundled to `api/agent/*.js` by
+  `npm run build:fn`. Public UI: [src/components/agent/](src/components/agent/).
 
 ## Status
 
@@ -128,8 +158,10 @@ iframe /agent/:slug  ──POST /api/agent/chat──▶  handleAgentChat  (serv
   locations, team, deploy, preview. Backed by Supabase + RLS.
 - **`/agent/:agentId`** — the deployed AI agent. Real OpenAI tool-calling over the
   merchant's live catalog: discovery, recommendations, comparison, inventory,
-  order preview, explicit Confirm & Pay. Payment execution is a later phase.
+  add-to-bag, order preview, card authorization, explicit Confirm & Pay,
+  simulated Visa authorization → real `agent_orders` row + inventory decrement.
 
-Conversational AI reasoning and payments are later phases. The two SQL
-migrations in [supabase/](supabase/) must be applied for auth + the workspace to
-function; `/agent/demo` works without them.
+The SQL migrations in [supabase/](supabase/) must be applied for auth + the
+workspace + live-store checkout to function; `/agent/demo` works without them.
+Real card processing is out of scope — the Visa step is a clearly isolated
+simulation.

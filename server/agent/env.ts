@@ -3,7 +3,12 @@ export type AgentEnv = {
   model: string
   supabaseUrl: string
   supabaseAnonKey: string
+  /** HMAC secret for checkout draft / authorization tokens. Set in production. */
+  signingSecret: string
 }
+
+/** Dev fallback so /agent/demo works with no config. Production MUST set AGENT_SIGNING_SECRET. */
+const DEV_SIGNING_SECRET = 'styleself-dev-unsafe-signing-secret'
 
 type RawEnv = Record<string, string | undefined>
 
@@ -30,5 +35,6 @@ export function readAgentEnv(raw: RawEnv): AgentEnv {
       'VITE_SUPABASE_ANON_KEY',
       'NEXT_PUBLIC_SUPABASE_ANON_KEY',
     ),
+    signingSecret: pick('AGENT_SIGNING_SECRET') || DEV_SIGNING_SECRET,
   }
 }

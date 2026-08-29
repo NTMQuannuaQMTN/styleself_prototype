@@ -117,7 +117,9 @@ export function AgentChat({
         text: res.message,
         products: res.products,
         comparison: res.comparison,
+        cart: res.cart,
         orderPreview: res.orderPreview,
+        orderDraftToken: res.orderDraftToken,
       },
     ])
     setStatus('ready')
@@ -193,13 +195,25 @@ export function AgentChat({
         </span>
       </div>
 
-      <div className="min-h-0 flex-1">
-        <div ref={scrollRef} className="h-full space-y-3 overflow-y-auto px-4 py-4">
-          {status === 'init' ? <TypingDots /> : turns.map((turn, i) => (
-            <ChatMessage key={i} turn={turn} agentName={agentName} onAdd={addToCart} />
-          ))}
-          {status === 'thinking' && <TypingDots />}
-        </div>
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4"
+      >
+        {status === 'init' ? (
+          <TypingDots />
+        ) : (
+          turns.map((turn, i) => (
+            <ChatMessage
+              key={i}
+              turn={turn}
+              agentName={agentName}
+              agentId={agentId}
+              conversationId={conversationId}
+              authToken={authToken}
+            />
+          ))
+        )}
+        {status === 'thinking' && <TypingDots />}
       </div>
 
       <div className="shrink-0 border-t border-line p-3">

@@ -1,4 +1,4 @@
-import type { AgentOrderPreview } from '../../src/agent/types'
+import type { AgentCart, AgentOrderPreview, CartLine } from '../../src/agent/types'
 import {
   rankProducts,
   totalStock,
@@ -9,27 +9,69 @@ import {
 
 const DELIVERY_FEE_CENTS = 500
 
+/** Structured, backend-resolved draft the runtime signs into an order token. */
+export type OrderDraft = {
+  items: {
+    productId: string
+    variantId: string
+    size: string | null
+    color: string | null
+    quantity: number
+    unitPriceCents: number
+  }[]
+  fulfillment: 'delivery' | 'pickup'
+  locationId: string | null
+  locationName: string | null
+  subtotalCents: number
+  feesCents: number
+  totalCents: number
+  currency: string
+}
+
 export function fmtMoney(cents: number, currency: string): string {
   const amount = cents / 100
   const s = amount % 1 === 0 ? amount.toFixed(0) : amount.toFixed(2)
   return currency === 'USD' ? `$${s}` : `${s} ${currency}`
 }
 
-function variantLabel(v: { size: string | null; color: string | null }): string {
+export function variantLabel(v: { size: string | null; color: string | null }): string {
   return [v.size, v.color].filter(Boolean).join(' / ') || 'One size'
 }
 
-function variantStock(v: CatalogVariant): number {
+export function variantStock(v: CatalogVariant): number {
   return Object.values(v.stockByLocation).reduce((a, b) => a + b, 0)
+}
+
+/** Best variant match for a product given an optional size / colour. */
+export function resolveVariant(
+  p: CatalogProduct,
+  size: string | null,
+  color: string | null,
+): CatalogVariant | null {
+  const s = size?.trim().toLowerCase()
+  const c = color?.trim().toLowerCase()
+  const matches = p.variants.filter(
+    (v) =>
+      (!s || v.size?.toLowerCase() === s) &&
+      (!c || v.color?.toLowerCase() === c),
+  )
+  if (matches.length === 0) return null
+  // prefer an in-stock match
+  return matches.find((v) => variantStock(v) > 0) ?? matches[0]
 }
 
 export type ToolContext = {
   catalog: Catalog
   currency: string
   recommendationLimit: number
+  /** Live bag — seeded from the echoed context, re-validated, mutated by add_to_cart. */
+  cart: CartLine[]
+  cartChanged: boolean
   lastSearch?: CatalogProduct[]
   lastCompare?: CatalogProduct[]
+  lastDetails?: CatalogProduct[]
   lastOrderPreview?: AgentOrderPreview
+  lastOrderDraft?: OrderDraft
   lastOrderProductIds?: string[]
 }
 
@@ -79,9 +121,9 @@ export const TOOL_SCHEMAS = [
   {
     type: 'function' as const,
     function: {
-      name: 'compare_products',
+      name: 'get_product_details',
       description:
-        'Authoritative facts (description, brand, style, material, care, price, stock) for one or more products already shown. Use for "tell me more about X" and "what is the difference between X and Y". You write the prose; the UI shows a table when there are 2+.',
+        'Authoritative facts (description, brand, style, material, care, price, sizes, colours, stock) for one or more products already shown. Use for "tell me more about X" and "what is the difference between X and Y". You write the prose; the UI shows a comparison table when there are 2+.',
       parameters: {
         type: 'object',
         properties: {
@@ -94,14 +136,33 @@ export const TOOL_SCHEMAS = [
   {
     type: 'function' as const,
     function: {
+      name: 'add_to_cart',
+      description:
+        "Add a product to the shopper's bag once they have committed to a specific item, size and colour. Validates the variant and stock. Call again to change quantity (quantity 0 removes it).",
+      parameters: {
+        type: 'object',
+        properties: {
+          product_id: { type: 'string' },
+          size: { type: 'string' },
+          color: { type: 'string' },
+          quantity: { type: 'integer', minimum: 0, description: 'defaults to 1; 0 removes' },
+        },
+        required: ['product_id'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
       name: 'create_order_preview',
       description:
-        'Deterministic purchase preview. The backend calculates all money. Call once the shopper has chosen product(s), size and colour.',
+        "Deterministic purchase preview. The backend calculates all money. Call when the shopper is ready to buy — uses the bag, or pass items to buy directly. Do not call for casual interest.",
       parameters: {
         type: 'object',
         properties: {
           items: {
             type: 'array',
+            description: 'optional — omit to use the current bag',
             items: {
               type: 'object',
               properties: {
@@ -114,9 +175,8 @@ export const TOOL_SCHEMAS = [
             },
           },
           fulfillment: { type: 'string', enum: ['delivery', 'pickup'] },
-          location: { type: 'string', description: 'pickup location name' },
+          location: { type: 'string', description: 'pickup / stock location name' },
         },
-        required: ['items'],
       },
     },
   },
@@ -153,7 +213,7 @@ export async function executeTool(
   switch (name) {
     case 'search_products': {
       const all = await ctx.catalog.all()
-      const ranked = rankProducts(
+      const { products: ranked, weak } = rankProducts(
         all,
         {
           query: str(rawArgs.query),
@@ -178,6 +238,12 @@ export async function executeTool(
       return {
         count: ranked.length,
         recommend_at_most: ctx.recommendationLimit,
+        exact_match: !weak,
+        ...(weak
+          ? {
+              note: "Nothing closely matches that request. These are the nearest in-stock options — tell the shopper you don't carry an exact match and recommend the closest one.",
+            }
+          : {}),
         products: ranked.map((p) => compactProduct(p, ctx.currency)),
       }
     }
@@ -213,12 +279,14 @@ export async function executeTool(
       }
     }
 
+    case 'get_product_details':
     case 'compare_products': {
       const ids = Array.isArray(rawArgs.product_ids)
         ? (rawArgs.product_ids as unknown[]).filter((x): x is string => typeof x === 'string')
         : []
       const products = await ctx.catalog.byIds(ids)
       ctx.lastCompare = products
+      ctx.lastDetails = products
       return {
         products: products.map((p) => ({
           id: p.id,
@@ -238,61 +306,152 @@ export async function executeTool(
       }
     }
 
-    case 'create_order_preview': {
-      const items = Array.isArray(rawArgs.items) ? (rawArgs.items as Args[]) : []
-      const fulfillment =
-        rawArgs.fulfillment === 'pickup' ? 'pickup' : 'delivery'
-      const location = str(rawArgs.location) ?? null
+    case 'add_to_cart': {
+      const id = str(rawArgs.product_id)
+      if (!id) return { error: 'product_id required' }
+      const [p] = await ctx.catalog.byIds([id])
+      if (!p) return { error: 'product not found' }
 
-      const ids = items
-        .map((it) => str(it.product_id))
-        .filter((x): x is string => !!x)
-      const products = await ctx.catalog.byIds(ids)
+      const size = str(rawArgs.size) ?? null
+      const color = str(rawArgs.color) ?? null
+      const wantQty =
+        num(rawArgs.quantity) === 0 ? 0 : Math.max(0, Math.round(num(rawArgs.quantity) ?? 1))
+      const variant = resolveVariant(p, size, color)
+
+      if (wantQty === 0) {
+        ctx.cart = ctx.cart.filter(
+          (l) => l.productId !== id || (variant ? l.variantId !== variant.id : false),
+        )
+        ctx.cartChanged = true
+        return { removed: true, bag_size: bagSize(ctx.cart) }
+      }
+
+      if (!variant) {
+        return {
+          error: 'no variant matches that size/colour — ask the shopper to choose',
+          available_sizes: [...new Set(p.variants.map((v) => v.size).filter(Boolean))],
+          available_colors: [...new Set(p.variants.map((v) => v.color).filter(Boolean))],
+        }
+      }
+      const stock = variantStock(variant)
+      if (stock < 1) return { error: `${p.name} (${variantLabel(variant)}) is out of stock` }
+
+      const qty = Math.min(wantQty, stock)
+      const existing = ctx.cart.find((l) => l.variantId === variant.id)
+      if (existing) existing.quantity = qty
+      else
+        ctx.cart.push({
+          productId: id,
+          variantId: variant.id,
+          size: variant.size,
+          color: variant.color,
+          quantity: qty,
+        })
+      ctx.cartChanged = true
+
+      return {
+        added: {
+          name: p.name,
+          variant: variantLabel(variant),
+          quantity: qty,
+          unit_price: fmtMoney(variant.priceCents ?? p.priceCents, ctx.currency),
+        },
+        bag_size: bagSize(ctx.cart),
+        ...(qty < wantQty ? { note: `Only ${stock} in stock — added ${qty}.` } : {}),
+      }
+    }
+
+    case 'create_order_preview': {
+      const explicit = Array.isArray(rawArgs.items) ? (rawArgs.items as Args[]) : []
+      const fulfillment = rawArgs.fulfillment === 'pickup' ? 'pickup' : 'delivery'
+      const locationName = str(rawArgs.location) ?? null
+      const locationId = ctx.catalog.locationIdByName(locationName)
+
+      type Want = { productId: string; size: string | null; color: string | null; quantity: number }
+      const wants: Want[] = explicit.length
+        ? explicit
+            .map((it) => ({
+              productId: str(it.product_id) ?? '',
+              size: str(it.size) ?? null,
+              color: str(it.color) ?? null,
+              quantity: Math.max(1, Math.round(num(it.quantity) ?? 1)),
+            }))
+            .filter((w) => w.productId)
+        : ctx.cart.map((l) => ({
+            productId: l.productId,
+            size: l.size,
+            color: l.color,
+            quantity: Math.max(1, l.quantity),
+          }))
+
+      if (wants.length === 0) {
+        return { error: 'the bag is empty — add an item first with add_to_cart' }
+      }
+
+      const products = await ctx.catalog.byIds([...new Set(wants.map((w) => w.productId))])
       const byId = new Map(products.map((p) => [p.id, p]))
 
       const lines: AgentOrderPreview['lines'] = []
+      const draftItems: OrderDraft['items'] = []
       let allInStock = true
 
-      for (const it of items) {
-        const p = byId.get(str(it.product_id) ?? '')
+      for (const w of wants) {
+        const p = byId.get(w.productId)
         if (!p) {
           allInStock = false
           continue
         }
-        const size = str(it.size)?.toLowerCase()
-        const color = str(it.color)?.toLowerCase()
-        const variant =
-          p.variants.find(
-            (v) =>
-              (!size || v.size?.toLowerCase() === size) &&
-              (!color || v.color?.toLowerCase() === color),
-          ) ?? p.variants[0]
-        const qty = Math.max(1, Math.round(num(it.quantity) ?? 1))
+        const variant = resolveVariant(p, w.size, w.color) ?? p.variants[0]
         const unit = variant?.priceCents ?? p.priceCents
-        if (!variant || variantStock(variant) < qty) allInStock = false
+        const atLoc = variant && locationId ? (variant.stockByLocation[locationId] ?? 0) : 0
+        const stockOk = variant ? variantStock(variant) >= w.quantity : false
+        if (!variant || !stockOk || (locationId && atLoc < w.quantity && fulfillment === 'pickup')) {
+          allInStock = false
+        }
         lines.push({
           name: p.name,
           variant: variant ? variantLabel(variant) : null,
-          quantity: qty,
+          quantity: w.quantity,
           unitPriceCents: unit,
-          lineTotalCents: unit * qty,
+          lineTotalCents: unit * w.quantity,
         })
+        if (variant) {
+          draftItems.push({
+            productId: p.id,
+            variantId: variant.id,
+            size: variant.size,
+            color: variant.color,
+            quantity: w.quantity,
+            unitPriceCents: unit,
+          })
+        }
       }
 
       const subtotal = lines.reduce((s, l) => s + l.lineTotalCents, 0)
       const delivery = fulfillment === 'delivery' ? DELIVERY_FEE_CENTS : 0
-      const preview: AgentOrderPreview = {
+
+      ctx.lastOrderPreview = {
         lines,
         subtotalCents: subtotal,
         deliveryCents: delivery,
         totalCents: subtotal + delivery,
         currency: ctx.currency,
         fulfillment,
-        location,
+        location: locationName,
         allInStock,
       }
-      ctx.lastOrderPreview = preview
-      ctx.lastOrderProductIds = [...new Set(ids)]
+      ctx.lastOrderDraft = {
+        items: draftItems,
+        fulfillment,
+        locationId,
+        locationName,
+        subtotalCents: subtotal,
+        feesCents: delivery,
+        totalCents: subtotal + delivery,
+        currency: ctx.currency,
+      }
+      ctx.lastOrderProductIds = [...new Set(draftItems.map((d) => d.productId))]
+
       return {
         lines: lines.map((l) => ({
           item: `${l.name}${l.variant ? ` (${l.variant})` : ''} x${l.quantity}`,
@@ -302,11 +461,78 @@ export async function executeTool(
         delivery: fmtMoney(delivery, ctx.currency),
         total: fmtMoney(subtotal + delivery, ctx.currency),
         all_in_stock: allInStock,
-        note: 'Show this preview to the shopper. They must press Confirm & Pay themselves.',
+        note: 'The preview card is shown. The shopper reviews, verifies identity, and presses Confirm & Pay themselves.',
       }
     }
 
     default:
       return { error: `unknown tool: ${name}` }
+  }
+}
+
+function bagSize(cart: CartLine[]): number {
+  return cart.reduce((s, l) => s + l.quantity, 0)
+}
+
+/** Re-validate a client-echoed bag against live data: drop unknowns, clamp to stock. */
+export async function sanitizeCart(
+  cart: CartLine[],
+  catalog: Catalog,
+): Promise<CartLine[]> {
+  if (!Array.isArray(cart) || cart.length === 0) return []
+  const ids = [...new Set(cart.map((l) => l?.productId).filter(Boolean))]
+  const products = await catalog.byIds(ids)
+  const byId = new Map(products.map((p) => [p.id, p]))
+  const out: CartLine[] = []
+  for (const line of cart) {
+    const p = line && byId.get(line.productId)
+    if (!p) continue
+    const variant =
+      p.variants.find((v) => v.id === line.variantId) ??
+      resolveVariant(p, line.size ?? null, line.color ?? null)
+    if (!variant) continue
+    const stock = variantStock(variant)
+    if (stock < 1) continue
+    const qty = Math.min(Math.max(1, Math.round(line.quantity || 1)), stock)
+    if (out.some((l) => l.variantId === variant.id)) continue
+    out.push({
+      productId: p.id,
+      variantId: variant.id,
+      size: variant.size,
+      color: variant.color,
+      quantity: qty,
+    })
+  }
+  return out
+}
+
+/** Bag summary for the UI, resolved from live product data. */
+export async function buildCartSummary(
+  cart: CartLine[],
+  catalog: Catalog,
+  currency: string,
+): Promise<AgentCart | null> {
+  if (cart.length === 0) return null
+  const products = await catalog.byIds([...new Set(cart.map((l) => l.productId))])
+  const byId = new Map(products.map((p) => [p.id, p]))
+  const items = cart
+    .map((l) => {
+      const p = byId.get(l.productId)
+      if (!p) return null
+      const variant = p.variants.find((v) => v.id === l.variantId)
+      return {
+        productId: p.id,
+        name: p.name,
+        variantLabel: variant ? variantLabel(variant) : null,
+        quantity: l.quantity,
+        unitPriceCents: variant?.priceCents ?? p.priceCents,
+      }
+    })
+    .filter((x): x is NonNullable<typeof x> => x != null)
+  if (items.length === 0) return null
+  return {
+    items,
+    subtotalCents: items.reduce((s, i) => s + i.unitPriceCents * i.quantity, 0),
+    currency,
   }
 }

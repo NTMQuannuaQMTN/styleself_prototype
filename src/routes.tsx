@@ -34,9 +34,13 @@ const CatalogPage = lazy(() => import('./pages/merchant/CatalogPage'))
 const ProductEditorPage = lazy(
   () => import('./pages/merchant/ProductEditorPage'),
 )
+const CatalogImportPage = lazy(
+  () => import('./pages/merchant/CatalogImportPage'),
+)
 const LocationsPage = lazy(() => import('./pages/merchant/LocationsPage'))
 const TeamPage = lazy(() => import('./pages/merchant/TeamPage'))
 const DeployPage = lazy(() => import('./pages/merchant/DeployPage'))
+const OrdersPage = lazy(() => import('./pages/merchant/OrdersPage'))
 const PreviewPage = lazy(() => import('./pages/merchant/PreviewPage'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
@@ -92,11 +96,13 @@ export function AppRoutes() {
               <Route index element={<DashboardPage />} />
               <Route path="agent" element={<AgentStudioPage />} />
               <Route path="catalog" element={<CatalogPage />} />
+              <Route path="catalog/import" element={<CatalogImportPage />} />
               <Route path="catalog/new" element={<ProductEditorPage />} />
               <Route path="catalog/:productId" element={<ProductEditorPage />} />
               <Route path="locations" element={<LocationsPage />} />
               <Route path="team" element={<TeamPage />} />
               <Route path="deploy" element={<DeployPage />} />
+              <Route path="orders" element={<OrdersPage />} />
               <Route path="preview" element={<PreviewPage />} />
               <Route path="settings" element={<StoreSettingsPage />} />
             </Route>

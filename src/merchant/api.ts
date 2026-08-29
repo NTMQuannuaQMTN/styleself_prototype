@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase'
 import type {
+  AgentOrder,
+  AgentOrderItem,
   InventoryRow,
   Product,
   ProductVariant,
@@ -156,7 +158,15 @@ export async function updateStore(
   patch: Partial<
     Pick<
       Store,
-      'name' | 'branch_name' | 'headquarters' | 'city' | 'agent_live' | 'slug'
+      | 'name'
+      | 'branch_name'
+      | 'headquarters'
+      | 'city'
+      | 'agent_live'
+      | 'slug'
+      | 'payout_bank_name'
+      | 'payout_account_name'
+      | 'payout_account_last4'
     >
   >,
 ): Promise<Store> {
@@ -168,6 +178,13 @@ export async function updateStore(
       .select('*')
       .single(),
   )
+}
+
+/** Owner-only: deploy / undeploy the public agent (via a SECURITY DEFINER RPC). */
+export async function setStoreLive(storeId: string, live: boolean): Promise<Store> {
+  return unwrap(
+    await supabase.rpc('set_store_live', { p_store: storeId, p_live: live }),
+  ) as Store
 }
 
 export async function deleteStore(storeId: string): Promise<void> {
@@ -191,6 +208,9 @@ const DEFAULT_AGENT = (storeId: string): StoreAgent => ({
   currency: 'USD',
   rules: null,
   recommendation_limit: 5,
+  brand_description: null,
+  category_focus: null,
+  require_confirmation: true,
   enabled: false,
   updated_at: new Date().toISOString(),
 })
@@ -205,16 +225,13 @@ export async function getAgent(storeId: string): Promise<StoreAgent> {
   )
   if (existing) return existing
   // Self-heal if the row wasn't seeded (e.g. store made outside the app).
-  const inserted = unwrap(
-    await supabase
-      .from('store_agents')
-      .insert({ store_id: storeId })
-      .select('*')
-      .maybeSingle(),
-  )
-  if (inserted) return inserted
-  // A non-manager viewer can't insert — fall back to sane defaults.
-  return DEFAULT_AGENT(storeId)
+  // Only the owner can insert (RLS) — any error here just falls back to defaults.
+  const { data: inserted } = await supabase
+    .from('store_agents')
+    .insert({ store_id: storeId })
+    .select('*')
+    .maybeSingle()
+  return inserted ?? DEFAULT_AGENT(storeId)
 }
 
 export async function updateAgent(
@@ -414,6 +431,7 @@ export async function createProduct(
   input: {
     storeId: string
     locationId?: string | null
+    merchantSku?: string | null
     name: string
     priceCents: number
     currency: string
@@ -427,6 +445,7 @@ export async function createProduct(
       .insert({
         store_id: input.storeId,
         location_id: input.locationId ?? null,
+        merchant_sku: input.merchantSku?.trim() || null,
         name: input.name.trim(),
         ...cleanAttributes(input),
         price_cents: input.priceCents,
@@ -445,6 +464,7 @@ export async function updateProduct(
     Pick<
       Product,
       | 'name'
+      | 'merchant_sku'
       | 'description'
       | 'brand'
       | 'style'
@@ -488,6 +508,17 @@ export async function createVariant(input: {
       .select('*')
       .single(),
   )
+}
+
+export async function updateVariant(
+  id: string,
+  patch: Partial<Pick<ProductVariant, 'size' | 'color' | 'sku' | 'price_cents'>>,
+): Promise<void> {
+  const { error } = await supabase
+    .from('product_variants')
+    .update(patch)
+    .eq('id', id)
+  if (error) throw new Error(error.message)
 }
 
 /** Human label for a (size, color) variant: "M · Navy", "One size", "Charcoal". */
@@ -570,4 +601,20 @@ export async function getDashboardCounts(
     pendingRequests: pending.count ?? 0,
     totalUnits,
   }
+}
+
+// ---------------------------------------------------------------------------
+// Orders — agent checkout sales (readable by any store member via RLS)
+// ---------------------------------------------------------------------------
+export type OrderWithItems = AgentOrder & { agent_order_items: AgentOrderItem[] }
+
+export async function listOrders(storeId: string): Promise<OrderWithItems[]> {
+  return unwrap(
+    await supabase
+      .from('agent_orders')
+      .select('*, agent_order_items(*)')
+      .eq('store_id', storeId)
+      .order('created_at', { ascending: false })
+      .limit(100),
+  ) as unknown as OrderWithItems[]
 }

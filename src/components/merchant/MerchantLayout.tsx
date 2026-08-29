@@ -11,6 +11,7 @@ const NAV = [
   { to: '/merchant/locations', label: 'Locations' },
   { to: '/merchant/team', label: 'Team', badgeKey: 'team' as const },
   { to: '/merchant/deploy', label: 'Deploy' },
+  { to: '/merchant/orders', label: 'Orders' },
   { to: '/merchant/preview', label: 'Preview' },
   { to: '/merchant/settings', label: 'Settings' },
 ]

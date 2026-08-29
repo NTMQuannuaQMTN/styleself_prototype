@@ -1,40 +1,90 @@
 import { useState } from 'react'
-import type { AgentOrderPreview } from '../../agent/types'
+import type { AgentOrderConfirmation, AgentOrderPreview } from '../../agent/types'
+import { authorizePayment, executePayment } from '../../agent/checkoutClient'
 import { formatMoney } from '../../merchant/money'
 
 /**
- * Post-preview checkout, entirely client-side and simulated. The card details
- * never leave the browser and are never sent to the agent or the backend — this
- * is a UX concept for the Visa Payments Stack integration, not a real charge.
+ * Post-preview checkout. The money comes from the backend preview; payment runs
+ * through /api/agent/checkout (deterministic, no AI). Card details never leave
+ * the browser except as a last-4 + brand for the simulated authorization.
+ *
+ *   review → identity (card details) → authorized → processing → done
  */
-type Stage = 'review' | 'pay' | 'processing' | 'done'
+type Stage = 'review' | 'identity' | 'authorized' | 'processing' | 'done' | 'error'
 
-export function OrderPreview({ preview }: { preview: AgentOrderPreview }) {
+export function OrderPreview({
+  agentId,
+  conversationId,
+  orderDraftToken,
+  preview,
+  authToken,
+}: {
+  agentId: string
+  conversationId: string
+  orderDraftToken?: string
+  preview: AgentOrderPreview
+  authToken?: string
+}) {
   const [stage, setStage] = useState<Stage>('review')
   const [name, setName] = useState('')
   const [card, setCard] = useState('')
   const [expiry, setExpiry] = useState('')
   const [cvc, setCvc] = useState('')
-  const [auth, setAuth] = useState<{ code: string; last4: string } | null>(null)
+  const [authorizationToken, setAuthorizationToken] = useState<string | null>(null)
+  const [order, setOrder] = useState<AgentOrderConfirmation | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
 
   const money = (c: number) => formatMoney(c, preview.currency)
   const digits = card.replace(/\D/g, '')
   const brand = brandOf(digits)
   const cardOk = luhnValid(digits)
-  const expiryOk = /^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry)
-  const cvcOk = /^\d{3,4}$/.test(cvc)
-  const formOk = name.trim().length > 1 && cardOk && expiryOk && cvcOk
+  const identityOk =
+    name.trim().length > 1 &&
+    cardOk &&
+    /^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry) &&
+    /^\d{3,4}$/.test(cvc)
 
-  function pay() {
+  const canPay = Boolean(orderDraftToken)
+
+  async function authorize() {
+    if (!orderDraftToken) return
+    setBusy(true)
+    setError(null)
+    const res = await authorizePayment(
+      {
+        agentId,
+        conversationId,
+        orderDraftToken,
+        buyerName: name.trim(),
+        card: { last4: digits.slice(-4), brand },
+      },
+      authToken,
+    )
+    setBusy(false)
+    if (res.ok && res.kind === 'authorization') {
+      setAuthorizationToken(res.token)
+      setStage('authorized')
+    } else {
+      setError('message' in res ? res.message : 'Could not authorize the payment.')
+    }
+  }
+
+  async function pay() {
+    if (!orderDraftToken || !authorizationToken) return
     setStage('processing')
-    // Simulated Visa authorization — no network call with card data.
-    window.setTimeout(() => {
-      setAuth({
-        code: `VIS-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-        last4: digits.slice(-4),
-      })
+    setError(null)
+    const res = await executePayment(
+      { agentId, conversationId, orderDraftToken, authorizationToken },
+      authToken,
+    )
+    if (res.ok && res.kind === 'order') {
+      setOrder(res)
       setStage('done')
-    }, 1400)
+    } else {
+      setError('message' in res ? res.message : 'The payment could not be completed.')
+      setStage('error')
+    }
   }
 
   return (
@@ -46,14 +96,13 @@ export function OrderPreview({ preview }: { preview: AgentOrderPreview }) {
         <VisaMark />
       </div>
 
+      {/* line items + totals — always visible */}
       <div className="mt-2 space-y-1.5 border-b border-line pb-2.5">
         {preview.lines.map((line, i) => (
           <div key={i} className="flex items-baseline justify-between gap-3 text-sm">
             <span className="text-ink">
               {line.name}
-              {line.variant ? (
-                <span className="text-muted"> · {line.variant}</span>
-              ) : null}
+              {line.variant ? <span className="text-muted"> · {line.variant}</span> : null}
               {line.quantity > 1 ? (
                 <span className="text-muted"> × {line.quantity}</span>
               ) : null}
@@ -62,7 +111,6 @@ export function OrderPreview({ preview }: { preview: AgentOrderPreview }) {
           </div>
         ))}
       </div>
-
       <dl className="mt-2.5 space-y-1 text-sm">
         <div className="flex justify-between">
           <dt className="text-muted">Subtotal</dt>
@@ -82,132 +130,172 @@ export function OrderPreview({ preview }: { preview: AgentOrderPreview }) {
         </div>
       </dl>
 
-      {stage === 'review' && !preview.allInStock && (
-        <p className="mt-2 text-xs text-[#8f3a24]">
-          Some items may be low or out of stock — the agent can suggest an
-          alternative.
-        </p>
-      )}
-
       {stage === 'review' && (
         <>
+          {!preview.allInStock && (
+            <p className="mt-2 text-xs text-[#8f3a24]">
+              Some items may be low or out of stock — the agent can suggest an alternative.
+            </p>
+          )}
           <button
             type="button"
-            onClick={() => setStage('pay')}
-            disabled={!preview.allInStock}
+            onClick={() => setStage('identity')}
+            disabled={!canPay || !preview.allInStock}
             className="btn btn-primary mt-3 w-full !py-2.5 text-sm"
           >
             Confirm &amp; Pay {money(preview.totalCents)}
           </button>
           <p className="mt-1.5 text-center text-[0.68rem] text-muted">
-            Card details are entered in the next step and stay in your browser.
+            {canPay
+              ? 'Card details are entered in the next step.'
+              : 'Ask the assistant to prepare the order.'}
           </p>
         </>
       )}
 
-      {(stage === 'pay' || stage === 'processing') && (
+      {stage === 'identity' && (
         <form
           className="mt-3 space-y-2"
           onSubmit={(e) => {
             e.preventDefault()
-            if (formOk && stage === 'pay') pay()
+            if (identityOk && !busy) authorize()
           }}
         >
-          <label className="block">
-            <span className="mb-1 block text-[0.68rem] text-muted">
-              Cardholder name
-            </span>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="cc-name"
-              placeholder="Alex Tan"
-              className="field-input !py-2 !text-sm"
-              disabled={stage === 'processing'}
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-[0.68rem] text-muted">
-              Card number{brand ? ` · ${brand}` : ''}
-            </span>
-            <input
-              value={card}
-              onChange={(e) => setCard(formatCard(e.target.value))}
-              inputMode="numeric"
-              autoComplete="cc-number"
-              placeholder="4111 1111 1111 1111"
-              className="field-input !py-2 font-mono !text-sm"
-              disabled={stage === 'processing'}
-            />
-          </label>
+          <p className="text-[0.7rem] text-muted">
+            Enter your card to authorize this Visa payment. Simulated — no real charge.
+          </p>
+          <Field label="Cardholder name" value={name} onChange={setName} placeholder="Alex Tan"
+            autoComplete="cc-name" />
+          <Field
+            label={`Card number${brand ? ` · ${brand}` : ''}`}
+            value={card}
+            onChange={(v) => setCard(formatCard(v))}
+            placeholder="4111 1111 1111 1111"
+            mono
+            autoComplete="cc-number"
+          />
           <div className="flex gap-2">
-            <label className="block flex-1">
-              <span className="mb-1 block text-[0.68rem] text-muted">Expiry</span>
-              <input
-                value={expiry}
-                onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-                inputMode="numeric"
-                autoComplete="cc-exp"
-                placeholder="MM/YY"
-                className="field-input !py-2 font-mono !text-sm"
-                disabled={stage === 'processing'}
-              />
-            </label>
-            <label className="block flex-1">
-              <span className="mb-1 block text-[0.68rem] text-muted">CVC</span>
-              <input
-                value={cvc}
-                onChange={(e) => setCvc(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                inputMode="numeric"
-                autoComplete="cc-csc"
-                placeholder="123"
-                className="field-input !py-2 font-mono !text-sm"
-                disabled={stage === 'processing'}
-              />
-            </label>
+            <Field label="Expiry" value={expiry} onChange={(v) => setExpiry(formatExpiry(v))}
+              placeholder="MM/YY" mono autoComplete="cc-exp" />
+            <Field label="CVC" value={cvc}
+              onChange={(v) => setCvc(v.replace(/\D/g, '').slice(0, 4))}
+              placeholder="123" mono autoComplete="cc-csc" />
           </div>
+          {error && <p className="text-xs text-[#8f3a24]">{error}</p>}
           <button
             type="submit"
-            disabled={!formOk || stage === 'processing'}
+            disabled={!identityOk || busy}
             className="btn btn-primary mt-1 w-full !py-2.5 text-sm"
           >
-            {stage === 'processing'
-              ? 'Authorizing with Visa…'
-              : `Pay ${money(preview.totalCents)}`}
+            {busy ? 'Verifying…' : 'Verify & authorize'}
           </button>
-          <p className="text-center text-[0.68rem] text-muted">
-            Simulated Visa authorization — no real charge. The assistant never
-            sees these details. Use a test card, e.g. 4111 1111 1111 1111.
-          </p>
+          <button
+            type="button"
+            onClick={() => setStage('review')}
+            className="w-full text-center text-[0.68rem] text-muted underline"
+          >
+            Cancel
+          </button>
         </form>
       )}
 
-      {stage === 'done' && auth && (
+      {stage === 'authorized' && (
         <div className="mt-3 space-y-2">
           <p className="flex items-center gap-2 rounded-lg bg-success/10 px-3 py-2 text-sm text-success">
-            <span aria-hidden>✓</span> Payment authorized — card ending {auth.last4}
+            <span aria-hidden>✓</span> Card authorized — payment linked to this session.
+          </p>
+          {error && <p className="text-xs text-[#8f3a24]">{error}</p>}
+          <button type="button" onClick={pay} className="btn btn-primary w-full !py-2.5 text-sm">
+            Pay {money(preview.totalCents)}
+          </button>
+        </div>
+      )}
+
+      {stage === 'processing' && (
+        <p className="mt-3 rounded-lg bg-paper px-3 py-2.5 text-sm text-muted">
+          Authorizing with Visa…
+        </p>
+      )}
+
+      {stage === 'error' && (
+        <div className="mt-3 space-y-2">
+          <p className="rounded-lg bg-[#8f3a24]/10 px-3 py-2 text-sm text-[#8f3a24]">
+            {error ?? 'The payment could not be completed.'}
+          </p>
+          <button
+            type="button"
+            onClick={() => setStage(authorizationToken ? 'authorized' : 'identity')}
+            className="btn btn-secondary w-full !py-2 text-sm"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
+      {stage === 'done' && order && (
+        <div className="mt-3 space-y-2">
+          <p className="flex items-center gap-2 rounded-lg bg-success/10 px-3 py-2 text-sm text-success">
+            <span aria-hidden>✓</span> {order.message}
           </p>
           <dl className="space-y-1 text-[0.72rem] text-muted">
             <div className="flex justify-between">
-              <dt>Authorization</dt>
-              <dd className="font-mono text-ink-soft">{auth.code}</dd>
+              <dt>Order</dt>
+              <dd className="font-mono text-ink-soft">{order.orderId}</dd>
             </div>
             <div className="flex justify-between">
-              <dt>Amount</dt>
-              <dd className="text-ink-soft">{money(preview.totalCents)}</dd>
+              <dt>Visa authorization</dt>
+              <dd className="font-mono text-ink-soft">{order.visaAuthCode}</dd>
             </div>
             <div className="flex justify-between">
-              <dt>Processor</dt>
-              <dd className="text-ink-soft">Visa Payments Stack (simulated)</dd>
+              <dt>Charged</dt>
+              <dd className="text-ink-soft">{money(order.totalCents)}</dd>
             </div>
+            {order.settlement ? (
+              <div className="flex justify-between">
+                <dt>Settles to</dt>
+                <dd className="text-ink-soft">{order.settlement}</dd>
+              </div>
+            ) : null}
           </dl>
           <p className="text-[0.68rem] text-muted">
-            In production this is where the Visa Payments Stack tokenizes the card
-            and settles the order. Nothing was charged.
+            Simulated Visa Payments Stack — nothing was charged. In production the card is
+            tokenized and the order is settled here.
           </p>
         </div>
       )}
     </div>
+  )
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  mono,
+  type = 'text',
+  autoComplete,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  mono?: boolean
+  type?: string
+  autoComplete?: string
+}) {
+  return (
+    <label className="block flex-1">
+      <span className="mb-1 block text-[0.68rem] text-muted">{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        className={`field-input !py-2 !text-sm ${mono ? 'font-mono' : ''}`}
+      />
+    </label>
   )
 }
 
@@ -243,11 +331,7 @@ function luhnValid(digits: string): boolean {
 }
 
 function formatCard(value: string): string {
-  return value
-    .replace(/\D/g, '')
-    .slice(0, 19)
-    .replace(/(.{4})/g, '$1 ')
-    .trim()
+  return value.replace(/\D/g, '').slice(0, 19).replace(/(.{4})/g, '$1 ').trim()
 }
 
 function formatExpiry(value: string): string {
