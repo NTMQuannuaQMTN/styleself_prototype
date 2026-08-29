@@ -1,52 +1,75 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { AgentChat } from '../../components/agent/AgentChat'
 
 /**
- * Public, unauthenticated route — the deployed StyleSelf agent. Merchants embed
- * it in their own site:
+ * Public, unauthenticated route — the deployed StyleSelf agent.
  *
- *   <iframe src="https://<host>/agent/<agentId>" width="100%" height="650" />
- *
- * All AI + catalog logic lives behind /api/agent/chat; nothing sensitive reaches
- * this page. `/agent/demo` runs on a built-in sample catalog.
+ * The merchant embeds it as a full-viewport transparent overlay iframe. A
+ * launcher button sits at the bottom-right; pressing it opens the chat panel
+ * centered on the screen, with the host page showing through around both.
  */
 export default function AgentPage() {
   const { agentId = 'demo' } = useParams()
   const [params] = useSearchParams()
   const embedKey = params.get('k') ?? undefined
-  const [size, setSize] = useState<'small' | 'large'>('small')
+  const [open, setOpen] = useState(false)
+
+  // This route is an overlay — let the host page (or blank canvas) show through
+  // everywhere except the chat panel and its launcher.
+  useEffect(() => {
+    const { body, documentElement: html } = document
+    const prev = { body: body.style.background, html: html.style.background }
+    body.style.background = 'transparent'
+    html.style.background = 'transparent'
+    return () => {
+      body.style.background = prev.body
+      html.style.background = prev.html
+    }
+  }, [])
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-paper">
+    <div className="fixed inset-0 flex flex-col items-end justify-end gap-3 bg-transparent p-4 sm:p-5">
       <div
-        className={`mx-auto flex w-full min-h-0 flex-1 flex-col p-3 transition-[max-width] duration-300 sm:p-4 ${
-          size === 'large' ? 'max-w-5xl' : 'max-w-lg'
+        className={` flex h-[min(620px,calc(100dvh-7rem))] w-[min(640px,calc(100vw-2rem))] flex-col overflow-hidden transition-all duration-300 ease-out ${
+          open
+            ? 'scale-100 opacity-100'
+            : 'pointer-events-none translate-y-4 scale-95 opacity-0'
         }`}
       >
-        <div className="mb-2 flex shrink-0 justify-end">
-          <div className="inline-flex rounded-full border border-line-strong bg-surface p-0.5 text-[0.65rem]" aria-label="Chat window size">
-            {(['small', 'large'] as const).map((option) => (
-              <button
-                key={option}
-                type="button"
-                aria-pressed={size === option}
-                aria-label={`Use ${option} chat window`}
-                title={`Use ${option} chat window`}
-                onClick={() => setSize(option)}
-                className={`rounded-full px-2.5 py-1 capitalize transition-colors ${size === option ? 'bg-ink text-paper' : 'text-muted hover:text-ink'}`}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        </div>
-        <AgentChat agentId={agentId} embedKey={embedKey} className="min-h-0 flex-1" />
-        <p className="mt-2 shrink-0 text-center text-[0.68rem] text-muted">
-          Shopping assistant by{' '}
-          <span className="font-display italic text-ink">StyleSelf</span>
-        </p>
+        <AgentChat
+          agentId={agentId}
+          embedKey={embedKey}
+          onMinimize={() => setOpen(false)}
+          className="min-h-0 flex-1"
+        />
       </div>
+
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex shrink-0 items-center gap-2 rounded-full bg-ink px-4 py-3 text-sm font-semibold text-paper shadow-[0_16px_40px_-12px_rgba(23,21,15,0.5)] transition-transform hover:-translate-y-0.5"
+      >
+        {open ? (
+          <>
+            <svg width="15" height="15" viewBox="0 0 15 15" aria-hidden>
+              <path
+                d="M4 4l7 7M11 4l-7 7"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+              />
+            </svg>
+            Close
+          </>
+        ) : (
+          <>
+            <span className="h-2 w-2 rounded-full bg-success" />
+            Chat with a stylist
+          </>
+        )}
+      </button>
     </div>
   )
 }
