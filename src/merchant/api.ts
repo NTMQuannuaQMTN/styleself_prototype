@@ -12,8 +12,22 @@ import type {
   StoreMemberRole,
 } from '../lib/database.types'
 
-function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
-  if (res.error) throw new Error(res.error.message)
+function unwrap<T>(res: {
+  data: T | null
+  error: { message: string; code?: string } | null
+}): T {
+  if (res.error) {
+    // ".single()/.maybeSingle() got 0 or >1 rows" — the raw PostgREST text
+    // ("Cannot coerce the result to a single JSON object") is opaque to users.
+    const m = res.error.message ?? ''
+    if (
+      res.error.code === 'PGRST116' ||
+      /coerce the result to a single json object/i.test(m)
+    ) {
+      throw new Error('That record was not found, or you don’t have access to it.')
+    }
+    throw new Error(m || 'Request failed.')
+  }
   return res.data as T
 }
 
@@ -123,9 +137,10 @@ export async function cancelJoinRequest(id: string): Promise<void> {
 // ---------------------------------------------------------------------------
 // Store detail: agent, locations, team
 // ---------------------------------------------------------------------------
-export async function getStore(storeId: string): Promise<Store> {
+/** Returns null when the store no longer exists / isn't visible to the user. */
+export async function getStore(storeId: string): Promise<Store | null> {
   return unwrap(
-    await supabase.from('stores').select('*').eq('id', storeId).single(),
+    await supabase.from('stores').select('*').eq('id', storeId).maybeSingle(),
   )
 }
 
@@ -161,6 +176,18 @@ export function toSlug(value: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
+const DEFAULT_AGENT = (storeId: string): StoreAgent => ({
+  store_id: storeId,
+  display_name: 'StyleSelf',
+  greeting: 'What are you looking for today?',
+  tone: 'Warm, concise, style-aware',
+  currency: 'USD',
+  rules: null,
+  recommendation_limit: 5,
+  enabled: false,
+  updated_at: new Date().toISOString(),
+})
+
 export async function getAgent(storeId: string): Promise<StoreAgent> {
   const existing = unwrap(
     await supabase
@@ -171,13 +198,16 @@ export async function getAgent(storeId: string): Promise<StoreAgent> {
   )
   if (existing) return existing
   // Self-heal if the row wasn't seeded (e.g. store made outside the app).
-  return unwrap(
+  const inserted = unwrap(
     await supabase
       .from('store_agents')
       .insert({ store_id: storeId })
       .select('*')
-      .single(),
+      .maybeSingle(),
   )
+  if (inserted) return inserted
+  // A non-manager viewer can't insert — fall back to sane defaults.
+  return DEFAULT_AGENT(storeId)
 }
 
 export async function updateAgent(
@@ -314,14 +344,16 @@ export async function listProducts(storeId: string): Promise<ProductWithVariants
   ) as unknown as ProductWithVariants[]
 }
 
-export async function getProduct(id: string): Promise<ProductWithVariants> {
+export async function getProduct(
+  id: string,
+): Promise<ProductWithVariants | null> {
   return unwrap(
     await supabase
       .from('products')
       .select('*, variants:product_variants(*, inventory(*))')
       .eq('id', id)
-      .single(),
-  ) as unknown as ProductWithVariants
+      .maybeSingle(),
+  ) as unknown as ProductWithVariants | null
 }
 
 export type ProductAttributes = {

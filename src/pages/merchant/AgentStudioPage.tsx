@@ -51,6 +51,9 @@ function AgentForm({
     TONES.includes(agent.tone) ? agent.tone : TONES[0],
   )
   const [currency, setCurrency] = useState(agent.currency)
+  const [recLimit, setRecLimit] = useState(
+    String(agent.recommendation_limit ?? 5),
+  )
   const [rules, setRules] = useState(agent.rules ?? '')
 
   const [saving, setSaving] = useState(false)
@@ -68,6 +71,10 @@ function AgentForm({
         greeting: greeting.trim(),
         tone,
         currency,
+        recommendation_limit: Math.min(
+          8,
+          Math.max(1, Math.round(Number(recLimit) || 5)),
+        ),
         rules: rules.trim() || null,
       })
       await refreshStore()
@@ -114,16 +121,28 @@ function AgentForm({
               <option key={t}>{t}</option>
             ))}
           </SelectField>
-          <SelectField
-            label="Currency"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            disabled={!canManage}
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </SelectField>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SelectField
+              label="Currency"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              disabled={!canManage}
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </SelectField>
+            <TextField
+              label="Recommendation limit"
+              type="number"
+              min={1}
+              max={8}
+              value={recLimit}
+              onChange={(e) => setRecLimit(e.target.value)}
+              hint="Max products the agent shows at once (1–8)."
+              disabled={!canManage}
+            />
+          </div>
           <TextArea
             label="Commerce rules"
             value={rules}

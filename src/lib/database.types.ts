@@ -52,6 +52,7 @@ export type StoreAgent = {
   tone: string
   currency: string
   rules: string | null
+  recommendation_limit: number
   enabled: boolean
   updated_at: string
 }
