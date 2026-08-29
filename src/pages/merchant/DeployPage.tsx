@@ -21,6 +21,7 @@ export default function DeployPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [keyShown, setKeyShown] = useState(false)
+  const [format, setFormat] = useState<'html' | 'react'>('html')
 
   const counts = useAsync(
     () => getDashboardCounts(activeStore!.id),
@@ -35,13 +36,37 @@ export default function DeployPage() {
   const shownKey = keyShown ? store.embed_key : maskedKey
   const agentUrl = `${window.location.origin}/agent/${store.slug}?k=${store.embed_key}`
   const shownUrl = `${window.location.origin}/agent/${store.slug}?k=${shownKey}`
-  const snippet = `<iframe
+  const title = `${store.name} — Shopping assistant`
+
+  // A full-viewport, transparent overlay iframe. The launcher button and the
+  // (centered) chat panel are drawn by the page inside; everything else is
+  // click-through-looking but the frame still sits on top, so keep z-index high.
+  const frameStyle =
+    'position:fixed;inset:0;width:100%;height:100%;border:0;z-index:9999'
+  const htmlSnippet = `<iframe
   src="${agentUrl}"
-  title="${store.name} — Shopping assistant"
-  width="100%"
-  height="640"
-  style="border:0;border-radius:16px;max-width:480px"
+  title="${title}"
+  style="${frameStyle}"
 ></iframe>`
+
+  const reactSnippet = `export default function StylistWidget() {
+  return (
+    <iframe
+      src="${agentUrl}"
+      title="${title}"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        border: 0,
+        zIndex: 9999,
+      }}
+    />
+  )
+}`
+
+  const snippet = format === 'react' ? reactSnippet : htmlSnippet
   const shownSnippet = snippet.replace(agentUrl, shownUrl)
 
   const checklist = [
@@ -133,19 +158,40 @@ export default function DeployPage() {
               <p className="eyebrow text-[0.6rem]">
                 {activeStore.agent_live ? 'Live' : 'Not deployed'}
               </p>
+              <div className="ml-auto flex overflow-hidden rounded-full border border-line-strong text-[0.58rem]">
+                {(['html', 'react'] as const).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    aria-pressed={format === f}
+                    onClick={() => setFormat(f)}
+                    className={`px-2.5 py-0.5 transition-colors ${
+                      format === f ? 'bg-ink text-paper' : 'text-muted hover:text-ink'
+                    }`}
+                  >
+                    {f === 'html' ? 'HTML' : 'React'}
+                  </button>
+                ))}
+              </div>
             </div>
-            <pre className="mt-3 overflow-x-auto rounded-lg border border-line bg-paper p-3.5 font-mono text-[0.72rem] leading-relaxed text-ink-soft">
-              <code>{shownSnippet}</code>
+            <pre className="mt-3 max-h-64 overflow-auto rounded-lg border border-line bg-paper p-3.5 font-mono text-[0.72rem] leading-relaxed text-ink-soft">
+              <code className="block whitespace-pre">{shownSnippet}</code>
             </pre>
             <button
               type="button"
               onClick={copy}
               className="btn btn-primary mt-3 w-full !py-2.5 text-sm"
             >
-              {copied ? 'Copied to clipboard' : 'Copy embed code'}
+              {copied
+                ? 'Copied to clipboard'
+                : `Copy ${format === 'react' ? 'React' : 'HTML'} code`}
             </button>
             <p className="mt-1.5 text-center text-[0.66rem] text-muted">
-              The key is hidden above — Copy still copies the full working code.
+              {format === 'react'
+                ? 'Save as a .jsx / .tsx file and render it once. '
+                : 'Paste before </body>. '}
+              Full-screen overlay — a launcher button, then the chat centered on
+              screen. The key is hidden above; Copy still copies the working code.
             </p>
             <a
               href={agentUrl}

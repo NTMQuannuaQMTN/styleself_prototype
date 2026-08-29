@@ -72,7 +72,7 @@ export default function CatalogPage() {
     setDeletingAll(true)
     setDeleteAllError(null)
     try {
-      await deleteAllProducts(activeStore.id)
+      await deleteAllProducts(activeStore!.id)
       products.reload()
     } catch (err) {
       setDeleteAllError(

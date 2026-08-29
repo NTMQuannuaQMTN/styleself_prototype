@@ -9,6 +9,7 @@ import {
   type AgentCart,
   type AgentOrderConfirmation,
 } from '../../agent/types'
+import { formatMoney } from '../../merchant/money'
 import { ChatMessage, TypingDots, type Turn } from './ChatMessage'
 import { OrderPreview, type BuyerDetails } from './OrderPreview'
 import { ProductDetailModal, type CardSelection } from './ProductCards'
@@ -48,8 +49,9 @@ export function AgentChat({
   authToken,
   embedKey,
   className = '',
-  cartPlacement = 'left',
+  cartPlacement = 'header',
   onCartChange,
+  onMinimize,
 }: {
   agentId: string
   /** Only for the merchant's own preview of a not-yet-published agent. */
@@ -58,14 +60,14 @@ export function AgentChat({
   embedKey?: string
   className?: string
   /**
-   * 'left' — the widget renders its own floating "Current cart" box beside the chat.
-   * 'external' — it renders no cart box; the host gets the rows via onCartChange
-   * and shows them itself (the merchant Preview page's side rail).
-   * 'preview' — the widget shows a compact cart toggle button in the header while
-   * still managing its own cart state for the host preview experience.
+   * 'header' — the cart is a hover/click popover under the "Cart" chip in the top bar.
+   * 'external' — no cart UI; the host gets the rows via onCartChange and shows them
+   * itself (the merchant Preview page's side rail).
    */
-  cartPlacement?: 'left' | 'external' | 'preview'
+  cartPlacement?: 'header' | 'external'
   onCartChange?: (items: CartLineView[]) => void
+  /** When set, a "−" button in the header calls this (floating-launcher pattern). */
+  onMinimize?: () => void
 }) {
   const conversationId = useMemo(() => newConversationId(), [])
   const [branding, setBranding] = useState<AgentBranding | null>(null)
@@ -85,9 +87,8 @@ export function AgentChat({
   const [detail, setDetail] = useState<AgentProductCard | null>(null)
   // The "Current cart" box — mirrors the agent's server-side bag after each turn.
   const [cart, setCart] = useState<CartItem[]>([])
-  const [pendingCartQuantities, setPendingCartQuantities] = useState<Record<string, number>>({})
-  // Keep the cart visible from the first paint; it starts empty and updates in place.
-  const [cartOpen, setCartOpen] = useState(true)
+  // Pins the top-bar cart popover open on click (it also opens on hover / focus).
+  const [cartOpen, setCartOpen] = useState(false)
   // The Checkout panel (top-right) holds the payment flow; the in-chat copy is
   // summary-only so payment can't be started from two places.
   const [checkoutOpen, setCheckoutOpen] = useState(false)
@@ -317,124 +318,9 @@ export function AgentChat({
     'What do you have for a formal dinner?',
   ]
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0)
-  const stockByProduct = new Map(
-    turns.flatMap((turn) => turn.products ?? []).map((product) => [
-      product.id,
-      product.stockQuantity ?? product.unitsLeft ?? 0,
-    ]),
-  )
-
-  function changeCartQuantity(item: CartItem, quantity: number) {
-    const max = stockByProduct.get(item.productId) ?? 0
-    if (!Number.isFinite(quantity)) return
-    const next = Math.max(1, Math.min(max, Math.round(quantity)))
-    setPendingCartQuantities((current) => ({ ...current, [item.productId]: next }))
-  }
-
-  function confirmCartQuantity(item: CartItem) {
-    const next = pendingCartQuantities[item.productId]
-    if (next == null || next === item.quantity) return
-    setCart((current) => current.map((line) =>
-      line.productId === item.productId ? { ...line, quantity: next } : line,
-    ))
-    setPendingCartQuantities((current) => {
-      const updated = { ...current }
-      delete updated[item.productId]
-      return updated
-    })
-    send(
-      `Set the quantity of ${item.name}${item.variantLabel ? ` (${item.variantLabel})` : ''} to ${next}`,
-    )
-  }
 
   return (
     <div className={`relative ${className}`}>
-      {cartPlacement !== 'external' && (
-        <aside
-          id="agent-cart"
-          aria-label="Current shopping cart"
-          className="mb-3 w-full rounded-[18px] border border-line-strong bg-surface p-3 shadow-[0_20px_50px_-30px_rgba(23,21,15,0.35)] md:absolute md:right-full md:top-12 md:mb-0 md:mr-4 md:w-44"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <p className="eyebrow text-[0.55rem]">Current cart</p>
-            <span className="text-[0.65rem] text-muted">
-              {cartCount} item{cartCount === 1 ? '' : 's'}
-            </span>
-          </div>
-          {cart.length === 0 ? (
-            <p className="mt-3 text-xs text-muted">Your cart is empty.</p>
-          ) : (
-            <div className="mt-3 space-y-3">
-              {cart.map((item) => (
-                <div key={item.productId} className="flex gap-2">
-                  <div className="h-12 w-10 shrink-0 overflow-hidden rounded border border-line bg-accent-soft/50">
-                    {item.imageUrl ? (
-                      <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
-                    ) : null}
-                  </div>
-                  <div className="min-w-0 text-xs">
-                    {(() => {
-                      const draftQuantity = pendingCartQuantities[item.productId] ?? item.quantity
-                      const changed = draftQuantity !== item.quantity
-                      return (
-                        <>
-                    <p className="line-clamp-2 text-ink">{item.name}</p>
-                    {item.variantLabel ? (
-                      <p className="text-[0.65rem] text-muted">{item.variantLabel}</p>
-                    ) : null}
-                    <div className="mt-1 flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        aria-label={`Decrease ${item.name} quantity`}
-                        onClick={() =>
-                            draftQuantity <= 1
-                            ? undefined
-                            : changeCartQuantity(item, draftQuantity - 1)
-                        }
-                        disabled={status !== 'ready' || draftQuantity <= 1}
-                        className="h-5 w-5 rounded border border-line-strong text-xs text-ink disabled:opacity-40"
-                      >
-                        −
-                      </button>
-                      <input
-                        type="number"
-                        min={1}
-                        max={stockByProduct.get(item.productId) ?? 0}
-                        value={draftQuantity}
-                        onChange={(e) => changeCartQuantity(item, Number(e.target.value))}
-                        aria-label={`Quantity for ${item.name}`}
-                        disabled={status !== 'ready'}
-                        className="w-9 rounded border border-line-strong bg-surface px-1 py-0.5 text-center text-[0.65rem] text-ink"
-                      />
-                      <button
-                        type="button"
-                        aria-label={`Increase ${item.name} quantity`}
-                        onClick={() => changeCartQuantity(item, draftQuantity + 1)}
-                        disabled={
-                          status !== 'ready' ||
-                          draftQuantity >= (stockByProduct.get(item.productId) ?? 0)
-                        }
-                        className="h-5 w-5 rounded border border-line-strong text-xs text-ink disabled:opacity-40"
-                      >
-                        +
-                      </button>
-                      <span className="text-[0.65rem] text-muted">in bag</span>
-                    </div>
-                    {changed && (
-                      <button type="button" onClick={() => confirmCartQuantity(item)} disabled={status !== 'ready'} className="mt-1 rounded-full bg-ink px-2 py-1 text-[0.62rem] font-medium text-paper disabled:opacity-50">
-                        Confirm change
-                      </button>
-                    )}
-                        </>
-                      )
-                    })()}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </aside>
-      )}
       <div className="flex h-full flex-col overflow-hidden rounded-[18px] border border-line-strong bg-surface shadow-[0_30px_70px_-45px_rgba(23,21,15,0.3)]">
         <div className="flex shrink-0 items-center gap-2 border-b border-line px-4 py-3">
           <span className="h-1.5 w-1.5 rounded-full bg-success" />
@@ -448,38 +334,80 @@ export function AgentChat({
             </span>
           )}
           <div className="ml-auto flex items-center gap-1.5">
-            {activeOrder && (
-              <button
-                type="button"
-                onClick={() => setCheckoutOpen((open) => !open)}
-                aria-expanded={checkoutOpen}
-                aria-controls="agent-checkout"
-                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[0.65rem] font-semibold text-paper shadow-sm transition-colors ${
-                  checkoutOpen ? 'bg-ink' : 'bg-accent hover:bg-ink'
-                }`}
-              >
-                <span
-                  className={`h-1.5 w-1.5 rounded-full bg-paper ${
-                    checkoutOpen ? '' : 'animate-pulse'
-                  }`}
-                />
-                Checkout
-              </button>
-            )}
-            {cartPlacement === 'preview' ? (
-              <button
-                type="button"
-                onClick={() => setCartOpen((open) => !open)}
-                aria-expanded={cartOpen}
-                aria-controls="agent-cart"
-                className="rounded-full border border-line-strong px-2.5 py-1 text-[0.65rem] text-muted transition-colors hover:border-ink hover:text-ink"
-              >
-                Cart {cartCount}
-              </button>
-            ) : (
-              <span className="rounded-full border border-line-strong px-2 py-0.5 text-[0.65rem] text-muted">
+            {cartPlacement === 'external' ? (
+              <span className="rounded-full border border-line-strong px-2.5 py-0.5 text-[0.65rem] text-muted">
                 Cart {cartCount}
               </span>
+            ) : (
+              <div
+                className="group relative"
+                onMouseLeave={() => setCartOpen(false)}
+              >
+                <button
+                  type="button"
+                  onClick={() => setCartOpen((open) => !open)}
+                  aria-expanded={cartOpen}
+                  aria-label={`Cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
+                  className="rounded-full border border-line-strong px-2.5 py-0.5 text-[0.65rem] text-muted transition-colors hover:border-ink hover:text-ink"
+                >
+                  Cart {cartCount}
+                </button>
+
+                <div
+                  role="region"
+                  aria-label="Current cart"
+                  className={`invisible absolute right-0 top-full z-50 mt-2 w-64 origin-top-right -translate-y-1 rounded-xl border border-line-strong bg-surface p-2.5 opacity-0 shadow-[0_20px_50px_-20px_rgba(23,21,15,0.4)] transition-[opacity,transform] duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 ${
+                    cartOpen ? '!visible !translate-y-0 !opacity-100' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between px-1">
+                    <p className="eyebrow text-[0.55rem]">Current cart</p>
+                    <span className="text-[0.62rem] text-muted">
+                      {cartCount} item{cartCount === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                  {cart.length === 0 ? (
+                    <p className="px-1 py-2 text-[0.72rem] text-muted">
+                      Your cart is empty.
+                    </p>
+                  ) : (
+                    <ul className="mt-1.5 max-h-56 divide-y divide-line overflow-y-auto">
+                      {cart.map((item) => (
+                        <li
+                          key={item.productId}
+                          className="flex items-baseline justify-between gap-3 px-1 py-1.5 text-[0.72rem]"
+                        >
+                          <span className="truncate text-ink">
+                            {item.name}
+                            {item.variantLabel ? (
+                              <span className="text-muted"> · {item.variantLabel}</span>
+                            ) : null}
+                          </span>
+                          <span className="shrink-0 text-muted">× {item.quantity}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
+            {onMinimize && (
+              <button
+                type="button"
+                onClick={onMinimize}
+                aria-label="Minimise the chat"
+                title="Minimise"
+                className="ml-0.5 rounded-full p-1 text-muted transition-colors hover:bg-black/[0.04] hover:text-ink"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>
+                  <path
+                    d="M3 7h8"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
             )}
           </div>
         </div>
@@ -488,10 +416,10 @@ export function AgentChat({
           <div
             id="agent-checkout"
             aria-hidden={!checkoutOpen}
-            className={`absolute right-2 top-[3.4rem] z-40 max-h-[calc(100%-4.5rem)] w-[19rem] max-w-[calc(100%-1rem)] origin-top-right overflow-y-auto rounded-xl shadow-[0_24px_60px_-24px_rgba(23,21,15,0.45)] transition-[opacity,transform] duration-200 ease-out ${
+            className={`absolute bottom-2 left-2 z-40 max-h-[calc(100%-4rem)] w-[19rem] max-w-[calc(100%-1rem)] origin-bottom-left overflow-y-auto rounded-xl shadow-[0_24px_60px_-24px_rgba(23,21,15,0.45)] transition-[opacity,transform] duration-200 ease-out ${
               checkoutOpen
                 ? 'translate-y-0 scale-100 opacity-100'
-                : 'pointer-events-none -translate-y-2 scale-95 opacity-0'
+                : 'pointer-events-none translate-y-2 scale-95 opacity-0'
             }`}
           >
             <OrderPreview
@@ -538,6 +466,42 @@ export function AgentChat({
         </div>
 
         <div className="shrink-0 border-t border-line p-3">
+          <div className="mb-2 flex">
+            <button
+              type="button"
+              onClick={() => setCheckoutOpen((open) => !open)}
+              disabled={!activeOrder}
+              aria-expanded={checkoutOpen}
+              aria-controls="agent-checkout"
+              title={
+                activeOrder ? undefined : 'Add something to your bag first'
+              }
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.7rem] font-semibold shadow-sm transition-colors ${
+                !activeOrder
+                  ? 'cursor-not-allowed border border-line-strong bg-transparent text-muted'
+                  : checkoutOpen
+                    ? 'bg-ink text-paper'
+                    : 'bg-accent text-paper hover:bg-ink'
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  !activeOrder
+                    ? 'bg-line-strong'
+                    : `bg-paper ${checkoutOpen ? '' : 'animate-pulse'}`
+                }`}
+              />
+              {checkoutOpen ? 'Hide checkout' : 'Checkout'}
+              {activeOrder && (
+                <span className="font-display">
+                  {formatMoney(
+                    activeOrder.preview.totalCents,
+                    activeOrder.preview.currency,
+                  )}
+                </span>
+              )}
+            </button>
+          </div>
           {turns.length <= 1 && status === 'ready' && (
             <div className="mb-2 flex flex-wrap gap-1.5">
               {suggestions.map((s) => (
