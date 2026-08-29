@@ -119,6 +119,11 @@ function cardFor(
     sizes,
     stockLevel,
     stockQuantity: stock,
+    variantStock: p.variants.map((v) => ({
+      size: v.size,
+      color: v.color,
+      quantity: variantStock(v),
+    })),
     ...(stockLevel === 'low' ? { unitsLeft: stock } : {}),
     reason: reasonFor(p.name, reply),
     ...(nearestMatch ? { nearestMatch: true } : {}),

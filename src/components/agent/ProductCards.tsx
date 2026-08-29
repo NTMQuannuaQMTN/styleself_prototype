@@ -273,10 +273,13 @@ export function AddControl({
   compact?: boolean
 }) {
   const out = product.stockLevel === 'out'
-  const maxQuantity = product.stockQuantity ?? product.unitsLeft ?? 0
   const colors = product.colors ?? []
   const colorNames = colors.map((c) => c.name)
   const sizes = product.sizes ?? []
+  const stockForSelection = (size: string | null, color: string | null) =>
+    product.variantStock
+      ? product.variantStock.find((v) => v.size === size && v.color === color)?.quantity ?? 0
+      : product.stockQuantity ?? product.unitsLeft ?? 0
 
   if (out) {
     return (
@@ -298,7 +301,7 @@ export function AddControl({
           type="button"
           onClick={() =>
             onSelect({
-              quantity: Math.min(1, maxQuantity),
+              quantity: Math.min(1, stockForSelection(sizes[0] ?? null, colorNames[0] ?? null)),
               size: sizes[0] ?? null,
               color: colorNames[0] ?? null,
             })
@@ -321,6 +324,7 @@ export function AddControl({
   }
 
   const patch = (p: Partial<CardSelection>) => onSelect({ ...sel, ...p })
+  const maxQuantity = stockForSelection(sel.size, sel.color)
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -377,7 +381,10 @@ export function AddControl({
           {sizes.length > 1 && (
             <select
               value={sel.size ?? ''}
-              onChange={(e) => patch({ size: e.target.value || null })}
+              onChange={(e) => {
+                const size = e.target.value || null
+                patch({ size, quantity: Math.min(sel.quantity, stockForSelection(size, sel.color)) })
+              }}
               disabled={disabled}
               className="rounded-md border border-line-strong bg-surface px-1.5 py-1 text-[0.7rem] text-ink"
             >
@@ -401,7 +408,10 @@ export function AddControl({
               />
               <select
                 value={sel.color ?? ''}
-                onChange={(e) => patch({ color: e.target.value || null })}
+                onChange={(e) => {
+                  const color = e.target.value || null
+                  patch({ color, quantity: Math.min(sel.quantity, stockForSelection(sel.size, color)) })
+                }}
                 disabled={disabled}
                 className="rounded-md border border-line-strong bg-surface px-1.5 py-1 text-[0.7rem] text-ink"
               >

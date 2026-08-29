@@ -158,6 +158,14 @@ export const TOOL_SCHEMAS = [
   {
     type: 'function' as const,
     function: {
+      name: 'clear_cart',
+      description: "Remove every item and variant from the shopper's bag. Use when the shopper asks to clear or empty the cart.",
+      parameters: { type: 'object', properties: {} },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
       name: 'create_order_preview',
       description:
         "Deterministic purchase preview. The backend calculates all money. Call when the shopper is ready to buy — uses the bag, or pass items to buy directly. Do not call for casual interest.",
@@ -373,6 +381,13 @@ export async function executeTool(
       }
     }
 
+    case 'clear_cart': {
+      const removed = ctx.cart.length
+      ctx.cart = []
+      ctx.cartChanged = true
+      return { cleared: true, removed_items: removed, bag_size: 0 }
+    }
+
     case 'create_order_preview': {
       const explicit = Array.isArray(rawArgs.items) ? (rawArgs.items as Args[]) : []
       const fulfillment = rawArgs.fulfillment === 'pickup' ? 'pickup' : 'delivery'
@@ -413,11 +428,14 @@ export async function executeTool(
           allInStock = false
           continue
         }
-        const variant = resolveVariant(p, w.size, w.color) ?? p.variants[0]
+        const sizeRequired = new Set(p.variants.map((v) => v.size).filter(Boolean)).size > 1
+        const colorRequired = new Set(p.variants.map((v) => v.color).filter(Boolean)).size > 1
+        const dimensionsSpecified = (!sizeRequired || Boolean(w.size)) &&
+          (!colorRequired || Boolean(w.color))
+        const variant = dimensionsSpecified ? resolveVariant(p, w.size, w.color) : null
         const unit = variant?.priceCents ?? p.priceCents
-        const atLoc = variant && locationId ? (variant.stockByLocation[locationId] ?? 0) : 0
         const stockOk = variant ? variantStock(variant) >= w.quantity : false
-        if (!variant || !stockOk || (locationId && atLoc < w.quantity && fulfillment === 'pickup')) {
+        if (!variant || !stockOk) {
           allInStock = false
         }
         lines.push({
@@ -536,6 +554,8 @@ export async function buildCartSummary(
         productId: p.id,
         name: p.name,
         variantLabel: variant ? variantLabel(variant) : null,
+        size: variant?.size ?? null,
+        color: variant?.color ?? null,
         quantity: l.quantity,
         unitPriceCents: variant?.priceCents ?? p.priceCents,
       }

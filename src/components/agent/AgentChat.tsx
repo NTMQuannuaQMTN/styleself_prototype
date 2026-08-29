@@ -28,6 +28,8 @@ type CartItem = {
   productId: string
   name: string
   variantLabel: string | null
+  size: string | null
+  color: string | null
   quantity: number
   imageUrl: string | null
 }
@@ -91,6 +93,8 @@ export function AgentChat({
   // The Checkout panel (top-right) holds the payment flow; the in-chat copy is
   // summary-only so payment can't be started from two places.
   const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [checkoutCancelledKey, setCheckoutCancelledKey] = useState<string | null>(null)
+  const [checkoutRequested, setCheckoutRequested] = useState(false)
   // Card details live here so they survive the panel remounting when the order
   // changes (e.g. the shopper edits the cart after entering their card).
   const [buyer, setBuyer] = useState<BuyerDetails>({
@@ -103,13 +107,30 @@ export function AgentChat({
 
   // The order to pay = the most recent turn that carries one.
   const orderTurnIdx = turns.findLastIndex((t) => Boolean(t.orderPreview))
-  const activeOrder =
+  const candidateOrder =
     orderTurnIdx >= 0
       ? {
           preview: turns[orderTurnIdx].orderPreview!,
           token: turns[orderTurnIdx].orderDraftToken,
           key: String(orderTurnIdx),
         }
+      : null
+  const orderMatchesCart = candidateOrder
+    ? (() => {
+        const expected = candidateOrder.preview.lines
+          .map((line) => `${line.name}|${line.variant ?? ''}|${line.quantity}`)
+          .sort()
+        const actual = cart
+          .map((line) => `${line.name}|${line.variantLabel ?? ''}|${line.quantity}`)
+          .sort()
+        return expected.length === actual.length && expected.every((line, i) => line === actual[i])
+      })()
+    : false
+  const activeOrder =
+    candidateOrder &&
+    orderMatchesCart &&
+    checkoutCancelledKey !== candidateOrder.key
+      ? candidateOrder
       : null
 
   // open the conversation (no model call server-side)
@@ -150,21 +171,14 @@ export function AgentChat({
     onCartChange?.(cart)
   }, [cart, onCartChange])
 
-  // Whenever a new order preview appears, snap the panel shut then slide it back
-  // open on the next frames — so a fresh checkout visibly replaces the old one.
+  // Open a newly-created order preview only when the shopper explicitly requested
+  // checkout. Normal chat activity must not interrupt the shopping conversation.
   const orderKey = activeOrder?.key
   useEffect(() => {
-    if (!orderKey) return
-    let raf2 = 0
-    const raf1 = requestAnimationFrame(() => {
-      setCheckoutOpen(false)
-      raf2 = requestAnimationFrame(() => setCheckoutOpen(true))
-    })
-    return () => {
-      cancelAnimationFrame(raf1)
-      cancelAnimationFrame(raf2)
-    }
-  }, [orderKey])
+    if (!orderKey || !checkoutRequested) return
+    setCheckoutOpen(true)
+    setCheckoutRequested(false)
+  }, [orderKey, checkoutRequested])
 
   const agentName = branding?.agentName ?? 'StyleSelf'
 
@@ -179,6 +193,8 @@ export function AgentChat({
         productId: it.productId,
         name: it.name,
         variantLabel: it.variantLabel,
+        size: it.size,
+        color: it.color,
         quantity: it.quantity,
         imageUrl:
           imgById.get(it.productId) ??
@@ -191,6 +207,11 @@ export function AgentChat({
   async function send(text: string) {
     const q = text.trim()
     if (!q || status === 'thinking' || status === 'init') return
+    if (activeOrder) {
+      setCheckoutCancelledKey(activeOrder.key)
+      setCheckoutOpen(false)
+    }
+    setCheckoutRequested(false)
     setInput('')
     const nextTurns: Turn[] = [...turns, { role: 'user', text: q }]
     setTurns(nextTurns)
@@ -318,25 +339,42 @@ export function AgentChat({
   ]
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0)
   const stockByProduct = new Map(
-    turns.flatMap((turn) => turn.products ?? []).map((product) => [
-      product.id,
-      product.stockQuantity ?? product.unitsLeft ?? 0,
-    ]),
+    turns.flatMap((turn) => turn.products ?? []).flatMap((product) =>
+      (product.variantStock ?? []).map((variant) => [
+        `${product.id}|${variant.size ?? ''}|${variant.color ?? ''}`,
+        variant.quantity,
+      ] as const),
+    ),
   )
 
   function changeCartQuantity(item: CartItem, quantity: number) {
-    const max = stockByProduct.get(item.productId) ?? 0
+    const max = stockByProduct.get(
+      `${item.productId}|${item.size ?? ''}|${item.color ?? ''}`,
+    ) ?? 0
     if (!Number.isFinite(quantity)) return
-    const next = Math.max(1, Math.min(max, Math.round(quantity)))
+    const next = Math.max(0, Math.min(max, Math.round(quantity)))
     setPendingCartQuantities((current) => ({ ...current, [item.productId]: next }))
   }
 
   function confirmCartQuantity(item: CartItem) {
     const next = pendingCartQuantities[item.productId]
     if (next == null || next === item.quantity) return
-    setCart((current) => current.map((line) =>
-      line.productId === item.productId ? { ...line, quantity: next } : line,
-    ))
+    setCart((current) =>
+      next === 0
+        ? current.filter(
+            (line) =>
+              line.productId !== item.productId ||
+              line.size !== item.size ||
+              line.color !== item.color,
+          )
+        : current.map((line) =>
+            line.productId === item.productId &&
+            line.size === item.size &&
+            line.color === item.color
+              ? { ...line, quantity: next }
+              : line,
+          ),
+    )
     setPendingCartQuantities((current) => {
       const updated = { ...current }
       delete updated[item.productId]
@@ -345,6 +383,27 @@ export function AgentChat({
     send(
       `Set the quantity of ${item.name}${item.variantLabel ? ` (${item.variantLabel})` : ''} to ${next}`,
     )
+  }
+
+  function clearCart() {
+    if (cart.length === 0 || status !== 'ready') return
+    setCart([])
+    setPendingCartQuantities({})
+    setCheckoutOpen(false)
+    setCheckoutRequested(false)
+    if (activeOrder) setCheckoutCancelledKey(activeOrder.key)
+    send('Remove every item from my cart')
+  }
+
+  function startCheckout() {
+    if (cartCount > 0) {
+      if (activeOrder) {
+        setCheckoutCancelledKey(activeOrder.key)
+        setCheckoutOpen(false)
+      }
+      send('I am ready to checkout and pay for my bag')
+      setCheckoutRequested(true)
+    }
   }
 
   return (
@@ -357,9 +416,21 @@ export function AgentChat({
         >
           <div className="flex items-center justify-between gap-2">
             <p className="eyebrow text-[0.55rem]">Current cart</p>
-            <span className="text-[0.65rem] text-muted">
-              {cartCount} item{cartCount === 1 ? '' : 's'}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[0.65rem] text-muted">
+                {cartCount} item{cartCount === 1 ? '' : 's'}
+              </span>
+              {cart.length > 0 && (
+                <button
+                  type="button"
+                  onClick={clearCart}
+                  disabled={status !== 'ready'}
+                  className="rounded-md border border-line-strong px-1.5 py-0.5 text-[0.62rem] font-medium text-muted transition-colors hover:border-ink hover:bg-paper hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Clear cart
+                </button>
+              )}
+            </div>
           </div>
           {cart.length === 0 ? (
             <p className="mt-3 text-xs text-muted">Your cart is empty.</p>
@@ -387,19 +458,17 @@ export function AgentChat({
                         type="button"
                         aria-label={`Decrease ${item.name} quantity`}
                         onClick={() =>
-                            draftQuantity <= 1
-                            ? undefined
-                            : changeCartQuantity(item, draftQuantity - 1)
+                            changeCartQuantity(item, draftQuantity - 1)
                         }
-                        disabled={status !== 'ready' || draftQuantity <= 1}
+                        disabled={status !== 'ready' || draftQuantity <= 0}
                         className="h-5 w-5 rounded border border-line-strong text-xs text-ink disabled:opacity-40"
                       >
                         −
                       </button>
                       <input
                         type="number"
-                        min={1}
-                        max={stockByProduct.get(item.productId) ?? 0}
+                        min={0}
+                        max={stockByProduct.get(`${item.productId}|${item.size ?? ''}|${item.color ?? ''}`) ?? 0}
                         value={draftQuantity}
                         onChange={(e) => changeCartQuantity(item, Number(e.target.value))}
                         aria-label={`Quantity for ${item.name}`}
@@ -412,7 +481,7 @@ export function AgentChat({
                         onClick={() => changeCartQuantity(item, draftQuantity + 1)}
                         disabled={
                           status !== 'ready' ||
-                          draftQuantity >= (stockByProduct.get(item.productId) ?? 0)
+                          draftQuantity >= (stockByProduct.get(`${item.productId}|${item.size ?? ''}|${item.color ?? ''}`) ?? 0)
                         }
                         className="h-5 w-5 rounded border border-line-strong text-xs text-ink disabled:opacity-40"
                       >
@@ -559,6 +628,15 @@ export function AgentChat({
             }}
             className="flex gap-2"
           >
+            <button
+              type="button"
+              onClick={startCheckout}
+              disabled={status !== 'ready' || (!activeOrder && cartCount === 0)}
+              className="shrink-0 rounded-lg border border-line-strong px-2.5 py-2 text-[0.7rem] font-semibold text-ink transition-colors hover:border-ink hover:bg-paper disabled:cursor-not-allowed disabled:opacity-40"
+              title={activeOrder ? 'Open payment' : 'Review your bag and continue to payment'}
+            >
+              Checkout
+            </button>
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
