@@ -71,11 +71,19 @@ export function AppHeader() {
                     <p className="truncate text-xs text-muted">{email}</p>
                   ) : null}
                 </div>
+                <Link
+                  to="/merchant/settings"
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                  className="block w-full px-3.5 py-2.5 text-left text-sm text-ink-soft transition-colors hover:bg-black/[0.03]"
+                >
+                  Settings
+                </Link>
                 <button
                   type="button"
                   role="menuitem"
                   onClick={handleSignOut}
-                  className="w-full px-3.5 py-2.5 text-left text-sm text-ink-soft transition-colors hover:bg-black/[0.03]"
+                  className="w-full border-t border-line px-3.5 py-2.5 text-left text-sm text-ink-soft transition-colors hover:bg-black/[0.03]"
                 >
                   Sign out
                 </button>

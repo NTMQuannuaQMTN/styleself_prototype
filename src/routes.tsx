@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { FullPageSpinner, RedirectIfAuthed, RequireAuth } from './auth/guards'
 import LandingPage from './pages/LandingPage'
 
@@ -18,6 +18,10 @@ const MerchantLayout = lazy(() =>
     default: m.MerchantLayout,
   })),
 )
+const CompleteProfilePage = lazy(
+  () => import('./pages/merchant/CompleteProfilePage'),
+)
+const SettingsPage = lazy(() => import('./pages/merchant/SettingsPage'))
 const OnboardingPage = lazy(() => import('./pages/merchant/OnboardingPage'))
 const DashboardPage = lazy(() => import('./pages/merchant/DashboardPage'))
 const AgentStudioPage = lazy(() => import('./pages/merchant/AgentStudioPage'))
@@ -68,21 +72,28 @@ export function AppRoutes() {
           path="/merchant"
           element={
             <RequireAuth>
-              <StoreProvider />
+              <Outlet />
             </RequireAuth>
           }
         >
-          <Route path="onboarding" element={<OnboardingPage />} />
-          <Route element={<MerchantLayout />}>
-            <Route index element={<DashboardPage />} />
-            <Route path="agent" element={<AgentStudioPage />} />
-            <Route path="catalog" element={<CatalogPage />} />
-            <Route path="catalog/new" element={<ProductEditorPage />} />
-            <Route path="catalog/:productId" element={<ProductEditorPage />} />
-            <Route path="locations" element={<LocationsPage />} />
-            <Route path="team" element={<TeamPage />} />
-            <Route path="deploy" element={<DeployPage />} />
-            <Route path="preview" element={<PreviewPage />} />
+          {/* Account-level — no store required */}
+          <Route path="complete-profile" element={<CompleteProfilePage />} />
+          <Route path="settings" element={<SettingsPage />} />
+
+          {/* Store-scoped */}
+          <Route element={<StoreProvider />}>
+            <Route path="onboarding" element={<OnboardingPage />} />
+            <Route element={<MerchantLayout />}>
+              <Route index element={<DashboardPage />} />
+              <Route path="agent" element={<AgentStudioPage />} />
+              <Route path="catalog" element={<CatalogPage />} />
+              <Route path="catalog/new" element={<ProductEditorPage />} />
+              <Route path="catalog/:productId" element={<ProductEditorPage />} />
+              <Route path="locations" element={<LocationsPage />} />
+              <Route path="team" element={<TeamPage />} />
+              <Route path="deploy" element={<DeployPage />} />
+              <Route path="preview" element={<PreviewPage />} />
+            </Route>
           </Route>
         </Route>
 

@@ -28,6 +28,10 @@ export interface AuthContextValue {
   signInWithGoogle: () => Promise<void>
   sendPasswordReset: (email: string) => Promise<void>
   updatePassword: (password: string) => Promise<void>
+  /** Update the profiles row (upserts if it's somehow missing). */
+  updateProfile: (patch: { full_name?: string }) => Promise<void>
+  /** Change the account email — Supabase sends a confirmation link. */
+  updateEmail: (email: string) => Promise<void>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<Profile | null>
 }

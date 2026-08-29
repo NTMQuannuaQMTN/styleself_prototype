@@ -129,7 +129,7 @@ export default function TeamPage() {
                   <p className="text-sm font-medium text-ink">
                     {m.profile?.full_name ||
                       m.profile?.email ||
-                      'Team member'}
+                      'Invited teammate'}
                     {m.user_id === user?.id && (
                       <span className="ml-2 text-xs text-muted">(you)</span>
                     )}

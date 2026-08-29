@@ -136,6 +136,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error
   }, [])
 
+  const updateProfile = useCallback(
+    async (patch: { full_name?: string }) => {
+      const uid = session?.user?.id
+      if (!uid) throw new Error('Not signed in.')
+      const { error } = await supabase.from('profiles').upsert(
+        {
+          id: uid,
+          email: session.user.email ?? null,
+          ...(patch.full_name !== undefined
+            ? { full_name: patch.full_name.trim() || null }
+            : {}),
+        },
+        { onConflict: 'id' },
+      )
+      if (error) throw error
+      await fetchProfile(uid)
+    },
+    [session, fetchProfile],
+  )
+
+  const updateEmail = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.updateUser({ email: email.trim() })
+    if (error) throw error
+  }, [])
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut()
     if (mounted.current) setProfile(null)
@@ -158,6 +183,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithGoogle,
       sendPasswordReset,
       updatePassword,
+      updateProfile,
+      updateEmail,
       signOut,
       refreshProfile,
     }),
@@ -171,6 +198,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithGoogle,
       sendPasswordReset,
       updatePassword,
+      updateProfile,
+      updateEmail,
       signOut,
       refreshProfile,
     ],
