@@ -7,7 +7,7 @@ export const ROUTES = {
 } as const
 
 export const NAV_LINKS = [
-  { label: 'How It Works', href: '#how-it-works' },
+  { label: 'Architecture', href: '#architecture' },
+  { label: 'Trust & Security', href: '#security' },
   { label: 'For Merchants', href: '#for-merchants' },
-  { label: 'The Experience', href: '#experience' },
 ] as const
