@@ -86,7 +86,7 @@ export function NoAITeam() {
         </div>
 
         <Reveal className="mt-10">
-          <Link to={ROUTES.merchantSignup} className="btn btn-primary">
+          <Link to={ROUTES.signup} className="btn btn-primary">
             Deploy Your Agent
           </Link>
         </Reveal>

@@ -62,8 +62,8 @@ export function MerchantDeployment() {
               Embed the StyleSelf Agent
             </p>
             <p className="mt-1 text-sm text-muted">
-              A versioned, hosted widget — not an iframe to hand-paste. It stays
-              in sync with your catalog automatically.
+              One hosted embed. It stays in sync with your catalog and inventory
+              automatically — no rebuilds.
             </p>
             <EmbedCode className="mt-5" />
           </div>

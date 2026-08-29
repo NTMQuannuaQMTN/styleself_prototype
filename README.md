@@ -35,25 +35,32 @@ npm run preview  # preview the production build
 
 ## Structure
 
+Every authenticated user is a **merchant**. End shoppers are anonymous — they
+talk to the deployed agent embedded on the merchant's own site.
+
 ```
 src/
-  main.tsx                  # router + <AuthProvider>
+  main.tsx                  # <AuthProvider> + <AppRoutes>
+  routes.tsx                # all routes, code-split with React.lazy
   lib/
     supabase.ts             # Supabase client (tolerates missing env)
     database.types.ts       # hand-written DB types (regenerate later)
   auth/
     AuthProvider.tsx        # session + profile + auth actions
-    useAuth.ts              # useAuth() hook
-    guards.tsx              # RequireAuth / RequireRole / RoleRedirect / RedirectIfAuthed
-    roles.ts, errors.ts
+    useAuth.ts, guards.tsx  # RequireAuth / RedirectIfAuthed / FullPageSpinner
+    errors.ts
   components/
     landing/                # landing sections + Studio/Site mocks (mocks.tsx)
     auth/                   # AuthShell + form primitives
+    agent/                  # AgentWidget (shared) + demoData
+    merchant/               # MerchantLayout + ui primitives
     app/AppHeader.tsx       # signed-in top bar
+  merchant/                 # store data layer: api, StoreProvider, useAsync, money
   pages/
     LandingPage.tsx
     auth/                   # Login, SignUp, Forgot/Reset password, OAuth callback
-    merchant/, shop/        # role dashboards (placeholders for now)
+    merchant/               # Onboarding + Agent Studio pages
+    agent/AgentPage.tsx     # public deployed agent (/agent/:agentId)
     NotFound.tsx
   hooks/useReveal.ts
 ```
@@ -63,26 +70,43 @@ src/
 | Path | Notes |
 | --- | --- |
 | `/` | Landing page |
-| `/login` | Email+password / Google; redirects authed users to `/app` |
-| `/create-account` | Role chooser, then signup; `?role=merchant\|customer` skips the chooser |
+| `/login`, `/signup` | Merchant auth (email+password / Google). Authed users → `/merchant`. `/create-account` redirects to `/signup`. |
 | `/forgot-password`, `/reset-password` | Password recovery |
 | `/auth/callback` | OAuth + email-confirmation redirect target |
-| `/app` | Neutral post-login target — forwards to the role's home |
-| `/merchant` | `RequireRole="merchant"` — placeholder dashboard |
-| `/shop` | `RequireRole="customer"` — placeholder |
+| `/merchant` | `RequireAuth` → onboarding or Agent Studio (`agent`, `catalog`, `locations`, `team`, `deploy`, `preview`) |
+| `/agent/:agentId` | **Public, no auth** — the deployed Fashion Commerce Agent, embeddable via `<iframe>`. MVP renders a demo store; `/agent/demo` is linked from the landing page. |
+
+## Merchant workspace (`/merchant`)
+
+After signing in as a merchant you either onboard (create a store, or search for
+one and request to join — an owner approves) or land in the Agent Studio:
+
+- **Overview** — live store metrics
+- **Agent Studio** — name, greeting, tone, currency, commerce rules (persisted)
+- **Catalog** — products with variants and per-location inventory
+- **Locations** — single store or many
+- **Team** — members + join-request approvals
+- **Deploy** — per-store embed snippet + go-live checklist/toggle
+- **Preview** — a working (non-AI) agent over the store's real catalog
+
+All of it is backed by Supabase with row-level security. See
+[src/merchant/](src/merchant/) and [src/pages/merchant/](src/pages/merchant/).
 
 ## Status
 
-**Landing page + authentication (phases 1–2) are in.**
+**Merchant SaaS → agent deployment → embedded customer experience.**
 
-The landing page sells the merchant deployment story: configure a pre-built
-Fashion Commerce Agent in the Studio → embed it on your site → customers shop
-through conversation. Sections: hero (Studio + deployed-site mock), the
-Upload/Configure/Deploy/Sell path, "no AI team required", the pre-built category
-agent, single- vs multi-location, the customer conversation, the 6-step
-deployment + embed code, agentic-payment trust, final CTA.
+- **Landing page** — sells the merchant deployment story (Studio + deployed-site
+  mock, Upload/Configure/Deploy/Sell, "no AI team", pre-built fashion agent,
+  single- vs multi-location, the customer conversation, 6-step deployment,
+  agentic-payment trust). All demo data is static.
+- **Auth** — real Supabase email/password + Google OAuth, session context,
+  password recovery. One user type: merchant.
+- **Merchant workspace** — onboarding, dashboard, Agent Studio, catalog,
+  locations, team, deploy, preview. Backed by Supabase + RLS.
+- **`/agent/:agentId`** — the deployed agent. Non-AI keyword/price search over a
+  catalog with per-location availability; runs standalone with no backend.
 
-Auth: real Supabase email/password + Google OAuth, session context, role-gated
-routes (`/merchant`, `/shop`), sign-out. Dashboards behind auth are minimal
-placeholders — the Agent Studio, customer agent, and payments are later phases.
-All landing-page data is static/mock.
+Conversational AI reasoning and payments are later phases. The two SQL
+migrations in [supabase/](supabase/) must be applied for auth + the workspace to
+function; `/agent/demo` works without them.

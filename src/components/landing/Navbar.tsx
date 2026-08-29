@@ -55,7 +55,7 @@ export function Navbar() {
         <div className="hidden items-center gap-3 md:flex">
           {authed ? (
             <Link
-              to={ROUTES.app}
+              to={ROUTES.dashboard}
               className="btn btn-primary !px-4 !py-2.5 text-sm"
             >
               Go to dashboard
@@ -69,7 +69,7 @@ export function Navbar() {
                 Log In
               </Link>
               <Link
-                to={ROUTES.merchantSignup}
+                to={ROUTES.signup}
                 className="btn btn-primary !px-4 !py-2.5 text-sm"
               >
                 Deploy Your Agent
@@ -127,7 +127,7 @@ export function Navbar() {
           <div className="mt-3 flex flex-col gap-3 border-t border-line pt-4">
             {authed ? (
               <Link
-                to={ROUTES.app}
+                to={ROUTES.dashboard}
                 onClick={() => setMenuOpen(false)}
                 className="btn btn-primary w-full"
               >
@@ -143,7 +143,7 @@ export function Navbar() {
                   Log In
                 </Link>
                 <Link
-                  to={ROUTES.merchantSignup}
+                  to={ROUTES.signup}
                   onClick={() => setMenuOpen(false)}
                   className="btn btn-primary w-full"
                 >

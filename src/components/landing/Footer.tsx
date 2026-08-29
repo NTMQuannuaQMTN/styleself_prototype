@@ -5,9 +5,9 @@ import { ROUTES } from './routes'
 const LINKS: { label: string; to: string; external?: boolean }[] = [
   { label: 'How It Works', to: '#how-it-works', external: true },
   { label: 'For Merchants', to: '#for-merchants', external: true },
-  { label: 'For Shoppers', to: '#for-shoppers', external: true },
+  { label: 'The Experience', to: '#experience', external: true },
   { label: 'Log In', to: ROUTES.login },
-  { label: 'Get Started', to: ROUTES.merchantSignup },
+  { label: 'Get Started', to: ROUTES.signup },
 ]
 
 export function Footer() {

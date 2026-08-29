@@ -1,12 +1,11 @@
 import { createContext } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
-import type { Profile, UserRole } from '../lib/database.types'
+import type { Profile } from '../lib/database.types'
 
 export type SignUpArgs = {
   email: string
   password: string
   fullName: string
-  role: UserRole
 }
 
 export type SignUpResult = {
@@ -24,7 +23,7 @@ export interface AuthContextValue {
   profileLoading: boolean
   signInWithPassword: (email: string, password: string) => Promise<void>
   signUpWithPassword: (args: SignUpArgs) => Promise<SignUpResult>
-  signInWithGoogle: (role?: UserRole) => Promise<void>
+  signInWithGoogle: () => Promise<void>
   sendPasswordReset: (email: string) => Promise<void>
   updatePassword: (password: string) => Promise<void>
   signOut: () => Promise<void>
@@ -32,5 +31,3 @@ export interface AuthContextValue {
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)
-
-export const PENDING_ROLE_KEY = 'styleself:pending-role'

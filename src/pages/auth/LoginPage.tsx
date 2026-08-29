@@ -17,7 +17,7 @@ export default function LoginPage() {
   const { signInWithPassword, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const next = safeNextPath(params.get('next')) ?? '/app'
+  const next = safeNextPath(params.get('next')) ?? '/merchant'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -52,11 +52,11 @@ export default function LoginPage() {
   return (
     <AuthShell
       title="Welcome back"
-      subtitle="Log in to manage your agent or continue shopping."
+      subtitle="Log in to manage your store and your Fashion Commerce Agent."
       footer={
         <>
           New to StyleSelf?{' '}
-          <Link to="/create-account" className="font-medium text-ink underline">
+          <Link to="/signup" className="font-medium text-ink underline">
             Create an account
           </Link>
         </>

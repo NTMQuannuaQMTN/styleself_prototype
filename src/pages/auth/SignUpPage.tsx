@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { AuthShell } from '../../components/auth/AuthShell'
 import {
   FormAlert,
@@ -12,62 +12,10 @@ import {
 } from '../../components/auth/form'
 import { useAuth } from '../../auth/useAuth'
 import { authErrorMessage } from '../../auth/errors'
-import { isRole, ROLE_COPY, ROLES } from '../../auth/roles'
-import type { UserRole } from '../../lib/database.types'
-
-function RoleChooser({ onPick }: { onPick: (role: UserRole) => void }) {
-  return (
-    <AuthShell
-      title="How will you use StyleSelf?"
-      subtitle="Pick the experience you want. You can’t change this later without a new account."
-      footer={
-        <>
-          Already have an account?{' '}
-          <Link to="/login" className="font-medium text-ink underline">
-            Log in
-          </Link>
-        </>
-      }
-    >
-      <div className="flex flex-col gap-3">
-        {ROLES.map((role) => (
-          <button
-            key={role}
-            type="button"
-            onClick={() => onPick(role)}
-            className="group flex items-center justify-between rounded-xl border border-line-strong bg-surface p-4 text-left transition-colors hover:border-ink"
-          >
-            <span>
-              <span className="block text-[0.95rem] font-medium text-ink">
-                {ROLE_COPY[role].chooserLabel}
-              </span>
-              <span className="mt-0.5 block text-sm text-muted">
-                {ROLE_COPY[role].blurb}
-              </span>
-            </span>
-            <span
-              aria-hidden
-              className="ml-3 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-ink"
-            >
-              →
-            </span>
-          </button>
-        ))}
-      </div>
-    </AuthShell>
-  )
-}
 
 export default function SignUpPage() {
   const { signUpWithPassword, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
-  const [params, setParams] = useSearchParams()
-
-  const roleParam = params.get('role')
-  const role = useMemo<UserRole | null>(
-    () => (isRole(roleParam) ? roleParam : null),
-    [roleParam],
-  )
 
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -77,21 +25,8 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null)
   const [sentTo, setSentTo] = useState<string | null>(null)
 
-  if (!role) {
-    return (
-      <RoleChooser
-        onPick={(picked) => {
-          setParams({ role: picked }, { replace: true })
-        }}
-      />
-    )
-  }
-
-  const copy = ROLE_COPY[role]
-
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!role) return
     setError(null)
 
     if (password.length < 8) {
@@ -106,7 +41,6 @@ export default function SignUpPage() {
           email: email.trim(),
           password,
           fullName: fullName.trim(),
-          role,
         })
 
       if (alreadyRegistered) {
@@ -119,7 +53,7 @@ export default function SignUpPage() {
         setSubmitting(false)
         return
       }
-      navigate('/app', { replace: true })
+      navigate('/merchant', { replace: true })
     } catch (err) {
       setError(authErrorMessage(err))
       setSubmitting(false)
@@ -127,11 +61,10 @@ export default function SignUpPage() {
   }
 
   async function onGoogle() {
-    if (!role) return
     setError(null)
     setGoogleLoading(true)
     try {
-      await signInWithGoogle(role)
+      await signInWithGoogle()
     } catch (err) {
       setError(authErrorMessage(err))
       setGoogleLoading(false)
@@ -145,7 +78,7 @@ export default function SignUpPage() {
         subtitle={
           <>
             We sent a confirmation link to <strong>{sentTo}</strong>. Click it to
-            finish setting up your {copy.label.toLowerCase()} account.
+            finish setting up your account.
           </>
         }
         footer={
@@ -163,19 +96,8 @@ export default function SignUpPage() {
 
   return (
     <AuthShell
-      title={copy.cta}
-      subtitle={
-        <>
-          Creating a <strong>{copy.label.toLowerCase()}</strong> account.{' '}
-          <button
-            type="button"
-            className="text-ink underline"
-            onClick={() => setParams({}, { replace: true })}
-          >
-            Change
-          </button>
-        </>
-      }
+      title="Deploy your agent"
+      subtitle="Create your StyleSelf account to configure and deploy your Fashion Commerce Agent."
       footer={
         <>
           Already have an account?{' '}
@@ -205,13 +127,13 @@ export default function SignUpPage() {
             placeholder="Alex Tan"
           />
           <TextField
-            label="Email"
+            label="Work email"
             type="email"
             autoComplete="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            placeholder="you@yourstore.com"
           />
           <PasswordField
             label="Password"

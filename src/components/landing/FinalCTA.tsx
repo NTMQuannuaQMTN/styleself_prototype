@@ -15,7 +15,7 @@ export function FinalCTA() {
             Upload your catalog. Configure your agent. Embed it into your store.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link to={ROUTES.merchantSignup} className="btn btn-primary">
+            <Link to={ROUTES.signup} className="btn btn-primary">
               Deploy Your Agent
             </Link>
             <a href="#how-it-works" className="btn btn-secondary">

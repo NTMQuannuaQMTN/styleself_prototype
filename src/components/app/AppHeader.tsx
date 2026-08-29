@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
-import { ROLE_COPY } from '../../auth/roles'
 
 function initials(name: string | null, email: string | null) {
   const source = name?.trim() || email?.split('@')[0] || '?'
@@ -31,7 +30,6 @@ export function AppHeader() {
 
   const name = profile?.full_name ?? null
   const email = profile?.email ?? user?.email ?? null
-  const roleLabel = profile ? ROLE_COPY[profile.role].label : null
 
   async function handleSignOut() {
     await signOut()
@@ -41,17 +39,14 @@ export function AppHeader() {
   return (
     <header className="border-b border-line bg-paper/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 sm:px-8">
-        <Link to="/" className="font-display text-lg tracking-tight text-ink">
+        <Link
+          to="/merchant"
+          className="font-display text-lg tracking-tight text-ink"
+        >
           Style<span className="italic">Self</span>
         </Link>
 
         <div className="flex items-center gap-3">
-          {roleLabel ? (
-            <span className="hidden rounded-full border border-line-strong px-2.5 py-1 text-[0.7rem] font-medium uppercase tracking-[0.12em] text-muted sm:inline">
-              {roleLabel}
-            </span>
-          ) : null}
-
           <div className="relative" ref={menuRef}>
             <button
               type="button"

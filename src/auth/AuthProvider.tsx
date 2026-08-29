@@ -2,30 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
-import type { Profile, UserRole } from '../lib/database.types'
+import type { Profile } from '../lib/database.types'
 import {
   AuthContext,
-  PENDING_ROLE_KEY,
   type AuthContextValue,
   type SignUpArgs,
 } from './context'
-
-function readPendingRole(): UserRole | null {
-  try {
-    const value = localStorage.getItem(PENDING_ROLE_KEY)
-    return value === 'merchant' || value === 'customer' ? value : null
-  } catch {
-    return null
-  }
-}
-
-function clearPendingRole() {
-  try {
-    localStorage.removeItem(PENDING_ROLE_KEY)
-  } catch {
-    /* storage unavailable — nothing to clean up */
-  }
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(isSupabaseConfigured)
@@ -65,15 +47,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   )
 
-  // Record the role a visitor picked right before a Google redirect.
-  const applyPendingRole = useCallback(async () => {
-    const pending = readPendingRole()
-    if (!pending) return
-    clearPendingRole()
-    const { error } = await supabase.rpc('set_signup_role', { desired: pending })
-    if (error) console.error('Could not set signup role:', error.message)
-  }, [])
-
   useEffect(() => {
     mounted.current = true
 
@@ -93,10 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
       if (event === 'SIGNED_IN' && next?.user) {
-        void (async () => {
-          await applyPendingRole()
-          await fetchProfile(next.user.id, { retry: true })
-        })()
+        void fetchProfile(next.user.id, { retry: true })
         return
       }
       if (event === 'SIGNED_OUT') {
@@ -108,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted.current = false
       sub.subscription.unsubscribe()
     }
-  }, [fetchProfile, applyPendingRole])
+  }, [fetchProfile])
 
   const signInWithPassword = useCallback(
     async (email: string, password: string) => {
@@ -119,12 +89,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const signUpWithPassword = useCallback(
-    async ({ email, password, fullName, role }: SignUpArgs) => {
+    async ({ email, password, fullName }: SignUpArgs) => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { full_name: fullName, role },
+          data: { full_name: fullName },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
@@ -142,12 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   )
 
-  const signInWithGoogle = useCallback(async (role?: UserRole) => {
-    try {
-      if (role) localStorage.setItem(PENDING_ROLE_KEY, role)
-    } catch {
-      /* storage unavailable — role just won't be pre-set */
-    }
+  const signInWithGoogle = useCallback(async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 
-const EMBED_SNIPPET = `<script
-  src="https://cdn.styleself.ai/agent.js"
-  data-store="urban-thread"
-  data-agent="fashion-commerce"
-></script>`
+const EMBED_SNIPPET = `<iframe
+  src="https://styleself.app/agent/urban-thread"
+  title="Urban Thread — Shopping assistant"
+  width="100%"
+  height="640"
+></iframe>`
 
 function LivePill({ label = 'Live' }: { label?: string }) {
   return (
@@ -88,7 +89,7 @@ export function StudioPanel({ className = '' }: { className?: string }) {
           <p className="eyebrow text-[0.56rem]">Deploy</p>
           <div className="mt-2 flex items-center gap-2">
             <code className="min-w-0 flex-1 truncate rounded-md border border-line bg-paper px-2.5 py-2 font-mono text-[0.7rem] text-ink-soft">
-              &lt;script src="…styleself.ai/agent.js"&gt;
+              &lt;iframe src="styleself.app/agent/urban-thread"&gt;
             </code>
             <button
               type="button"

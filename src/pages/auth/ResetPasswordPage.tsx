@@ -44,7 +44,7 @@ export default function ResetPasswordPage() {
     try {
       await updatePassword(password)
       setDone(true)
-      window.setTimeout(() => navigate('/app', { replace: true }), 1200)
+      window.setTimeout(() => navigate('/merchant', { replace: true }), 1200)
     } catch (err) {
       setError(authErrorMessage(err))
       setSubmitting(false)

@@ -28,7 +28,7 @@ export function Hero() {
             conversation.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link to={ROUTES.merchantSignup} className="btn btn-primary">
+            <Link to={ROUTES.signup} className="btn btn-primary">
               Deploy Your Agent
             </Link>
             <a href="#how-it-works" className="btn btn-secondary">

@@ -6,7 +6,7 @@ import { useAuth } from '../../auth/useAuth'
 /**
  * Landing point for Google OAuth and email-confirmation redirects. The Supabase
  * client exchanges the code automatically (detectSessionInUrl); we just wait for
- * the session to appear, then hand off to <RoleRedirect> at /app.
+ * the session to appear, then send the merchant to their dashboard.
  */
 export default function AuthCallbackPage() {
   const { session, loading } = useAuth()
@@ -37,7 +37,7 @@ export default function AuthCallbackPage() {
       />
     )
   }
-  if (session) return <Navigate to="/app" replace />
+  if (session) return <Navigate to="/merchant" replace />
   if (!loading && timedOut) {
     return (
       <Navigate

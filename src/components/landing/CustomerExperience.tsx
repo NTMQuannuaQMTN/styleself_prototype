@@ -1,5 +1,7 @@
+import { Link } from 'react-router-dom'
 import { Container, Reveal, SectionHeading } from './primitives'
 import { ConversationDemo } from './ConversationDemo'
+import { ROUTES } from './routes'
 
 const BEATS = [
   { label: 'Discovery', body: 'The shopper describes the occasion and budget in plain words.' },
@@ -11,13 +13,13 @@ const BEATS = [
 export function CustomerExperience() {
   return (
     <section
-      id="for-shoppers"
+      id="experience"
       className="scroll-mt-20 border-t border-line py-20 md:py-28"
     >
       <Container className="grid items-center gap-14 lg:grid-cols-[1fr_1.05fr] lg:gap-16">
         <Reveal>
           <SectionHeading
-            eyebrow="For Shoppers"
+            eyebrow="The customer experience"
             title={
               <>
                 Your customers just need to{' '}
@@ -49,6 +51,13 @@ export function CustomerExperience() {
               </Reveal>
             ))}
           </ul>
+
+          <Link
+            to={ROUTES.demoAgent}
+            className="btn btn-secondary mt-8"
+          >
+            Try the live demo agent
+          </Link>
         </Reveal>
 
         <Reveal delay={100}>
