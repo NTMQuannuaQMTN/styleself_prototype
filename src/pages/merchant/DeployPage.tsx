@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '../../merchant/useStore'
 import { useAsync } from '../../merchant/useAsync'
-import { getDashboardCounts, updateStore } from '../../merchant/api'
+import { getDashboardCounts, setStoreLive } from '../../merchant/api'
 import {
   Card,
   InlineError,
@@ -10,7 +10,8 @@ import {
 } from '../../components/merchant/ui'
 
 export default function DeployPage() {
-  const { activeStore, agent, isManager, refreshStore } = useStore()
+  const { activeStore, agent, activeRole, refreshStore } = useStore()
+  const isOwner = activeRole === 'owner'
   const [copied, setCopied] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -59,7 +60,7 @@ export default function DeployPage() {
     setError(null)
     setBusy(true)
     try {
-      await updateStore(store.id, { agent_live: !store.agent_live })
+      await setStoreLive(store.id, !store.agent_live)
       await refreshStore()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update.')
@@ -111,7 +112,7 @@ export default function DeployPage() {
 
           {error ? <InlineError>{error}</InlineError> : null}
 
-          {isManager ? (
+          {isOwner ? (
             <Card className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-ink">
@@ -144,7 +145,9 @@ export default function DeployPage() {
             </Card>
           ) : (
             <p className="text-sm text-muted">
-              Only owners and admins can publish the agent.
+              {activeStore.agent_live
+                ? 'The agent is live. Only the store owner can take it offline.'
+                : 'Only the store owner can publish the agent.'}
             </p>
           )}
         </div>

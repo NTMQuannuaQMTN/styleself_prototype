@@ -199,6 +199,8 @@ export type AgentOrderConfirmation = {
   feesCents: number
   totalCents: number
   visaAuthCode: string
+  /** Where the funds settle, e.g. "Urban Thread · DBS ••4291". null if unset. */
+  settlement: string | null
   message: string
 }
 

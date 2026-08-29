@@ -213,7 +213,7 @@ export async function executeTool(
   switch (name) {
     case 'search_products': {
       const all = await ctx.catalog.all()
-      const ranked = rankProducts(
+      const { products: ranked, weak } = rankProducts(
         all,
         {
           query: str(rawArgs.query),
@@ -238,6 +238,12 @@ export async function executeTool(
       return {
         count: ranked.length,
         recommend_at_most: ctx.recommendationLimit,
+        exact_match: !weak,
+        ...(weak
+          ? {
+              note: "Nothing closely matches that request. These are the nearest in-stock options — tell the shopper you don't carry an exact match and recommend the closest one.",
+            }
+          : {}),
         products: ranked.map((p) => compactProduct(p, ctx.currency)),
       }
     }

@@ -63,6 +63,18 @@ export default function StoreSettingsPage() {
         />
 
         {isOwner && (
+          <PayoutCard
+            bankName={store.payout_bank_name ?? ''}
+            accountName={store.payout_account_name ?? ''}
+            last4={store.payout_account_last4 ?? ''}
+            onSave={async (patch) => {
+              await updateStore(store.id, patch)
+              await refreshStore()
+            }}
+          />
+        )}
+
+        {isOwner && (
           <DangerZone
             storeName={store.name}
             onDelete={async () => {
@@ -271,6 +283,107 @@ function SlugCard({
             {saved && <span className="text-sm text-success">Saved</span>}
           </div>
         )}
+      </form>
+    </Card>
+  )
+}
+
+function PayoutCard({
+  bankName,
+  accountName,
+  last4,
+  onSave,
+}: {
+  bankName: string
+  accountName: string
+  last4: string
+  onSave: (patch: {
+    payout_bank_name: string | null
+    payout_account_name: string | null
+    payout_account_last4: string | null
+  }) => Promise<void>
+}) {
+  const [bank, setBank] = useState(bankName)
+  const [holder, setHolder] = useState(accountName)
+  // Full number is entered but never stored — only the last 4 digits persist.
+  const [account, setAccount] = useState(last4 ? `••••${last4}` : '')
+  const [busy, setBusy] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const digits = account.replace(/\D/g, '')
+  const nextLast4 = digits.length >= 4 ? digits.slice(-4) : last4
+  const dirty =
+    bank.trim() !== bankName.trim() ||
+    holder.trim() !== accountName.trim() ||
+    nextLast4 !== last4
+
+  async function submit(e: FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setBusy(true)
+    try {
+      await onSave({
+        payout_bank_name: bank.trim() || null,
+        payout_account_name: holder.trim() || null,
+        payout_account_last4: nextLast4 || null,
+      })
+      if (digits.length >= 4) setAccount(`••••${nextLast4}`)
+      setSaved(true)
+      window.setTimeout(() => setSaved(false), 2500)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Card>
+      <form onSubmit={submit} className="space-y-4">
+        <div>
+          <p className="font-display text-lg text-ink">Payout account</p>
+          <p className="mt-1 text-sm text-muted">
+            Where completed orders settle. Only the last 4 digits are stored;
+            settlement is simulated for the prototype.
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextField
+            label="Bank"
+            value={bank}
+            onChange={(e) => setBank(e.target.value)}
+            placeholder="DBS"
+          />
+          <TextField
+            label="Account holder"
+            value={holder}
+            onChange={(e) => setHolder(e.target.value)}
+            placeholder="Urban Thread Pte Ltd"
+          />
+        </div>
+        <TextField
+          label="Account number"
+          value={account}
+          onChange={(e) => setAccount(e.target.value)}
+          placeholder="0000 0000 4291"
+          hint={
+            nextLast4
+              ? `Will be stored as ••••${nextLast4}`
+              : 'Only the last 4 digits are kept.'
+          }
+        />
+        {error ? <InlineError>{error}</InlineError> : null}
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            className="btn btn-secondary"
+            disabled={busy || !dirty}
+          >
+            {busy ? 'Saving…' : 'Save payout account'}
+          </button>
+          {saved && <span className="text-sm text-success">Saved</span>}
+        </div>
       </form>
     </Card>
   )

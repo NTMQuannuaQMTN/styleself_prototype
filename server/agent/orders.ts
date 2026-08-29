@@ -16,6 +16,8 @@ export type CheckoutInput = {
   currency: string
   items: DraftItem[]
   merchantName: string
+  /** Human-readable settlement destination, or null when unset. */
+  settlement: string | null
 }
 
 const FEE_CENTS = 500
@@ -84,6 +86,7 @@ export async function simulateCheckout(
     feesCents: fees,
     totalCents: subtotal + fees,
     visaAuthCode: authCode(),
+    settlement: input.settlement,
     message: 'Payment authorized and your order is confirmed.',
   }
   demoOrders.set(key, confirmation)
@@ -144,6 +147,7 @@ export async function runCheckout(
     feesCents: order.fees_cents,
     totalCents: order.total_cents,
     visaAuthCode: order.visa_auth_code ?? authCode(),
+    settlement: input.settlement,
     message: 'Payment authorized and your order is confirmed.',
   }
 }

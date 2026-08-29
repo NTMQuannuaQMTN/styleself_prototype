@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase'
 import type {
+  AgentOrder,
+  AgentOrderItem,
   InventoryRow,
   Product,
   ProductVariant,
@@ -156,7 +158,15 @@ export async function updateStore(
   patch: Partial<
     Pick<
       Store,
-      'name' | 'branch_name' | 'headquarters' | 'city' | 'agent_live' | 'slug'
+      | 'name'
+      | 'branch_name'
+      | 'headquarters'
+      | 'city'
+      | 'agent_live'
+      | 'slug'
+      | 'payout_bank_name'
+      | 'payout_account_name'
+      | 'payout_account_last4'
     >
   >,
 ): Promise<Store> {
@@ -168,6 +178,13 @@ export async function updateStore(
       .select('*')
       .single(),
   )
+}
+
+/** Owner-only: deploy / undeploy the public agent (via a SECURITY DEFINER RPC). */
+export async function setStoreLive(storeId: string, live: boolean): Promise<Store> {
+  return unwrap(
+    await supabase.rpc('set_store_live', { p_store: storeId, p_live: live }),
+  ) as Store
 }
 
 export async function deleteStore(storeId: string): Promise<void> {
@@ -570,4 +587,20 @@ export async function getDashboardCounts(
     pendingRequests: pending.count ?? 0,
     totalUnits,
   }
+}
+
+// ---------------------------------------------------------------------------
+// Orders — agent checkout sales (readable by any store member via RLS)
+// ---------------------------------------------------------------------------
+export type OrderWithItems = AgentOrder & { agent_order_items: AgentOrderItem[] }
+
+export async function listOrders(storeId: string): Promise<OrderWithItems[]> {
+  return unwrap(
+    await supabase
+      .from('agent_orders')
+      .select('*, agent_order_items(*)')
+      .eq('store_id', storeId)
+      .order('created_at', { ascending: false })
+      .limit(100),
+  ) as unknown as OrderWithItems[]
 }

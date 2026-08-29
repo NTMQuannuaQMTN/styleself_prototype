@@ -37,6 +37,7 @@ const ProductEditorPage = lazy(
 const LocationsPage = lazy(() => import('./pages/merchant/LocationsPage'))
 const TeamPage = lazy(() => import('./pages/merchant/TeamPage'))
 const DeployPage = lazy(() => import('./pages/merchant/DeployPage'))
+const OrdersPage = lazy(() => import('./pages/merchant/OrdersPage'))
 const PreviewPage = lazy(() => import('./pages/merchant/PreviewPage'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
@@ -97,6 +98,7 @@ export function AppRoutes() {
               <Route path="locations" element={<LocationsPage />} />
               <Route path="team" element={<TeamPage />} />
               <Route path="deploy" element={<DeployPage />} />
+              <Route path="orders" element={<OrdersPage />} />
               <Route path="preview" element={<PreviewPage />} />
               <Route path="settings" element={<StoreSettingsPage />} />
             </Route>

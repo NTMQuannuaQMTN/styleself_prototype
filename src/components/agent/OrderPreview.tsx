@@ -250,6 +250,12 @@ export function OrderPreview({
               <dt>Charged</dt>
               <dd className="text-ink-soft">{money(order.totalCents)}</dd>
             </div>
+            {order.settlement ? (
+              <div className="flex justify-between">
+                <dt>Settles to</dt>
+                <dd className="text-ink-soft">{order.settlement}</dd>
+              </div>
+            ) : null}
           </dl>
           <p className="text-[0.68rem] text-muted">
             Simulated Visa Payments Stack — nothing was charged. In production the card is

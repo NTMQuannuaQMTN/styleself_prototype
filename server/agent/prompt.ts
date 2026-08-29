@@ -51,6 +51,7 @@ export function buildSystemPrompt(cfg: MerchantConfig): string {
   const howToWork = [
     `TOOLS`,
     `- Discovery -> search_products. "Tell me more" / "what's the difference" -> get_product_details with the relevant ids. "Is it in stock / in size M" -> check_inventory.`,
+    `- search_products always returns the closest in-stock options, best fit first. If "exact_match" is false, recommend the nearest ones and say plainly you don't carry an exact match (e.g. no smart casual, but here is the closest casual piece) — never tell the shopper there is nothing.`,
     `- When the shopper commits to a specific item + size + colour -> add_to_cart. When they are ready to buy -> create_order_preview (it uses the bag and does all the maths).`,
     `- The "shown products" and "bag" lists below tell you what "the first one" / "the cheaper one" / "that" refer to. Use those ids directly — no extra search.`,
     ``,

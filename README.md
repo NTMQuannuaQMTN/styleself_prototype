@@ -77,7 +77,7 @@ api/agent/checkout.js       #   "
 | `/login`, `/signup` | Merchant auth (email+password / Google). Authed users → `/merchant`. `/create-account` redirects to `/signup`. |
 | `/forgot-password`, `/reset-password` | Password recovery |
 | `/auth/callback` | OAuth + email-confirmation redirect target |
-| `/merchant` | `RequireAuth` → onboarding or Agent Studio (`agent`, `catalog`, `locations`, `team`, `deploy`, `preview`, `settings`); `/merchant/account` for profile |
+| `/merchant` | `RequireAuth` → onboarding or Agent Studio (`agent`, `catalog`, `locations`, `team`, `deploy`, `orders`, `preview`, `settings`); `/merchant/account` for profile |
 | `/agent/:agentId` | **Public, no auth** — the deployed Fashion Commerce Agent, embeddable via `<iframe>`. `agentId` = the store's slug; `/agent/demo` runs on a built-in sample catalog. |
 | `POST /api/agent/chat` | Agent runtime (not a page). Node/serverless. |
 | `POST /api/agent/checkout` | Deterministic payment flow — `authorize` + `pay`. No AI. |
@@ -89,7 +89,13 @@ one and request to join — an owner approves) or land in the Agent Studio:
 
 - **Overview** — live store metrics
 - **Agent Studio** — name, greeting, brand description, fashion focus, tone,
-  currency, recommendation limit, confirmation rule, commerce rules (persisted)
+  currency, recommendation limit, confirmation rule, commerce rules
+  (persisted; **owner-only** to edit, others see it read-only)
+- **Orders** — every sale completed through the agent (buyer, items, total, Visa
+  auth code), visible to all store members
+- **Deploy** — embed snippet + go-live toggle (**owner-only** to publish)
+- **Store settings → Payout account** — settlement destination (last-4 only),
+  owner-only; echoed on the shopper's order confirmation
 - **Catalog** — products with variants and per-location inventory
 - **Locations** — single store or many
 - **Team** — members + join-request approvals

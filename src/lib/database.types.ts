@@ -33,6 +33,10 @@ export type Store = {
   /** city / area */
   city: string | null
   agent_live: boolean
+  /** Payout destination for completed orders (settlement is simulated). */
+  payout_bank_name: string | null
+  payout_account_name: string | null
+  payout_account_last4: string | null
   created_by: string | null
   created_at: string
   updated_at: string
@@ -247,6 +251,10 @@ export type Database = {
           p_items: unknown
         }
         Returns: AgentOrder
+      }
+      set_store_live: {
+        Args: { p_store: string; p_live: boolean }
+        Returns: Store
       }
     }
     Enums: {

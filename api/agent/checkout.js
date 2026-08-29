@@ -316,6 +316,7 @@ async function simulateCheckout(catalog, input) {
     feesCents: fees,
     totalCents: subtotal + fees,
     visaAuthCode: authCode(),
+    settlement: input.settlement,
     message: "Payment authorized and your order is confirmed."
   };
   demoOrders.set(key, confirmation);
@@ -365,6 +366,7 @@ async function runCheckout(supabase, storeId, catalog, input) {
     feesCents: order.fees_cents,
     totalCents: order.total_cents,
     visaAuthCode: order.visa_auth_code ?? authCode(),
+    settlement: input.settlement,
     message: "Payment authorized and your order is confirmed."
   };
 }
@@ -452,7 +454,8 @@ async function handleCheckout(body, authHeader, rawEnv) {
     locationId: draft.locationId ?? null,
     currency: draft.currency,
     items: draft.items,
-    merchantName: resolved.merchantName
+    merchantName: resolved.merchantName,
+    settlement: resolved.settlement
   };
   const result = resolved.kind === "demo" ? await simulateCheckout(resolved.catalog, input) : await runCheckout(resolved.supabase, resolved.storeId, resolved.catalog, input);
   if (!result.ok) {
@@ -468,7 +471,8 @@ async function resolveAgent(agentId, authHeader, env) {
       catalog: new DemoCatalog(),
       storeId: null,
       supabase: null,
-      merchantName: "Urban Thread"
+      merchantName: "Urban Thread",
+      settlement: "Urban Thread \xB7 DBS \u2022\u20224291"
     };
   }
   if (!env.supabaseUrl || !env.supabaseAnonKey) return "unconfigured";
@@ -484,12 +488,14 @@ async function resolveAgent(agentId, authHeader, env) {
   ]);
   const locations = (locRows ?? []).map((l) => ({ id: l.id, name: l.name }));
   const currency = agentRow?.currency ?? "USD";
+  const settlement = store.payout_account_last4 ? `${store.name} \xB7 ${store.payout_bank_name ?? "Bank"} \u2022\u2022${store.payout_account_last4}` : null;
   return {
     kind: "db",
     catalog: new DbCatalog(supabase, store.id, currency, locations),
     storeId: store.id,
     supabase,
-    merchantName: store.name
+    merchantName: store.name,
+    settlement
   };
 }
 async function checkStock(catalog, draft) {

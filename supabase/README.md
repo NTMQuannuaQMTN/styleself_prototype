@@ -20,11 +20,17 @@ Run them **in order** in the SQL Editor (or `supabase db push`):
    (member↔profile FK, product / variant attribute columns).
 4. [`migrations/20260829170000_agent_orders.sql`](migrations/20260829170000_agent_orders.sql)
    — agent checkout: `store_agents` gains `brand_description` / `category_focus` /
-   `require_confirmation`; new `agent_orders` + `agent_order_items` (members-only
-   read); the `agent_checkout(...)` **SECURITY DEFINER** RPC — the only writer:
-   it re-validates price and stock from live rows, writes the order, and
-   decrements `inventory` in one transaction. Idempotent on
-   `(conversation_id, draft_hash)`. `/agent/demo` never hits the database.
+   `require_confirmation` (and its insert/update RLS narrows to owner-only); new
+   `agent_orders` + `agent_order_items` (members-only read); the
+   `agent_checkout(...)` **SECURITY DEFINER** RPC — the only writer: it
+   re-validates price and stock from live rows, writes the order, and decrements
+   `inventory` in one transaction. Idempotent on `(conversation_id, draft_hash)`.
+   `/agent/demo` never hits the database.
+5. [`migrations/20260829180000_store_payout_and_deploy.sql`](migrations/20260829180000_store_payout_and_deploy.sql)
+   — `stores` gains `payout_bank_name` / `payout_account_name` /
+   `payout_account_last4` (settlement destination, last-4 only); the
+   `set_store_live(store, bool)` **SECURITY DEFINER** RPC restricts going
+   live/offline to the store **owner**.
 
 This file is fully idempotent — **re-run it** to pick up every column / policy
 added since your last run.

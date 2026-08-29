@@ -41,6 +41,7 @@ type Resolved = {
   storeId: string | null
   supabase: SupabaseClient<Database> | null
   merchantName: string
+  settlement: string | null
 }
 
 const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : undefined)
@@ -157,6 +158,7 @@ export async function handleCheckout(
     currency: draft.currency,
     items: draft.items,
     merchantName: resolved.merchantName,
+    settlement: resolved.settlement,
   }
 
   const result =
@@ -183,6 +185,7 @@ async function resolveAgent(
       storeId: null,
       supabase: null,
       merchantName: 'Urban Thread',
+      settlement: 'Urban Thread · DBS ••4291',
     }
   }
   if (!env.supabaseUrl || !env.supabaseAnonKey) return 'unconfigured'
@@ -210,6 +213,9 @@ async function resolveAgent(
 
   const locations = (locRows ?? []).map((l) => ({ id: l.id, name: l.name }))
   const currency = agentRow?.currency ?? 'USD'
+  const settlement = store.payout_account_last4
+    ? `${store.name} · ${store.payout_bank_name ?? 'Bank'} ••${store.payout_account_last4}`
+    : null
 
   return {
     kind: 'db',
@@ -217,6 +223,7 @@ async function resolveAgent(
     storeId: store.id,
     supabase,
     merchantName: store.name,
+    settlement,
   }
 }
 

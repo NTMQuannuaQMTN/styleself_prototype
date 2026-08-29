@@ -54,19 +54,37 @@ const STOP = new Set([
   'looking', 'under', 'below', 'over', 'about', 'some', 'that', 'this',
 ])
 
-/** Cheap relevance ranking done in the backend — the model never sees the full catalog. */
+export type RankedProducts = {
+  products: CatalogProduct[]
+  /** true when the shopper gave criteria but even the best result barely matches */
+  weak: boolean
+}
+
+/**
+ * Cheap relevance ranking done in the backend — the model never sees the full
+ * catalog. Attributes (style, category, colour, …) are *preferences*, not hard
+ * filters: a mismatch lowers the score but never removes a product. So a request
+ * for "smart casual" still returns the nearest "casual" options rather than
+ * nothing. Only "out of stock" excludes; over-budget items are kept as a
+ * last-resort fallback.
+ */
 export function rankProducts(
   products: CatalogProduct[],
   filters: SearchFilters,
   limit = 8,
-): CatalogProduct[] {
+): RankedProducts {
   const terms = `${filters.query ?? ''} ${filters.occasion ?? ''} ${filters.style ?? ''}`
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
     .filter((t) => t.length > 2 && !STOP.has(t))
 
+  const hasCriteria =
+    terms.length > 0 ||
+    Boolean(filters.category || filters.style || filters.gender || filters.color || filters.size)
+
   const scored = products
+    .filter((p) => totalStock(p) > 0)
     .map((p) => {
       const hay = [
         p.name, p.brand, p.style, p.category, p.gender, p.material,
@@ -78,37 +96,59 @@ export function rankProducts(
         .toLowerCase()
 
       let score = 0
-      for (const t of terms) if (hay.includes(t)) score += 2
-      if (terms.length === 0) score += 1
+      let signal = 0 // count of positive matches — used to judge "weak"
+      for (const t of terms) if (hay.includes(t)) {
+        score += 3
+        signal++
+      }
 
-      const hard = (field: string | undefined, hs: string) =>
-        field ? (hs.includes(field.toLowerCase()) ? 1 : -3) : 0
-      score += hard(filters.category, p.category?.toLowerCase() ?? '')
-      score += hard(filters.style, p.style?.toLowerCase() ?? '')
-      score += hard(filters.gender, p.gender?.toLowerCase() ?? '')
+      const soft = (
+        field: string | undefined,
+        hs: string,
+        hit: number,
+        miss: number,
+      ) => {
+        if (!field) return 0
+        if (hs.includes(field.toLowerCase())) {
+          signal++
+          return hit
+        }
+        return miss
+      }
+      score += soft(filters.category, p.category?.toLowerCase() ?? '', 3, -1)
+      score += soft(filters.style, p.style?.toLowerCase() ?? '', 3, -1)
+      score += soft(filters.gender, p.gender?.toLowerCase() ?? '', 1, -1)
       if (filters.color) {
-        const colors = p.variants
-          .map((v) => v.color?.toLowerCase() ?? '')
-          .join(' ')
-        score += colors.includes(filters.color.toLowerCase()) ? 1 : -2
+        const colors = p.variants.map((v) => v.color?.toLowerCase() ?? '').join(' ')
+        score += soft(filters.color, colors, 2, -1)
       }
       if (filters.size) {
-        const sizes = p.variants
-          .map((v) => v.size?.toLowerCase() ?? '')
-          .join(' ')
-        score += sizes.includes(filters.size.toLowerCase()) ? 1 : -2
+        const sizes = p.variants.map((v) => v.size?.toLowerCase() ?? '').join(' ')
+        score += soft(filters.size, sizes, 1, -1)
       }
-      if (filters.minPriceCents != null && p.priceCents < filters.minPriceCents)
-        score -= 3
-      if (filters.maxPriceCents != null && p.priceCents > filters.maxPriceCents)
-        score -= 5
 
-      return { p, score }
+      const overBudget =
+        filters.maxPriceCents != null && p.priceCents > filters.maxPriceCents
+      if (overBudget) score -= 4
+      if (filters.minPriceCents != null && p.priceCents < filters.minPriceCents) {
+        score -= 2
+      }
+
+      return { p, score, signal, overBudget }
     })
-    .filter((x) => x.score > 0 && totalStock(x.p) > 0)
     .sort((a, b) => b.score - a.score || a.p.priceCents - b.p.priceCents)
 
-  return scored.slice(0, limit).map((x) => x.p)
+  if (scored.length === 0) return { products: [], weak: false }
+
+  // Prefer in-budget matches; only fall back to over-budget if nothing fits.
+  const inBudget = scored.filter((x) => !x.overBudget)
+  const pool = inBudget.length > 0 ? inBudget : scored
+  const top = pool.slice(0, limit)
+
+  return {
+    products: top.map((x) => x.p),
+    weak: hasCriteria && top[0].signal === 0,
+  }
 }
 
 // ---------------------------------------------------------------------------

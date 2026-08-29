@@ -71,7 +71,8 @@ var STOP = /* @__PURE__ */ new Set([
 ]);
 function rankProducts(products, filters, limit = 8) {
   const terms = `${filters.query ?? ""} ${filters.occasion ?? ""} ${filters.style ?? ""}`.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((t) => t.length > 2 && !STOP.has(t));
-  const scored = products.map((p) => {
+  const hasCriteria = terms.length > 0 || Boolean(filters.category || filters.style || filters.gender || filters.color || filters.size);
+  const scored = products.filter((p) => totalStock(p) > 0).map((p) => {
     const hay = [
       p.name,
       p.brand,
@@ -83,27 +84,45 @@ function rankProducts(products, filters, limit = 8) {
       p.variants.map((v2) => v2.color).join(" ")
     ].filter(Boolean).join(" ").toLowerCase();
     let score = 0;
-    for (const t of terms) if (hay.includes(t)) score += 2;
-    if (terms.length === 0) score += 1;
-    const hard = (field, hs) => field ? hs.includes(field.toLowerCase()) ? 1 : -3 : 0;
-    score += hard(filters.category, p.category?.toLowerCase() ?? "");
-    score += hard(filters.style, p.style?.toLowerCase() ?? "");
-    score += hard(filters.gender, p.gender?.toLowerCase() ?? "");
+    let signal = 0;
+    for (const t of terms) if (hay.includes(t)) {
+      score += 3;
+      signal++;
+    }
+    const soft = (field, hs, hit, miss) => {
+      if (!field) return 0;
+      if (hs.includes(field.toLowerCase())) {
+        signal++;
+        return hit;
+      }
+      return miss;
+    };
+    score += soft(filters.category, p.category?.toLowerCase() ?? "", 3, -1);
+    score += soft(filters.style, p.style?.toLowerCase() ?? "", 3, -1);
+    score += soft(filters.gender, p.gender?.toLowerCase() ?? "", 1, -1);
     if (filters.color) {
       const colors = p.variants.map((v2) => v2.color?.toLowerCase() ?? "").join(" ");
-      score += colors.includes(filters.color.toLowerCase()) ? 1 : -2;
+      score += soft(filters.color, colors, 2, -1);
     }
     if (filters.size) {
       const sizes = p.variants.map((v2) => v2.size?.toLowerCase() ?? "").join(" ");
-      score += sizes.includes(filters.size.toLowerCase()) ? 1 : -2;
+      score += soft(filters.size, sizes, 1, -1);
     }
-    if (filters.minPriceCents != null && p.priceCents < filters.minPriceCents)
-      score -= 3;
-    if (filters.maxPriceCents != null && p.priceCents > filters.maxPriceCents)
-      score -= 5;
-    return { p, score };
-  }).filter((x) => x.score > 0 && totalStock(x.p) > 0).sort((a, b) => b.score - a.score || a.p.priceCents - b.p.priceCents);
-  return scored.slice(0, limit).map((x) => x.p);
+    const overBudget = filters.maxPriceCents != null && p.priceCents > filters.maxPriceCents;
+    if (overBudget) score -= 4;
+    if (filters.minPriceCents != null && p.priceCents < filters.minPriceCents) {
+      score -= 2;
+    }
+    return { p, score, signal, overBudget };
+  }).sort((a, b) => b.score - a.score || a.p.priceCents - b.p.priceCents);
+  if (scored.length === 0) return { products: [], weak: false };
+  const inBudget = scored.filter((x) => !x.overBudget);
+  const pool = inBudget.length > 0 ? inBudget : scored;
+  const top = pool.slice(0, limit);
+  return {
+    products: top.map((x) => x.p),
+    weak: hasCriteria && top[0].signal === 0
+  };
 }
 function matchLocationId(locations, name) {
   if (name) {
@@ -449,7 +468,7 @@ async function executeTool(name, rawArgs, ctx) {
   switch (name) {
     case "search_products": {
       const all = await ctx.catalog.all();
-      const ranked = rankProducts(
+      const { products: ranked, weak } = rankProducts(
         all,
         {
           query: str(rawArgs.query),
@@ -468,6 +487,10 @@ async function executeTool(name, rawArgs, ctx) {
       return {
         count: ranked.length,
         recommend_at_most: ctx.recommendationLimit,
+        exact_match: !weak,
+        ...weak ? {
+          note: "Nothing closely matches that request. These are the nearest in-stock options \u2014 tell the shopper you don't carry an exact match and recommend the closest one."
+        } : {},
         products: ranked.map((p) => compactProduct(p, ctx.currency))
       };
     }
@@ -738,6 +761,7 @@ function buildSystemPrompt(cfg) {
   const howToWork = [
     `TOOLS`,
     `- Discovery -> search_products. "Tell me more" / "what's the difference" -> get_product_details with the relevant ids. "Is it in stock / in size M" -> check_inventory.`,
+    `- search_products always returns the closest in-stock options, best fit first. If "exact_match" is false, recommend the nearest ones and say plainly you don't carry an exact match (e.g. no smart casual, but here is the closest casual piece) \u2014 never tell the shopper there is nothing.`,
     `- When the shopper commits to a specific item + size + colour -> add_to_cart. When they are ready to buy -> create_order_preview (it uses the bag and does all the maths).`,
     `- The "shown products" and "bag" lists below tell you what "the first one" / "the cheaper one" / "that" refer to. Use those ids directly \u2014 no extra search.`,
     ``,
