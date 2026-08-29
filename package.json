@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "VITE_CONFIG_NATIVE_IGNORE_WARNING=true vite",
+    "build": "tsc -b && VITE_CONFIG_NATIVE_IGNORE_WARNING=true vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },

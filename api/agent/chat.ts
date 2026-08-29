@@ -1,4 +1,4 @@
-import { handleAgentChat } from '../../server/agent/handler.ts'
+import { handleAgentChat } from '../../server/agent/handler'
 
 /**
  * Production agent endpoint (Vercel serverless / any Node function host).

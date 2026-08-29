@@ -1,16 +1,16 @@
 import OpenAI from 'openai'
 import { createClient } from '@supabase/supabase-js'
-import type { Database } from '../../src/lib/database.types.ts'
+import type { Database } from '../../src/lib/database.types'
 import {
   emptyContext,
   type AgentBranding,
   type AgentRequest,
   type AgentResponse,
-} from '../../src/agent/types.ts'
-import { readAgentEnv } from './env.ts'
-import { DbCatalog, DemoCatalog, type Catalog, type Loc } from './catalog.ts'
-import type { MerchantConfig } from './prompt.ts'
-import { runTurn } from './runtime.ts'
+} from '../../src/agent/types'
+import { readAgentEnv } from './env'
+import { DbCatalog, DemoCatalog, type Catalog, type Loc } from './catalog'
+import type { MerchantConfig } from './prompt'
+import { runTurn } from './runtime'
 
 const DEMO_GREETING = 'Hi — what are you shopping for today?'
 

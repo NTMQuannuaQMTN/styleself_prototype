@@ -1,6 +1,6 @@
-import type { AgentContext } from '../../src/agent/types.ts'
-import type { CatalogProduct } from './catalog.ts'
-import { fmtMoney } from './tools.ts'
+import type { AgentContext } from '../../src/agent/types'
+import type { CatalogProduct } from './catalog'
+import { fmtMoney } from './tools'
 
 export type MerchantConfig = {
   storeName: string

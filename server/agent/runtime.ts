@@ -6,11 +6,11 @@ import type {
   AgentProductCard,
   AgentReply,
   ChatTurn,
-} from '../../src/agent/types.ts'
-import type { Catalog, CatalogProduct } from './catalog.ts'
-import { totalStock } from './catalog.ts'
-import { buildSystemPrompt, contextBlock, type MerchantConfig } from './prompt.ts'
-import { executeTool, fmtMoney, TOOL_SCHEMAS, type ToolContext } from './tools.ts'
+} from '../../src/agent/types'
+import type { Catalog, CatalogProduct } from './catalog'
+import { totalStock } from './catalog'
+import { buildSystemPrompt, contextBlock, type MerchantConfig } from './prompt'
+import { executeTool, fmtMoney, TOOL_SCHEMAS, type ToolContext } from './tools'
 
 const MAX_TOOL_ROUNDS = 3
 const MAX_HISTORY = 8

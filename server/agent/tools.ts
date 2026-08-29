@@ -1,11 +1,11 @@
-import type { AgentOrderPreview } from '../../src/agent/types.ts'
+import type { AgentOrderPreview } from '../../src/agent/types'
 import {
   rankProducts,
   totalStock,
   type Catalog,
   type CatalogProduct,
   type CatalogVariant,
-} from './catalog.ts'
+} from './catalog'
 
 const DELIVERY_FEE_CENTS = 500
 

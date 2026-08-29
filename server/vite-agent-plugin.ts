@@ -1,5 +1,5 @@
 import type { Plugin } from 'vite'
-import { handleAgentChat } from './agent/handler.ts'
+import { handleAgentChat } from './agent/handler'
 
 /**
  * Dev-only: serves POST /api/agent/chat from the Vite dev server so the agent

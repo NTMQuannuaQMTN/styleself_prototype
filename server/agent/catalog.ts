@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '../../src/lib/database.types.ts'
+import type { Database } from '../../src/lib/database.types'
 
 /** Rich, server-only view of a product used by the tools. */
 export type CatalogProduct = {
