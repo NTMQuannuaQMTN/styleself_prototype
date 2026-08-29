@@ -17,7 +17,11 @@ export default function AgentPage() {
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-paper">
-      <div className={`mx-auto flex w-full min-h-0 flex-1 flex-col p-3 sm:p-4 ${size === 'large' ? 'max-w-5xl' : 'max-w-lg'}`}>
+      <div
+        className={`mx-auto flex w-full min-h-0 flex-1 flex-col p-3 transition-[max-width] duration-300 sm:p-4 ${
+          size === 'large' ? 'max-w-5xl' : 'max-w-lg'
+        }`}
+      >
         <div className="mb-2 flex shrink-0 justify-end">
           <div className="inline-flex rounded-full border border-line-strong bg-surface p-0.5 text-[0.65rem]" aria-label="Chat window size">
             {(['small', 'large'] as const).map((option) => (
