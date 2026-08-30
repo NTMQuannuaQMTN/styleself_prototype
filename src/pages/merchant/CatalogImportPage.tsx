@@ -51,7 +51,13 @@ export default function CatalogImportPage() {
   const [error, setError] = useState<string | null>(null)
 
   const currency = agent?.currency ?? 'USD'
-  const stockColumns = useMemo(() => stockColumnsFor(locations), [locations])
+  const storeLocations = activeStore
+    ? locations.filter((location) => location.store_id === activeStore.id)
+    : []
+  const stockColumns = useMemo(
+    () => stockColumnsFor(storeLocations),
+    [storeLocations],
+  )
 
   if (!activeStore) return null
 
@@ -87,7 +93,12 @@ export default function CatalogImportPage() {
       )
       return
     }
-    const built = planImport(parsed.rows, parsed.headers, existing, locations)
+    const built = planImport(
+      parsed.rows,
+      parsed.headers,
+      existing,
+      storeLocations,
+    )
     setPlan(built)
     setStage('preview')
   }
@@ -101,7 +112,9 @@ export default function CatalogImportPage() {
         storeId: activeStore!.id,
         currency,
         locationId: isManager
-          ? locations.find((l) => l.is_primary)?.id ?? locations[0]?.id ?? null
+          ? storeLocations.find((l) => l.is_primary)?.id ??
+            storeLocations[0]?.id ??
+            null
           : memberLocationId,
       })
       setResult(res)
@@ -141,13 +154,13 @@ export default function CatalogImportPage() {
         <>
           {stage === 'upload' && (
             <UploadStage
-              locations={locations}
+              locations={storeLocations}
               stockColumns={stockColumns}
               onFile={onFile}
               onTemplate={() =>
                 downloadText(
                   `${activeStore.slug}-catalog-template.csv`,
-                  templateCsv(locations),
+                  templateCsv(storeLocations),
                 )
               }
             />

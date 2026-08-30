@@ -277,9 +277,9 @@ export function AddControl({
   const colorNames = colors.map((c) => c.name)
   const sizes = product.sizes ?? []
   const stockForSelection = (size: string | null, color: string | null) =>
-    product.variantStock
-      ? product.variantStock.find((v) => v.size === size && v.color === color)?.quantity ?? 0
-      : product.stockQuantity ?? product.unitsLeft ?? 0
+    product.variantStock?.find(
+      (v) => v.size === size && v.color === color,
+    )?.quantity ?? 0
 
   if (out) {
     return (

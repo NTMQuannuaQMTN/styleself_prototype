@@ -98,6 +98,7 @@ export function AgentChat({
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [checkoutCancelledKey, setCheckoutCancelledKey] = useState<string | null>(null)
   const [checkoutRequested, setCheckoutRequested] = useState(false)
+  const [completedOrder, setCompletedOrder] = useState<AgentOrderConfirmation | null>(null)
   // Card details live here so they survive the panel remounting when the order
   // changes (e.g. the shopper edits the cart after entering their card).
   const [buyer, setBuyer] = useState<BuyerDetails>({
@@ -262,6 +263,7 @@ export function AgentChat({
   }
 
   function handlePaid(order: AgentOrderConfirmation) {
+    setCompletedOrder(order)
     setContext((c) => ({ ...c, cart: [], selectedProductIds: [] }))
     setCart([])
     setTurns((t) => [
@@ -406,6 +408,72 @@ export function AgentChat({
 
   return (
     <div className={`relative ${className}`}>
+      {completedOrder && (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center rounded-[18px] bg-ink/70 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="purchase-complete-title"
+        >
+          <div className="max-h-full w-full max-w-md overflow-y-auto rounded-xl border border-line-strong bg-surface p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="eyebrow text-[0.58rem]">Purchase complete</p>
+                <h2 id="purchase-complete-title" className="mt-1 font-display text-xl text-ink">
+                  Transaction details
+                </h2>
+              </div>
+              <span className="rounded-full bg-success/10 px-2 py-1 text-xs font-semibold text-success">
+                Paid
+              </span>
+            </div>
+
+            <p className="mt-3 text-sm text-success">{completedOrder.message}</p>
+            <dl className="mt-4 space-y-1.5 text-sm">
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted">Order</dt>
+                <dd className="break-all text-right font-mono text-ink-soft">
+                  {completedOrder.orderId}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted">Merchant</dt>
+                <dd className="text-right text-ink-soft">{completedOrder.merchantName}</dd>
+              </div>
+            </dl>
+
+            <div className="mt-4 border-y border-line py-3">
+              {completedOrder.items.map((item, index) => (
+                <div key={`${item.name}-${index}`} className="flex justify-between gap-3 py-1 text-sm">
+                  <span className="text-ink">
+                    {item.name}
+                    {item.variantLabel ? ` · ${item.variantLabel}` : ''}
+                    {item.quantity > 1 ? ` × ${item.quantity}` : ''}
+                  </span>
+                  <span className="shrink-0 text-ink-soft">
+                    {formatMoney(item.lineTotalCents, completedOrder.currency)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <dl className="space-y-1.5 pt-3 text-sm">
+              <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(completedOrder.subtotalCents, completedOrder.currency)}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted">Fees</dt><dd>{formatMoney(completedOrder.feesCents, completedOrder.currency)}</dd></div>
+              <div className="flex justify-between border-t border-line pt-2 font-semibold"><dt className="text-ink">Total paid</dt><dd className="text-ink">{formatMoney(completedOrder.totalCents, completedOrder.currency)}</dd></div>
+            </dl>
+
+            <p className="mt-3 text-xs text-muted">Authorization: {completedOrder.visaAuthCode}</p>
+            <button
+              type="button"
+              onClick={() => setCompletedOrder(null)}
+              className="btn btn-primary mt-5 w-full"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex h-full flex-col overflow-hidden rounded-[18px] border border-line-strong bg-surface shadow-[0_30px_70px_-45px_rgba(23,21,15,0.3)]">
         <div className="flex shrink-0 items-center gap-2 border-b border-line px-4 py-3">
           <span className="h-1.5 w-1.5 rounded-full bg-success" />
