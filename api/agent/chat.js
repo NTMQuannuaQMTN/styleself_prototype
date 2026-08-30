@@ -820,8 +820,11 @@ function buildSystemPrompt(cfg) {
     `- Never say an order is placed, paid or confirmed. ${cfg.requireConfirmation ? "The shopper must explicitly confirm in the UI." : ""}`,
     ``,
     `STYLE`,
-    `- 2\u20134 short sentences. Plain sentences only \u2014 no markdown, bullet points, dashes or HTML.`,
-    `- When you show products, give each one its own sentence that names it and says why it suits the shopper (occasion, fit, fabric, colour or price). The card UI lifts that sentence, so keep one product per sentence.`
+    `- Keep it short and skimmable: 1\u20133 short paragraphs, each 1\u20132 sentences, separated by a blank line. Never write one long block of text.`,
+    `- When it helps the shopper compare a few things (options, sizes, care notes, trade-offs), use a short bullet list: put each point on its own line starting with "- ". Prefer 2\u20134 bullets, one line each.`,
+    `- Lead with the single most useful sentence, then details or bullets, then at most one follow-up question on its own line.`,
+    `- Plain text only \u2014 no headings, bold, italics, tables or HTML. The only formatting allowed is blank lines between paragraphs and "- " bullets.`,
+    `- When you show products, give each one its own line/sentence that names it and says why it suits the shopper (occasion, fit, fabric, colour or price). The card UI lifts that sentence, so keep one product per line.`
   ].join("\n");
   return [identity, ``, merchant, ``, howToWork].join("\n");
 }
@@ -875,8 +878,8 @@ function firstSentences(s, max) {
   if (!parts || parts.length <= max) return s.trim();
   return parts.slice(0, max).join("").trim();
 }
-function stripMarkdown(s) {
-  return s.replace(/\*\*(.+?)\*\*/g, "$1").replace(/(^|\s)\*(\S.*?\S)\*(?=\s|$)/g, "$1$2").replace(/^#{1,6}\s+/gm, "").replace(/^\s*[-*]\s+/gm, "").replace(/^\s*\d+\.\s+/gm, "").replace(/`([^`]+)`/g, "$1").replace(/\n{3,}/g, "\n\n").trim();
+function tidyText(s) {
+  return s.replace(/\*\*(.+?)\*\*/g, "$1").replace(/__(.+?)__/g, "$1").replace(/(^|\s)\*(\S.*?\S)\*(?=\s|$)/g, "$1$2").replace(/^#{1,6}\s+/gm, "").replace(/`([^`]+)`/g, "$1").replace(/^\s*[*+•]\s+/gm, "- ").replace(/^\s*\d+[.)]\s+/gm, "- ").replace(/\n{3,}/g, "\n\n").replace(/[ \t]+$/gm, "").trim();
 }
 var LOW_STOCK_AT = 5;
 function variantStock2(v2) {
@@ -1000,7 +1003,7 @@ async function runTurn(openai, model, input) {
     finalText = (choice.content ?? "").trim();
     break;
   }
-  finalText = stripMarkdown(finalText);
+  finalText = tidyText(finalText);
   if (!finalText) {
     finalText = "I'm having trouble putting that together right now \u2014 could you rephrase?";
   }

@@ -9,6 +9,45 @@ import { ComparisonCard } from './ComparisonCard'
 import { OrderPreview } from './OrderPreview'
 import { ProductCards, type CardSelection } from './ProductCards'
 
+/**
+ * Render the agent's reply as blocks: blank-line- or newline-separated
+ * paragraphs, with consecutive "- " lines grouped into a bullet list.
+ */
+function RichText({ text }: { text: string }) {
+  const blocks: { type: 'p' | 'ul'; items: string[] }[] = []
+  for (const raw of text.split('\n')) {
+    const line = raw.trim()
+    if (!line) continue
+    const last = blocks[blocks.length - 1]
+    if (line.startsWith('- ')) {
+      const item = line.slice(2).trim()
+      if (last?.type === 'ul') last.items.push(item)
+      else blocks.push({ type: 'ul', items: [item] })
+    } else {
+      blocks.push({ type: 'p', items: [line] })
+    }
+  }
+
+  return (
+    <>
+      {blocks.map((b, i) =>
+        b.type === 'ul' ? (
+          <ul
+            key={i}
+            className="list-disc space-y-0.5 pl-5 marker:text-muted"
+          >
+            {b.items.map((it, j) => (
+              <li key={j}>{it}</li>
+            ))}
+          </ul>
+        ) : (
+          <p key={i}>{b.items[0]}</p>
+        ),
+      )}
+    </>
+  )
+}
+
 export type Turn = {
   role: 'user' | 'assistant'
   text: string
@@ -60,9 +99,9 @@ export function ChatMessage({
     <div className="flex flex-col gap-2">
       <span className="eyebrow text-[0.55rem] tracking-[0.18em]">{agentName}</span>
       {turn.text && (
-        <p className="max-w-[92%] rounded-2xl rounded-tl-md border border-line bg-paper px-3.5 py-2 text-sm leading-relaxed text-ink-soft">
-          {turn.text}
-        </p>
+        <div className="max-w-[92%] space-y-2 rounded-2xl rounded-tl-md border border-line bg-paper px-3.5 py-2 text-sm leading-relaxed text-ink-soft">
+          <RichText text={turn.text} />
+        </div>
       )}
       {turn.products && turn.products.length > 0 && (
         <ProductCards

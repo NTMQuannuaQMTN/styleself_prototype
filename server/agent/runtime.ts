@@ -56,16 +56,22 @@ function firstSentences(s: string, max: number): string {
   return parts.slice(0, max).join('').trim()
 }
 
-/** The model occasionally reaches for markdown despite the prompt. Flatten it. */
-function stripMarkdown(s: string): string {
+/**
+ * Keep the reply readable: allow short paragraphs and simple "- " bullet lines,
+ * but strip the rest of markdown (bold, italics, headings, inline code) and
+ * normalise list markers so the chat UI can render blocks predictably.
+ */
+function tidyText(s: string): string {
   return s
     .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/__(.+?)__/g, '$1')
     .replace(/(^|\s)\*(\S.*?\S)\*(?=\s|$)/g, '$1$2')
     .replace(/^#{1,6}\s+/gm, '')
-    .replace(/^\s*[-*]\s+/gm, '')
-    .replace(/^\s*\d+\.\s+/gm, '')
     .replace(/`([^`]+)`/g, '$1')
-    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^\s*[*+•]\s+/gm, '- ') // normalise bullet markers
+    .replace(/^\s*\d+[.)]\s+/gm, '- ') // numbered lists -> bullets
+    .replace(/\n{3,}/g, '\n\n') // cap blank runs
+    .replace(/[ \t]+$/gm, '')
     .trim()
 }
 
@@ -224,7 +230,7 @@ export async function runTurn(
     break
   }
 
-  finalText = stripMarkdown(finalText)
+  finalText = tidyText(finalText)
   if (!finalText) {
     finalText =
       "I'm having trouble putting that together right now — could you rephrase?"

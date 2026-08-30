@@ -64,8 +64,11 @@ export function buildSystemPrompt(cfg: MerchantConfig): string {
     `- Never say an order is placed, paid or confirmed. ${cfg.requireConfirmation ? 'The shopper must explicitly confirm in the UI.' : ''}`,
     ``,
     `STYLE`,
-    `- 2–4 short sentences. Plain sentences only — no markdown, bullet points, dashes or HTML.`,
-    `- When you show products, give each one its own sentence that names it and says why it suits the shopper (occasion, fit, fabric, colour or price). The card UI lifts that sentence, so keep one product per sentence.`,
+    `- Keep it short and skimmable: 1–3 short paragraphs, each 1–2 sentences, separated by a blank line. Never write one long block of text.`,
+    `- When it helps the shopper compare a few things (options, sizes, care notes, trade-offs), use a short bullet list: put each point on its own line starting with "- ". Prefer 2–4 bullets, one line each.`,
+    `- Lead with the single most useful sentence, then details or bullets, then at most one follow-up question on its own line.`,
+    `- Plain text only — no headings, bold, italics, tables or HTML. The only formatting allowed is blank lines between paragraphs and "- " bullets.`,
+    `- When you show products, give each one its own line/sentence that names it and says why it suits the shopper (occasion, fit, fabric, colour or price). The card UI lifts that sentence, so keep one product per line.`,
   ].join('\n')
 
   return [identity, ``, merchant, ``, howToWork].join('\n')

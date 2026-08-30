@@ -42,9 +42,9 @@ export default function PreviewPage() {
         }
       />
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_19rem] lg:items-start">
+      <div className="grid gap-6 lg:grid-cols-[1fr_19rem] lg:items-start">
         {/* Chat -------------------------------------------------------------- */}
-        <div className="mx-auto w-full lg:mx-0">
+        <div className="mx-auto w-full max-w-md lg:mx-0">
           <div className="mb-3 flex items-center justify-between">
             <p className="eyebrow text-[0.6rem]">Chat window</p>
           </div>
@@ -55,7 +55,7 @@ export default function PreviewPage() {
             embedKey={activeStore.embed_key}
             cartPlacement="external"
             onCartChange={setCart}
-            className="max-h-[36rem] min-h-[32rem] w-full"
+            className="max-h-[40rem] min-h-[34rem] w-full"
           />
         </div>
 
