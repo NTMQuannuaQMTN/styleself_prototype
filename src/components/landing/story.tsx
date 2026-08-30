@@ -164,7 +164,7 @@ export function SplitArchitecture() {
                 </span>
               </>
             }
-            intro="The AI advises. A deterministic endpoint pays. They never share a code path — so a persuaded, prompt-injected, or malfunctioning model still cannot authorize a charge."
+            intro="The AI advises; a deterministic endpoint pays. They never share a code path — so a persuaded or prompt-injected model still can't authorize a charge."
           />
         </Reveal>
 
@@ -175,19 +175,16 @@ export function SplitArchitecture() {
               POST /api/agent/chat
             </p>
             <p className="mt-3 text-sm leading-relaxed text-muted">
-              Runs entirely server-side on OpenAI <Mono>gpt-4o-mini</Mono>. The
-              browser holds only a chat widget; the key never leaves the server.
-              Each turn is a bounded tool-calling loop — the model picks a tool,
-              the server runs it against the merchant&rsquo;s real data and feeds
-              the result back, until the model writes its reply. Capped, so
-              latency and cost stay bounded.
+              Runs server-side on OpenAI <Mono>gpt-4o-mini</Mono> — the key never
+              reaches the browser. Each turn is a bounded tool loop: the model
+              picks a tool, the server runs it on real data and feeds the result
+              back, until it replies.
             </p>
             <ul className="mt-5 space-y-2 border-t border-line pt-5 text-sm text-ink-soft">
               {[
-                <>The model never invents numbers.</>,
                 <>
-                  Prices, stock, sizes, colours and totals are all computed by
-                  the backend.
+                  The model never invents numbers — prices, stock, sizes and
+                  totals all come from the backend.
                 </>,
                 <>
                   5 deterministic tools: <Mono>search_products</Mono>,{' '}
@@ -212,9 +209,9 @@ export function SplitArchitecture() {
               POST /api/agent/checkout
             </p>
             <p className="mt-3 text-sm leading-relaxed text-muted">
-              Contains no AI. No model output can trigger a charge. State moves
-              through HMAC-signed, stateless tokens — each one pinning the exact
-              line items, total and buyer.
+              No AI — no model output can trigger a charge. State moves through
+              HMAC-signed stateless tokens, each pinning the exact items, total
+              and buyer.
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-5 text-xs">
               {['draft', 'authorized', 'paid'].map((s, i) => (
@@ -228,9 +225,8 @@ export function SplitArchitecture() {
             </div>
             <ul className="mt-5 space-y-2 text-sm text-ink-soft">
               {[
-                'Each transition re-pins items, total and buyer into a fresh signed token.',
                 'A tampered or inflated total fails signature or mandate checks.',
-                'Idempotent on (conversation_id, draft_hash) — a replay returns the same paid order.',
+                'Idempotent on (conversation_id, draft_hash) — a replay returns the same order.',
               ].map((t) => (
                 <li key={t} className="flex gap-2.5">
                   <Tick />
@@ -331,16 +327,40 @@ export function VisaStack() {
 const SAFEGUARDS = [
   {
     title: 'Transaction preview',
-    body: 'Line items, delivery fee and total — shown before any card details are entered.',
+    body: 'Line items, delivery and total — shown before any card details.',
   },
   {
     title: 'Identity step',
-    body: 'Cardholder name + card, then a simulated 3-D Secure challenge (any 6-digit code). The card number is Luhn-checked in the browser; only the last-4 and card network are sent.',
+    body: 'Name + card, then a simulated 3-D Secure code. The number is Luhn-checked in the browser; only the last-4 and network are sent.',
   },
   {
     title: 'Spend mandate',
-    body: 'The core trust mechanism. The order total is signed into the checkout tokens as a spend ceiling and enforced at Visa’s authorize() step — a tampered or inflated total is declined at the network layer, not just in the UI.',
+    body: 'The order total is signed into the tokens as a ceiling. An inflated total is declined at authorize() — at the network layer, not just the UI.',
     strong: true,
+  },
+]
+
+const UNDERNEATH = [
+  {
+    title: 'Access control',
+    body: (
+      <>
+        The iframe carries an <Mono>embed_key</Mono> — wrong or missing,
+        rejected. Row-level security keeps each merchant to its own data; the
+        anon role is read-only, and only when <Mono>agent_live = true</Mono>.{' '}
+        <Mono>agent_checkout</Mono> is the only writer of orders and inventory.
+      </>
+    ),
+  },
+  {
+    title: 'Audit log',
+    body: (
+      <>
+        Every order lands in <Mono>agent_orders</Mono> /{' '}
+        <Mono>agent_order_items</Mono> and shows at{' '}
+        <Mono>/merchant/orders</Mono> — items, buyer, total, auth result.
+      </>
+    ),
   },
 ]
 
@@ -350,8 +370,8 @@ export function TrustSecurity() {
       id="security"
       className="scroll-mt-20 border-t border-line bg-ink py-20 text-paper md:py-28"
     >
-      <Container className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
-        <Reveal>
+      <Container>
+        <Reveal className="max-w-2xl">
           <p className="eyebrow mb-4 !text-paper/55">Trust &amp; security</p>
           <h2 className="text-3xl leading-[1.12] text-paper sm:text-4xl">
             The agent does the work.{' '}
@@ -360,103 +380,117 @@ export function TrustSecurity() {
             </span>
           </h2>
           <p className="mt-5 text-base leading-relaxed text-paper/70">
-            The brief&rsquo;s four safeguards, mapped onto a flow the shopper
-            walks through — preview, then identity, then a signed spend ceiling
-            the network enforces.
+            Three checkpoints, in order — preview, identity, then a signed spend
+            ceiling the network itself enforces.
           </p>
         </Reveal>
 
-        <Reveal delay={100}>
-          <div className="rounded-[20px] border border-paper/12 bg-surface p-6 text-ink shadow-[0_50px_90px_-40px_rgba(0,0,0,0.55)]">
-            <p className="eyebrow text-[0.6rem]">Purchase review</p>
-            <div className="mt-4 flex items-center gap-3 border-b border-line pb-4">
-              <img
-                src={DEMO_PRODUCTS[0].image}
-                alt={DEMO_PRODUCTS[0].alt}
-                loading="lazy"
-                decoding="async"
-                className="h-14 w-11 shrink-0 rounded-md object-cover"
-              />
-              <div>
-                <p className="text-sm font-medium text-ink">Linen Blazer</p>
-                <p className="text-xs text-muted">Size M × 1</p>
+        <div className="mt-14 grid gap-12 lg:grid-cols-[1fr_360px] lg:gap-16">
+          {/* the flow */}
+          <ol>
+            {SAFEGUARDS.map((s, i) => (
+              <Reveal
+                key={s.title}
+                as="li"
+                delay={i * 90}
+                className="relative flex gap-5 pb-9 last:pb-0"
+              >
+                {i < SAFEGUARDS.length - 1 && (
+                  <span
+                    aria-hidden
+                    className="absolute left-[19px] top-11 bottom-1 w-px bg-paper/15"
+                  />
+                )}
+                <span
+                  className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border font-display text-sm ${
+                    s.strong
+                      ? 'border-accent-soft/40 bg-accent text-paper'
+                      : 'border-paper/20 bg-ink text-paper/70'
+                  }`}
+                >
+                  {i + 1}
+                </span>
+                <div
+                  className={`min-w-0 flex-1 rounded-2xl border p-5 ${
+                    s.strong
+                      ? 'border-accent-soft/25 bg-accent-soft/[0.08]'
+                      : 'border-paper/10 bg-paper/[0.035]'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-display text-lg text-paper">{s.title}</p>
+                    {s.strong && (
+                      <span className="rounded-full border border-accent-soft/40 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-accent-soft">
+                        Network-enforced
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-paper/70">
+                    {s.body}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </ol>
+
+          {/* the artifact */}
+          <Reveal delay={120} className="lg:sticky lg:top-24 lg:self-start">
+            <div className="rounded-[20px] border border-paper/12 bg-surface p-6 text-ink shadow-[0_50px_90px_-40px_rgba(0,0,0,0.55)]">
+              <p className="eyebrow text-[0.6rem]">Purchase review</p>
+              <div className="mt-4 flex items-center gap-3 border-b border-line pb-4">
+                <img
+                  src={DEMO_PRODUCTS[0].image}
+                  alt={DEMO_PRODUCTS[0].alt}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-14 w-11 shrink-0 rounded-md object-cover"
+                />
+                <div>
+                  <p className="text-sm font-medium text-ink">Linen Blazer</p>
+                  <p className="text-xs text-muted">Size M × 1</p>
+                </div>
               </div>
+              <dl className="mt-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-muted">Product</dt>
+                  <dd className="text-ink">$89</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted">Delivery</dt>
+                  <dd className="text-ink">$5</dd>
+                </div>
+                <div className="flex justify-between border-t border-line pt-2 font-medium">
+                  <dt className="text-ink">Total</dt>
+                  <dd className="font-display text-base text-ink">$94</dd>
+                </div>
+              </dl>
+              <div className="mt-4 rounded-lg bg-paper px-3 py-2.5 text-xs text-muted">
+                <span className="font-medium text-ink">Signed ceiling: $94</span>{' '}
+                — any <Mono>authorize()</Mono> over this is declined.
+              </div>
+              <button type="button" className="btn btn-primary mt-4 w-full">
+                Confirm &amp; Pay $94
+              </button>
             </div>
-            <dl className="mt-4 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-muted">Product</dt>
-                <dd className="text-ink">$89</dd>
+          </Reveal>
+        </div>
+
+        {/* underneath */}
+        <Reveal delay={80} className="mt-14">
+          <p className="eyebrow mb-4 !text-paper/45">Underneath</p>
+          <div className="grid gap-5 sm:grid-cols-2">
+            {UNDERNEATH.map((u) => (
+              <div
+                key={u.title}
+                className="rounded-2xl border border-paper/12 bg-paper/[0.03] p-6"
+              >
+                <p className="font-display text-base text-paper">{u.title}</p>
+                <p className="mt-2 text-sm leading-relaxed text-paper/70">
+                  {u.body}
+                </p>
               </div>
-              <div className="flex justify-between">
-                <dt className="text-muted">Delivery</dt>
-                <dd className="text-ink">$5</dd>
-              </div>
-              <div className="flex justify-between border-t border-line pt-2 font-medium">
-                <dt className="text-ink">Total</dt>
-                <dd className="font-display text-base text-ink">$94</dd>
-              </div>
-            </dl>
-            <div className="mt-4 rounded-lg bg-paper px-3 py-2.5 text-xs text-muted">
-              <span className="font-medium text-ink">Signed spend ceiling:</span>{' '}
-              $94 — any authorize() over this is declined at the network.
-            </div>
-            <button type="button" className="btn btn-primary mt-4 w-full">
-              Confirm &amp; Pay $94
-            </button>
+            ))}
           </div>
-        </Reveal>
-      </Container>
-
-      <Container>
-        <div className="mt-12 grid gap-5 lg:grid-cols-3">
-          {SAFEGUARDS.map((s, i) => (
-            <Reveal
-              key={s.title}
-              delay={i * 80}
-              className={`rounded-[16px] border p-6 ${
-                s.strong
-                  ? 'border-accent-soft/30 bg-accent-soft/[0.08]'
-                  : 'border-paper/12 bg-paper/[0.04]'
-              }`}
-            >
-              <p className="font-display text-lg text-paper">{s.title}</p>
-              <p className="mt-2.5 text-sm leading-relaxed text-paper/70">
-                {s.body}
-              </p>
-            </Reveal>
-          ))}
-        </div>
-
-        <div className="mt-6 grid gap-5 lg:grid-cols-2">
-          <Reveal className="rounded-[16px] border border-paper/12 bg-paper/[0.04] p-6">
-            <p className="font-display text-lg text-paper">Access control</p>
-            <p className="mt-2.5 text-sm leading-relaxed text-paper/70">
-              The embedded iframe carries an <Mono>embed_key</Mono> — wrong or
-              missing key, rejected. Postgres row-level security keeps every
-              merchant to its own data; the anonymous role is read-only, and only
-              when the store has <Mono>agent_live = true</Mono>. The{' '}
-              <Mono>agent_checkout</Mono> RPC is the sole writer of orders and
-              inventory, re-validating price and stock against live rows.
-            </p>
-          </Reveal>
-          <Reveal
-            delay={90}
-            className="rounded-[16px] border border-paper/12 bg-paper/[0.04] p-6"
-          >
-            <p className="font-display text-lg text-paper">Audit log</p>
-            <p className="mt-2.5 text-sm leading-relaxed text-paper/70">
-              Every completed order is written to <Mono>agent_orders</Mono> /{' '}
-              <Mono>agent_order_items</Mono> and shown to the merchant at{' '}
-              <Mono>/merchant/orders</Mono> — line items, buyer, total and Visa
-              authorization result.
-            </p>
-          </Reveal>
-        </div>
-
-        <Reveal delay={120}>
-          <p className="mt-10 font-display text-lg text-paper">
-            Preview, verify, authorize — in that order, every time.
-          </p>
         </Reveal>
       </Container>
     </section>
@@ -480,7 +514,7 @@ const ONBOARDING = [
   },
   {
     title: 'Configure the agent',
-    body: 'Name, greeting, brand description, category focus, tone, currency, recommendation limit, confirmation rule, commerce rules.',
+    body: 'Name, greeting, brand voice, category focus, currency, recommendation limit, confirmation rule.',
   },
   {
     title: 'Set a payout account',
@@ -519,11 +553,10 @@ export function Onboarding() {
                 Scales from an SME to a chain
               </p>
               <p className="mt-2.5 text-sm leading-relaxed text-muted">
-                A brand is a single <Mono>stores</Mono> row. An SME has one
-                location; a chain adds branches as managers join, each scoped by
-                row-level security to its own branch. The public agent searches
-                the full catalogue and tells the shopper which branch stocks an
-                item.
+                A brand is one <Mono>stores</Mono> row. An SME has one location; a
+                chain adds branches as managers join, each RLS-scoped to its own.
+                The public agent searches the whole catalogue and says which
+                branch has an item.
               </p>
             </div>
           </Reveal>
